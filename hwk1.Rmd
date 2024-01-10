@@ -170,10 +170,62 @@ Test your code by making sure you can recover the answer in Q. 3 as a special ca
 ```{r repeat-q}
 
 ```
-#### Part 3 
+#### Part 3 (INCOMPLETE)
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \). Here \( \propto \) means "proportional to"; try to infer what it means in this context.
 
 ```{r one_to_ten}
 posterior_given_four_heads((1:10))
 plot(posterior_given_four_heads((1:10)))
+```
+What does "proportional to" mean?
+```{r proptoWhut}
+# note that the whole 1 to 10 thing is non-normalized
+# so we know the proportionality to 1:10 is the same as
+# actually passing the following probabilities
+1:10/(sum(1:10))
+# also code output is the same
+posterior_given_four_heads( 1:10/(sum(1:10)))
+```
+
+## Q.5: Generalizing Observations
+
+We now generalize Q. 4 as follows: instead of observing 4 "heads" out of 4 observations, say we observe `n_heads` out of `n_observations`, where `n_heads` and `n_observations` will be additional arguments passed into a new R function.
+
+#### Part 1
+
+Write the joint distribution of this modified model. Use the \(\sim\) notation as in Equation 1. Hint: use a Binomial distribution.
+
+
+#### Part 2
+
+Write an R function called `posterior` taking three input arguments in the following order: a vector \( \rho \) as in Q. 4, as well as two integers, `n_heads` and `n_observations`.
+
+```{r n-observations}
+posterior <- function(rho, n_heads, n_observations){
+  # this part is the same
+  kvals = 0:(length(rho)-1)
+  K = length(kvals)
+  biases = kvals / (K-1)
+  # we need the overall probability of nheads
+  p_E =  sum(dbinom(x = n_heads, size = n_observations, p = biases)*rho)
+  # then, across the k coins that can be picked
+  # then numerator is still P(X)P(E | X)
+  prior_likeli =  sapply(1:K, function(k){ 
+    dbinom(x = n_heads, size = n_observations, p = biases[k]) * rho[k]} ) 
+  # then return the ratio
+  return(prior_likeli / p_E)
+}
+```
+#### Part 3
+```{r recover2}
+posterior(c(1/3, 1/3, 1/3), 4, 4)
+```
+Test your code by making sure you can recover the answer in Q. 3 as a special case.
+
+
+#### Part 4
+Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \) and `n_heads = 2` and `n_observations = 10`.
+
+```{r posterior-plot}
+plot(posterior(1:10, 2, 10))
 ```
