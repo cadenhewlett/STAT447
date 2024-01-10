@@ -38,6 +38,8 @@ posterior_given_four_heads <- function(rho){
 
 # this returns q1
 posterior_given_four_heads(rho = c(1/3, 1/3, 1/3))
+
+posterior_given_four_heads(c(1/2, 1/4, 1/4))
 # 1/17
 # this is q3? no.
 # posterior_given_four_heads(

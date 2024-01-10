@@ -177,7 +177,10 @@ Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \). Here \( \propto \)
 posterior_given_four_heads((1:10))
 plot(posterior_given_four_heads((1:10)))
 ```
-What does "proportional to" mean?
+
+
+
+What does "proportional to" mean in this context?
 ```{r proptoWhut}
 # note that the whole 1 to 10 thing is non-normalized
 # so we know the proportionality to 1:10 is the same as
@@ -191,7 +194,7 @@ posterior_given_four_heads( 1:10/(sum(1:10)))
 
 We now generalize Q. 4 as follows: instead of observing 4 "heads" out of 4 observations, say we observe `n_heads` out of `n_observations`, where `n_heads` and `n_observations` will be additional arguments passed into a new R function.
 
-#### Part 1
+#### Part 1  (INCOMPLETE)
 
 Write the joint distribution of this modified model. Use the \(\sim\) notation as in Equation 1. Hint: use a Binomial distribution.
 
@@ -216,16 +219,17 @@ posterior <- function(rho, n_heads, n_observations){
   return(prior_likeli / p_E)
 }
 ```
-#### Part 3
+#### Part 3 (MAYBE INCOMPLETE)
 ```{r recover2}
 posterior(c(1/3, 1/3, 1/3), 4, 4)
 ```
 Test your code by making sure you can recover the answer in Q. 3 as a special case.
 
 
-#### Part 4
+#### Part 4 (MAYBE INCOMPLETE)
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \) and `n_heads = 2` and `n_observations = 10`.
 
 ```{r posterior-plot}
+posterior(1:10, 2, 10)
 plot(posterior(1:10, 2, 10))
 ```
