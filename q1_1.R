@@ -30,16 +30,17 @@ posterior_given_four_heads <- function(rho){
   biases = kvals / (K-1)
   # in this case, the denominator is from LOTP again
   p_E =  sum( biases^4 * rho )
+  print(p_E)
   # then numerator is P(X)P(E | X)
   prior_likeli =  sapply(1:K, function(k){ biases[k]^4 * rho[k]} ) 
+  print(prior_likeli)
   # then return the ratio
   return(prior_likeli / p_E)
 }
-
-# this returns q1
-posterior_given_four_heads(rho = c(1/3, 1/3, 1/3))
-
-posterior_given_four_heads(c(1/2, 1/4, 1/4))
+57/800
+# this returns q3
+posterior_given_four_heads(c(1, 98, 1))
+49/57
 # 1/17
 # this is q3? no.
 # posterior_given_four_heads(
