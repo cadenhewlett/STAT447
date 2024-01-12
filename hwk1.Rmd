@@ -16,15 +16,13 @@ library(extraDistr)
 
 ## Question 1 : Sampling from a Joint Distribution
 
-#### Part 1 (INCOMPLETE)
-
+#### Part 1 (INCOMPLETE) \
 
 
 Compute $\mathbb{E}[(1 + Y_1)^X]$ mathematically (with a precise mathematical derivation).
 
 
-
-We wish to compute $\mathbb{E}(g, X, Y_1, \dots Y_4).$ In this case, $g(x, y_1, \dots y_4) = (1 + y_1)^x$.  We can hence write the expectation as follows:
+**Solution:** We wish to compute $\mathbb{E}(g, X, Y_1, \dots Y_4).$ In this case, $g(x, y_1, \dots y_4) = (1 + y_1)^x$.  We can hence write the expectation as follows:
       \begin{equation*}
           \mathbb{E}[g(X, Y_1, \dots, Y_4)] = \sum_x \sum_{y_1} \sum_{y_2} \sum_{y_3} \sum_{y_4} g(x, y_1, \dots, y_4)  p(x, y_1, y_2, y_3, y_4).
       \end{equation*}
@@ -76,7 +74,23 @@ forward_sample()
 
 How can your code and the law of large number be used to approximate $\mathbb{E}[(1 + Y_1)^X]$
 
-Since the Law of Large numbers basically states that average of many *iid* random samples will approach the truth (if it exists), we can use our newly-created `forward_sample()` function to generate many Monte Carlo samples. We can then subset these top-down runs to extract many $x$ and $y_1$ observations, computing $(1 + y_1)^x$ each time. We can then approximate $\mathbb{E}[(1 + Y_1)^X]$ by taking the average of all our simulations. In short, we can generate Monte Carlo samples to generate an
+Since the Law of Large numbers basically states that average of many *iid* random samples will approach the truth (if it exists), we can use our newly-created `forward_sample()` function to approximate via Monte Carlo simulation. We can conduct $m$ simulations, and let $\hat G_M = (1 + y_1)^x$. Then, the average given by $\hat G_M = \frac{1}{M} \sum_{m=1}^M G^{(m)}$ is approximately equal to $\mathbb{E}((1 + Y_1)^X)$. The actual code to do this is below:
+
+```{r monte-carlo}
+set.seed(19690720)
+# declare number of iterations
+num_iterations = 20000
+# generate all simulations 
+simulations = sapply(1:20000, function(x){
+    # generate a sample using the forward_sample() function
+    sample_i = forward_sample()
+    # calculate g(x, y) using the generated sample
+    g_x = (1 + sample_i[2])^sample_i[1]
+    # return this iteration
+    return(g_x)
+})
+```
+<!-- Then, with each simulation, we compute $(1 + y_1)^x$. We can then approximate $\mathbb{E}[(1 + Y_1)^X]$ by taking the average of all our simulations. In short, we can generate Monte Carlo samples to generate an -->
 
 ### Part 4
 
@@ -86,20 +100,18 @@ Compare the approximation from your code with you answer in part 1.
 
 Here, we actually conduct the simulations and compare the results to those found by arithmetic operations.
 
-```{r simulations}
-# refresh the seed just in case
-set.seed(19690720)
-# generate 20,000 simulations
-simulations = sapply(1:20000, function(x){
-                  sample_i = forward_sample()
-                  g_x = (1 + sample_i[2])^sample_i[1]
-                  return(g_x)
-                })
+```{r simulations-check}
+# generate the estimate of E(g(X, Y))
 simulated_mean = mean(simulations)
+# value from simulations
 print(paste("Simulated Value:", simulated_mean))
-print(paste("Calculated Value:", round(13/6, 4)))
-print(paste("Percent Difference: ", 
-            round(abs(simulated_mean- 13/6)/(13/6)*100, 4), "%", sep = ''))
+# value from part 1
+print(paste("Calculated Value:", round(13 / 6, 4)))
+# (observed - expected)/(expected) as a percent
+print(paste("Percent Difference: ",
+            round(abs(
+              simulated_mean - 13 / 6
+            ) / (13 / 6) * 100, 4), "%", sep = ''))
 ```
 So we can see that the result found from simulation is very close to that found in **Part 1**.
 
@@ -107,43 +119,93 @@ So we can see that the result found from simulation is very close to that found 
 
 Suppose now that you observe the outcome of the 4 coin flips, but not the type of coin that was picked. Say you observe: "heads", "heads", "heads", "heads" = `[0, 0, 0, 0]`.
 
-**Note:** We will use precise and careful notation to solve, not skipping any steps. (Mostly because this is the very first assignment.)
+**Note:** We will use precise and careful notation to solve, not skipping any steps. 
 
-1. Write mathematically: "Given you observe 4 heads, what is the probability that you picked the standard coin?"
-    We know that the coin flips are $Y_1, Y_2, Y_3, Y_4$ respectively. Based on the question description, for arbitrary $i \in [1,4]$ the event that a coin is "heads" is $Y_i = 0.$
+### Part 1
+
+Write mathematically: "Given you observe 4 heads, what is the probability that you picked the standard coin?"
+
+
+We know that the coin flips are $Y_1, Y_2, Y_3, Y_4$ respectively. Based on the question description, for arbitrary $i \in [1,4]$ the event that a coin is "heads" is $Y_i = 0.$
     Therefore, we can all four flips as the random vector $(Y_1, Y_2, Y_3, Y_4)$. Understanding that selecting the standard coin is the event that $X = 1$, the sentence can be succinctly described as follows:
     $$
     P(X = 1 | (Y_1, Y_2, Y_3, Y_4) = (0, 0, 0, 0))
     $$
 
-2. Now, solve the expression.
-    **Solution:** 
-    For simplicity, we will let event $E$ be the event that $(Y_1, Y_2, Y_3, Y_4)$ is equal to $(0, 0, 0, 0)$, where again a zero indicates a heads.
+### Part 2 Now, solve the expression.
+
+  For simplicity, we will let event $E$ be the event that $(Y_1, Y_2, Y_3, Y_4)$ is equal to $(0, 0, 0, 0)$, where again a zero indicates a heads.
     
-    We wish to find $P(X = 1 | E)$. We will implement Bayes' Theorem.
+We wish to find $P(X = 1 | E)$. We will implement Bayes' Theorem.
     $$
     P(X = 1 | E) = \frac{P(E | X = 1) P(X = 1)}{P(E)}
     $$
     
-    We can compute the probability of picking Coin #1 directly.
+We can compute the probability of picking Coin #1 directly.
     $$
     P(X = 1) = P(\text{unif}(\{0, 1, 2\}) = 1) = \frac{1}{3}
     $$
     
-    Assuming each $Y_i$ is iid for $i \in [1, 4]$, we can compute $P(E | X = 1)$:
+Assuming each $Y_i$ is iid for $i \in [1, 4]$, we can compute $P(E | X = 1)$:
     $$
     P(E | X = 1) = P((Y_1, Y_2, Y_3, Y_4) = (0, 0, 0, 0) | X = 1) = \prod_{i = 1}^4 P(Y_i = 0 | X = 1) = \left(\frac{1}{2^4}\right) = \frac{1}{16}
     $$
     
-    Now, we can compute $P(E)$ via the Law of Total Probability. Trivially, we know $P(E | X = 2) = 1$ and $P(E | X = 0) = 0.$
+Now, we can compute $P(E)$ via the Law of Total Probability. Trivially, we know $P(E | X = 2) = 1$ and $P(E | X = 0) = 0.$
     $$
     P(E) = \sum_{i = 0}^2 P(E | X = i) P(X = i) = (0)\left(\frac{1}{3}\right) + \left(\frac{1}{16}\right)\left(\frac{1}{3}\right) + (1)\left(\frac{1}{3}\right) = \frac{1}{48}+ \frac{1}{3} = \frac{17}{48}
     $$
     
-    Putting this all together, we have the following:
+Putting this all together, we have the following:
     $$
     P(X = 1 | E) = \frac{P(E | X = 1) P(X = 1)}{P(E)} = \frac{(1/3)(1/16)}{(17/48)} = \boxed{\frac{1}{17}}
     $$
+
+## Question 3 : Non-Uniform Prior on Coin Types
+
+We now modify the problem as follows: I stuffed the bag with 100 coins: 98 standard (fair) coins, 1 coin with only heads, and 1 coin with only tails. The rest is the same: pick one of the coins, flip it 4 times.
+
+#### Part 1 
+Write the joint distribution of this modified model. Use the notation as in Equation 1. Hint: use a `Categorical` distribution.
+
+
+Now, we know that $X$ is no longer Uniform. Using the notation for the categorical distribution used in class, we write that
+$$
+X\sim \text{categorical}\big\{(0, 1, 2), (\frac{1}{100}, \frac{98}{100}, \frac{1}{100}) \big\}
+$$
+Since the rules for flipping the coins remains the same, we still have that:
+$$
+Y_i \mid X \sim \text{bern}(X/2)
+$$
+Where $X$ is now the categorical distribution.
+
+#### Part 2
+
+Compute the probability that you picked one of the fair coins, given you see four heads.
+
+\textbf{\underline{NOTE}}: We will let the event of a heads be represented with a **1** rather than a **0**, to comply with the `dunif` function used in the succeeding questions.
+
+We wish to find $P(X = 1 \mid Y_{1:4} = {\vec{\mathbf{1}}})$.We will implement Bayes' Theorem.
+    $$
+   P(X = 1 \mid Y_{1:4} = {\vec{\mathbf{1}}}) = \frac{P(Y_{1:4} = {\vec{\mathbf{1}}} | X = 1) P(X = 1)}{P(Y_{1:4} = {\vec{\mathbf{1}}})}
+    $$
+We note from the Categorical Distribution defined above, that $P(X = 1) = \frac{98}{100}$. Similarly, by the same logic applied in **Question 2**, we know that:
+$$
+P(Y_{1:4} = {\vec{\mathbf{1}}} | X = 1) = \bigg(\frac{1}{2}\bigg)^4 = \frac{1}{16}
+$$
+Now, we can find $P(Y_{1:4} = {\vec{\mathbf{1}}})$ via the Law of Total Probability.
+\begin{align*}
+P(Y_{1:4} = {\vec{\mathbf{1}}}) &= \sum_{i = 0}^2 P(X = i)P(Y_{1:4} = \mathbf{\vec{1}} \mid X = i) \\
+P(Y_{1:4} = {\vec{\mathbf{1}}}) &= \frac{1}{100}(0) + \frac{98}{100} \bigg(\frac{1}{16}\bigg) + \frac{1}{100}(1) \\
+P(Y_{1:4} = {\vec{\mathbf{1}}}) &= \frac{1}{100} + \frac{98}{1600} = \frac{114}{1600}
+\end{align*}
+Now, we can bring this all together to solve for $P(X = 1 \mid Y_{1:4} = {\vec{\mathbf{1}}})$
+\begin{align*}
+P(X = 1 \mid Y_{1:4} = {\vec{\mathbf{1}}}) = \frac{P(Y_{1:4} = {\vec{\mathbf{1}}} | X = 1) P(X = 1)}{P(Y_{1:4} = {\vec{\mathbf{1}}})} = \dfrac{\bigg(\dfrac{1}{16}\bigg)\bigg(\dfrac{98}{100}\bigg)}{\bigg(\dfrac{114}{1600}\bigg)} = \boxed{\frac{49}{57}}
+\end{align*}
+Where $\frac{49}{57}$ is approximately $0.859649\dots$ as a decimal.
+
+
 
 ## Question 4
 
