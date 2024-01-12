@@ -16,7 +16,7 @@ library(extraDistr)
 
 ## Question 1 : Sampling from a Joint Distribution
 
-#### Part 1 (INCOMPLETE) \
+#### Part 1  \
 
 
 Compute $\mathbb{E}[(1 + Y_1)^X]$ mathematically (with a precise mathematical derivation).
@@ -207,7 +207,7 @@ Where $\frac{49}{57}$ is approximately $0.859649\dots$ as a decimal.
 
 
 
-## Question 4
+## Question 4 :  A First Posterior Inference Algorithm
 
 We now generalize to having \( K + 1 \) types of coins such that:
 
@@ -243,37 +243,54 @@ posterior_given_four_heads(rho = c(1/3, 1/3, 1/3))
 Test your code by making sure you can recover the answer in Q. 3 as a special case. Report what values of \( K \) and \( \rho \) you used.
 
 
-```{r repeat-q}
-
+```{r repeat-q3}
+posterior_given_four_heads(rho = c(1, 98, 1))
 ```
-#### Part 3 (INCOMPLETE)
+
+Here, we use $\rho = (1, 98, 1)$. This vector has a magnitude of $3$, hence `kvals = 0:(length(rho)-1)` will give $(0, 1, 2)$, hence $K=2$ in this case.
+
+
+
+
+#### Part 3
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \). Here \( \propto \) means "proportional to"; try to infer what it means in this context.
 
 ```{r one_to_ten}
-posterior_given_four_heads((1:10))
-plot(posterior_given_four_heads((1:10)))
+data.frame(posterior = posterior_given_four_heads((1:10)))
+plot(posterior_given_four_heads((1:10)), ylab = "Posterior", xlab = "Bias")
 ```
 
 
 
 What does "proportional to" mean in this context?
-```{r proptoWhut}
-# note that the whole 1 to 10 thing is non-normalized
-# so we know the proportionality to 1:10 is the same as
-# actually passing the following probabilities
-1:10/(sum(1:10))
-# also code output is the same
-posterior_given_four_heads( 1:10/(sum(1:10)))
-```
 
-## Q.5: Generalizing Observations
+We know that the fraction of coins in the bag of type $k$ is $\rho_k$. However, 
+the sequence of discrete numbers $\rho = (1, 2, \dots, 10)$ is not the *fraction* of coins, 
+moreover the *number* of coins. In other words, these values are not normalized.
+Hence, we know that passing the sequence $\rho$ to the function is equivalent 
+to passing the following normalized ratios.
+
+```{r proptoWhut}
+1:10/(sum(1:10))
+```
+So, this could be what "proportional to" means in this context. We are analyzing the posterior probabilities for the inputs proportional to given number of coins rather than the ratios of coins.
+
+## Question 5: Generalizing Observations
 
 We now generalize Q. 4 as follows: instead of observing 4 "heads" out of 4 observations, say we observe `n_heads` out of `n_observations`, where `n_heads` and `n_observations` will be additional arguments passed into a new R function.
 
-#### Part 1  (INCOMPLETE)
+#### Part 1 
 
 Write the joint distribution of this modified model. Use the \(\sim\) notation as in Equation 1. Hint: use a Binomial distribution.
 
+Firstly, the distribution of $X$ has changed, now dependent on the external hyperparameter $K$. 
+$$X \sim  \text{unif}\big(\{0, 1, \dots ,K \} \big)$$
+
+Secondly, if we let $y$ be `n_heads` and $N$ be `n_observations`, the conditional distribution $Y | X $ now follows a Binomial Distribution with parameters $p = X/K$ and $n = N$. 
+
+In other words,
+$$Y| X \sim {\mathrm{binomial}}(n = N, p = X/K)$$
+Which can be found to find the probability of a specific `n_heads` ($y$) given a choice of $K$ and a result of the uniform random variable $X$.
 
 #### Part 2
 
@@ -295,17 +312,20 @@ posterior <- function(rho, n_heads, n_observations){
   return(prior_likeli / p_E)
 }
 ```
-#### Part 3 (MAYBE INCOMPLETE)
-```{r recover2}
-posterior(c(1/3, 1/3, 1/3), 4, 4)
-```
+#### Part 3 
+
 Test your code by making sure you can recover the answer in Q. 3 as a special case.
+```{r recover2}
+posterior(c(1, 98, 1), 4, 4)
+round(posterior(c(1, 98, 1), 4, 4)[2] - (49/57), 5) == 0
+```
 
 
-#### Part 4 (MAYBE INCOMPLETE)
+
+#### Part 4 
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \) and `n_heads = 2` and `n_observations = 10`.
 
 ```{r posterior-plot}
-posterior(1:10, 2, 10)
-plot(posterior(1:10, 2, 10))
+data.frame(posterior = posterior(1:10, 2, 10))
+plot(posterior(1:10, 2, 10), xlab = "Bias", ylab = "Posterior")
 ```
