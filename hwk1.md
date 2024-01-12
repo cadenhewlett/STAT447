@@ -1,25 +1,19 @@
 ---
 title: "STAT 447 Assignment 1"
 author: "Caden Hewlett"
-date: "`r Sys.Date()`"
+date: "2024-01-11"
 output:
-  pdf_document: default
   html_document:
     keep_md: yes
+  pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-library(extraDistr)
-```
+
 
 
 ## Question 1 : Sampling from a Joint Distribution
 
 #### Part 1 (INCOMPLETE)
-
-
-
 Compute $\mathbb{E}[(1 + Y_1)^X]$ mathematically (with a precise mathematical derivation).
 
 
@@ -36,15 +30,10 @@ This can be simplified slightly as follows:
       \end{equation*}
 
 
-Further, we know the specific $y_2, y_3, y_4$ coin flip outcomes don't matter in this particular calculation, since our expectation is only in terms of $X$ and $Y_1$.
-With this in mind, we can consider the following tree describing this situation.
+Where the specific $y_2, y_3, y_4$ don't matter in this particular calculation.
+With this in mind, we can consider the following tree describing this situation:
 
-<center>
-
-![Decision Tree for First Coin Flip, with Function $g(x, y_1)$](447_hwk_1_img_1.png){#id .class width=75% height=75%}
-
-</center>
-
+![Decision Tree for First Coin Flip, with Function](447_hwk_1_img_1.png){#id .class width=50% height=50%}
 <!-- We can expand this as follows: -->
 <!--       \begin{align*} -->
 <!--           \mathbb{E}[(1 + Y_1)^X] = \sum_{x=0}^2 \sum_{y_1 = 0}^1 (1 + y_1)^x p(x, y_1, y_2, y_3, y_4) -->
@@ -60,7 +49,8 @@ Then, applying the Law of the Unconscious Statistician (as seen in the bottom le
 
 Write an R function called `forward_sample` that samples (“simulates”) from the joint distribution of $(X, Y_1, Y_2, Y_3, Y_4)$. As a general practice, fix the seed, and submit both the code and the output (here, a single sample).
 
-```{r fwd-samp}
+
+```r
 library(extraDistr)
 set.seed(19690720)
 forward_sample <- function(){
@@ -70,6 +60,10 @@ forward_sample <- function(){
       )
 }
 forward_sample()
+```
+
+```
+## [1] 2 1 1 1 1
 ```
 
 ### Part 3
@@ -86,7 +80,8 @@ Compare the approximation from your code with you answer in part 1.
 
 Here, we actually conduct the simulations and compare the results to those found by arithmetic operations.
 
-```{r simulations}
+
+```r
 # refresh the seed just in case
 set.seed(19690720)
 # generate 20,000 simulations
@@ -97,9 +92,27 @@ simulations = sapply(1:20000, function(x){
                 })
 simulated_mean = mean(simulations)
 print(paste("Simulated Value:", simulated_mean))
+```
+
+```
+## [1] "Simulated Value: 2.1529"
+```
+
+```r
 print(paste("Calculated Value:", round(13/6, 4)))
+```
+
+```
+## [1] "Calculated Value: 2.1667"
+```
+
+```r
 print(paste("Percent Difference: ", 
             round(abs(simulated_mean- 13/6)/(13/6)*100, 4), "%", sep = ''))
+```
+
+```
+## [1] "Percent Difference: 0.6354%"
 ```
 So we can see that the result found from simulation is very close to that found in **Part 1**.
 
@@ -160,7 +173,8 @@ We consider the same observation as before: "you observe 4 heads". We want to fi
 Write an R function called `posterior_given_four_heads` taking as input a vector
 \( \rho = (\rho_0, \rho_1, \ldots, \rho_K) \) and returning \( \pi = (\pi_0, \pi_1, \ldots, \pi_K) \).
 
-```{r posterior function}
+
+```r
 posterior_given_four_heads <- function(rho){
   kvals = 0:(length(rho)-1)
   K = length(kvals)
@@ -177,31 +191,58 @@ posterior_given_four_heads <- function(rho){
 # this returns q2
 posterior_given_four_heads(rho = c(1/3, 1/3, 1/3))
 ```
+
+```
+## [1] 0.00000000 0.05882353 0.94117647
+```
 #### Part 2 
 Test your code by making sure you can recover the answer in Q. 3 as a special case. Report what values of \( K \) and \( \rho \) you used.
 
 
-```{r repeat-q}
 
-```
 #### Part 3 (INCOMPLETE)
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \). Here \( \propto \) means "proportional to"; try to infer what it means in this context.
 
-```{r one_to_ten}
+
+```r
 posterior_given_four_heads((1:10))
+```
+
+```
+##  [1] 0.000000e+00 1.468882e-05 3.525316e-04 2.379588e-03 9.400843e-03
+##  [6] 2.754153e-02 6.662848e-02 1.410714e-01 2.707443e-01 4.818667e-01
+```
+
+```r
 plot(posterior_given_four_heads((1:10)))
 ```
+
+![](hwk1_files/figure-html/one_to_ten-1.png)<!-- -->
 
 
 
 What does "proportional to" mean in this context?
-```{r proptoWhut}
+
+```r
 # note that the whole 1 to 10 thing is non-normalized
 # so we know the proportionality to 1:10 is the same as
 # actually passing the following probabilities
 1:10/(sum(1:10))
+```
+
+```
+##  [1] 0.01818182 0.03636364 0.05454545 0.07272727 0.09090909 0.10909091
+##  [7] 0.12727273 0.14545455 0.16363636 0.18181818
+```
+
+```r
 # also code output is the same
 posterior_given_four_heads( 1:10/(sum(1:10)))
+```
+
+```
+##  [1] 0.000000e+00 1.468882e-05 3.525316e-04 2.379588e-03 9.400843e-03
+##  [6] 2.754153e-02 6.662848e-02 1.410714e-01 2.707443e-01 4.818667e-01
 ```
 
 ## Q.5: Generalizing Observations
@@ -217,7 +258,8 @@ Write the joint distribution of this modified model. Use the \(\sim\) notation a
 
 Write an R function called `posterior` taking three input arguments in the following order: a vector \( \rho \) as in Q. 4, as well as two integers, `n_heads` and `n_observations`.
 
-```{r n-observations}
+
+```r
 posterior <- function(rho, n_heads, n_observations){
   # this part is the same
   kvals = 0:(length(rho)-1)
@@ -234,8 +276,13 @@ posterior <- function(rho, n_heads, n_observations){
 }
 ```
 #### Part 3 (MAYBE INCOMPLETE)
-```{r recover2}
+
+```r
 posterior(c(1/3, 1/3, 1/3), 4, 4)
+```
+
+```
+## [1] 0.00000000 0.05882353 0.94117647
 ```
 Test your code by making sure you can recover the answer in Q. 3 as a special case.
 
@@ -243,7 +290,18 @@ Test your code by making sure you can recover the answer in Q. 3 as a special ca
 #### Part 4 (MAYBE INCOMPLETE)
 Show the output for \( \rho \propto (1, 2, 3, \ldots, 10) \) and `n_heads = 2` and `n_observations = 10`.
 
-```{r posterior-plot}
+
+```r
 posterior(1:10, 2, 10)
+```
+
+```
+##  [1] 0.000000e+00 1.628596e-01 3.357600e-01 2.934782e-01 1.516748e-01
+##  [6] 4.771276e-02 8.024795e-03 4.870678e-04 2.795670e-06 0.000000e+00
+```
+
+```r
 plot(posterior(1:10, 2, 10))
 ```
+
+![](hwk1_files/figure-html/posterior-plot-1.png)<!-- -->
