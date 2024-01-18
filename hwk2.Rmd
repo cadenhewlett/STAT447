@@ -44,3 +44,14 @@ What are the unknown quantities in this scenario? And what is the data?
 In this case, the data is given in the setup section, and is simply that as of Jan 2024, Delta 7925H rockets have been launched 3 times, with 0 failed launches. Further, we have $\rho_k$, the probability that the *true* probability $p$ is $k/K$ for a given discrete $k$. 
 
 ## Part 2
+
+Here, letting $k = 20$, we can think of the random Variable $X$ as the probability that the rocket has failure rate $k$, for $k \in [0, 20]$ i.e.
+
+$$ X \sim \text{unif}(\{0, 1,2, \dots, 20\}) $$
+
+Similarly, the conditional distribution of $Y_i$ given $X$ can be written as:
+$$
+Y_i \sim \text{bern}\bigg(\dfrac{X}{20}\Big(1 - \dfrac{X}{20}\Big) \bigg)
+$$
+
+Together, these form the joint distribution $p_{X, Y}(x, y)$ as we saw in lecture, due to the chain rule.
