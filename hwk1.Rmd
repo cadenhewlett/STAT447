@@ -4,8 +4,6 @@ author: "Caden Hewlett"
 date: "`r Sys.Date()`"
 output:
   pdf_document: default
-  html_document:
-    keep_md: yes
 ---
 
 ```{r setup, include=FALSE}
