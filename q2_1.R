@@ -49,3 +49,5 @@ p2 <- ggplot(plot_data_2, aes(x = value, y = 0, yend = probability)) +
     linewidth = 0.5
   ))
 print(p2)
+
+sum(realizations*pi)
