@@ -51,3 +51,5 @@ p2 <- ggplot(plot_data_2, aes(x = value, y = 0, yend = probability)) +
 print(p2)
 
 sum(realizations*pi)
+
+(0:K)[which.max(pi)]
