@@ -9,10 +9,11 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(extraDistr)
+library(ggplot2)
 ```
 
 
-## Question 1 : Define a Bayesian Model
+# Question 1 : Define a Bayesian Model
 
 In order to perform inference on the unknown quantities, we must specify how they relate to the data; i.e., we need a probabilistic model. Assume that every Delta 7925H rocket has the same probability 
 $p$ of failing. For simplicity, let us assume that $p$ is allowed to take values on an evenly space grid
@@ -55,3 +56,98 @@ Y_i \sim \text{bern}\bigg(\dfrac{X}{20}\Big(1 - \dfrac{X}{20}\Big) \bigg)
 $$
 
 Together, these form the joint distribution $p_{X, Y}(x, y)$ as we saw in lecture, due to the chain rule.
+
+# Question 2 :  Posterior and Point Estimates
+
+To help you answer the following questions, we create the two vectors
+
+`prior_probabilities` where entry 
+$i$ containing the prior probability $\rho_{i-1}$ defined in Q1 (the minus one reflects the fact that R uses indexing starting at 1), and
+`realizations`, a vector of possible realizations of $p$ in the same order, namely $(0, 1/K, 2/K \dots, 1)$.
+
+```{r vectors}
+K = 20
+prior_probabilities = sapply(0:K, function(k){(k / K)*(1 - k/K)})
+realizations = sapply(0:K, function(k){k/K})
+```
+
+## Part 1
+
+Plot the prior PMF. Do you think this is a reasonable prior?
+
+```{r priorplot}
+plot_data <- data.frame(
+  value = 0:K,
+  probability = prior_probabilities
+)
+# plot prior
+p <- ggplot(plot_data, aes(x = value, y = 0, yend = probability)) +
+  geom_segment(aes(xend = value), color = "#b298dc", linewidth = 0.75) +
+  geom_point(aes(x = value, y = probability), color = "#6f2dbd") +
+  labs(x = "Value", y = "Probability") +
+  ggtitle("Plot of Prior Probabilities") + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p)
+```
+
+I'm not sure that this prior is exactly reasonable for this specific situation, but it's not bad. My main issue with it is the lower probability placed on higher outcomes. For example, $\rho_{20}$, i.e. $P(p = {20}/{K} = 1)$ is assigned the same (zero) probability as $\rho_0$, the probability of the rocket being guaranteed to fail. This symmetry in the fail probability likelihoods doesn't exactly square with our existing data - we know that we've had three successful launches already, so it may not be correct to assume that there isn't a "heavier tail" for greater values of $k$. Further, as was discussed in lecture, it's best not to assume any of the values in the prior are exactly zero.
+
+
+However, there is nuance to this problem (as in all real-world scenarios.) This prior distribution is quite conservative - i.e., it isn't placing too much potentially risky weight on the historical successes, which is *also* a sensible choice given the cost of these rockets. 
+
+## Part 2 
+
+Let $\pi_k = \mathbb{P}(p = k/K | Y_{1:3} = (1, 1, 1))$ denote the posterior probabilities, for $k \in \{0, 1, 2, \dots, K\}$.
+Create a vector `posterior_probabilities` where entry $i$ is $\pi_{i-1}$. Plot the posterior PMF.
+
+
+
+We can start by computing $P(Y_{1:3} = \vec{1} \mid p = \dfrac{k}{20})$ using the `realizations` vector from earlier. This probability decomposes as follows (letting $k/20 = p_{\text{obs}}$ for simplicity):
+$$
+P(Y_{1:3} = \vec{1} \mid p = p_{\text{obs}}) = P(Y_1 = 1  \mid p = p_{\text{obs}})P(Y_2 = 1 \mid Y_1 = 1, p = p_{\text{obs}})P(Y_3 = 1 \mid Y_2 = 1, Y_1 = 1, p = p_{\text{obs}})
+$$
+Which can simplify nicely into:
+$$
+P(Y_{1:3} = \vec{1} \mid p = p_{\text{obs}}) = P(Y_1 = 1  \mid p = p_{\text{obs}})P(Y_2 = 1 \mid p_{\text{obs}})P(Y_3 = 1 \mid p = p_{\text{obs}})
+$$
+Then, assuming the rocket launches are *iid* $\text{bern}(p_{\text{obs}})$ as discussed previously, with success probability $p_{\text{obs}}$, this can be simplified as:
+$$ P(Y_{1:3} = \vec{1} \mid p = p_{\text{obs}}) =  (p_{\text{obs}}) (p_{\text{obs}}) (p_{\text{obs}}) =  (p_{\text{obs}})^3
+$$
+This is really just a long-winded way of saying we simply take the cube of our `realizations` vector to get the likelihood. 
+```{r get_likelihood}
+likelihood = (realizations)^3
+```
+
+Then, $\gamma(k/20)$ for $k \in \{0, 1, \dots, 20\}$ is simply the product of the prior probabilities with the likelihood.
+
+```{r get_gamma}
+gamma = prior_probabilities*likelihood
+```
+
+Finally, we divide by the normalizing constant $Z$ so the probabilities sum to 1. This gives $\pi_k$, which we calculate and plot below.
+
+```{r get_pi_and_plot}
+pi = gamma/sum(gamma)
+
+plot_data_2 <- data.frame(
+  value = 0:K,
+  probability = pi
+)
+# plot posterior
+p2 <- ggplot(plot_data_2, aes(x = value, y = 0, yend = probability)) +
+  geom_segment(aes(xend = value), color = "#4361ee", linewidth = 0.75) +
+  geom_point(aes(x = value, y = probability), color = "#3a0ca3") +
+  labs(x = "Value", y = "Posterior Probability",
+       title = "Plot of Posterior Probabilities",
+       subtitle = "Given the Three Successful Rocket Launches") + theme_bw() +
+  theme(panel.grid.minor = element_line(
+    color = "grey90",
+    linetype = "dashed",
+    linewidth = 0.5
+  ))
+print(p2)
+```
