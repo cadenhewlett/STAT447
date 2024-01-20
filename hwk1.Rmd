@@ -14,7 +14,7 @@ library(extraDistr)
 
 ## Question 1 : Sampling from a Joint Distribution
 
-#### Part 1  \
+#### Part 1  
 
 
 Compute $\mathbb{E}[(1 + Y_1)^X]$ mathematically (with a precise mathematical derivation).
