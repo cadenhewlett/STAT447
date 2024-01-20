@@ -50,7 +50,7 @@ Write an R function called `forward_sample` that samples (“simulates”) from 
 library(extraDistr)
 set.seed(19690720)
 forward_sample <- function(){
-      X = rdunif(1, 0, 2)
+      X = rdunif(1, min = 0, max = 2)
       return(
         c(X, sapply(1:4, function(x) rbinom(n = 1, size = 1, prob = X/2)))
       )
