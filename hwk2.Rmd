@@ -2,6 +2,8 @@
 title: "STAT 447 Assignment 2"
 author: "Caden Hewlett"
 date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{array}
 output: pdf_document
 ---
 
@@ -94,10 +96,10 @@ p <- ggplot(plot_data, aes(x = value, y = 0, yend = probability)) +
 print(p)
 ```
 
-I'm not sure that this prior is exactly reasonable for this specific situation, but it's not bad. My main issue with it is the lower probability placed on higher outcomes. For example, $\rho_{20}$, i.e. $P(p = {20}/{K} = 1)$ is assigned the same (zero) probability as $\rho_0$, the probability of the rocket being guaranteed to fail. This symmetry in the fail probability likelihoods doesn't exactly square with our existing data - we know that we've had three successful launches already, so it may not be correct to assume that there isn't a "heavier tail" for greater values of $k$. Further, as was discussed in lecture, it's best not to assume any of the values in the prior are exactly zero.
+I'm not sure that this prior is exactly reasonable for this specific situation, but it's not bad. My main issue with it is the lower probability placed on higher outcomes. For example, $\rho_{20}$, i.e. $P(p = {20}/{K} = 1)$ is assigned the same (zero) probability as $\rho_0$, the probability of the rocket being guaranteed to fail. This symmetry in the fail probability likelihoods doesn't exactly square with our existing data (which is fine because we will calculate the posterior). However, we know some information about the history of *all* rocket launches in the past, and we could in theory use this to see if there is, in reality, a "heavier tail" for greater values of $k$. Also, as was discussed in lecture, it's best not to assume any of the values in the prior are exactly zero.
 
 
-However, there is nuance to this problem (as in all real-world scenarios.) This prior distribution is quite conservative - i.e., it isn't placing too much potentially risky weight on the historical successes, which is *also* a sensible choice given the cost of these rockets. 
+However, there is nuance to this problem (as in all real-world scenarios.) This prior distribution is quite conservative - i.e., it isn't placing too much potentially risky weight on the historical successes, which is *also* a sensible choice given the cost of these rockets.   
 
 ## Part 2 
 
@@ -175,3 +177,38 @@ $$
 $$
 
 Thankfully, with our `realizations` and `posterior` distributions, we already have most of the tools at our disposal to make this calculation.
+
+```{r posterior_mean}
+get_posterior_mean <- function(){
+  return(sum(realizations*pi))
+}
+get_posterior_mean()
+```
+
+# Question 3 : Bayes Action
+
+Let $a \in \{0, 1\}$  be a binary variable denoting the decision of buying the insurance ($a = 1$) or not ($a = 0$.)
+
+## Part 1
+
+Based on the problem description from the Setup Section, define a loss function $L(a, y)$ that summarizes the cost of having taken decision $a \in \{0, 1\}$ depending on whether the next launch is successful ($y = 1$) or not ($y = 0$). Hint: use indicator functions (i.e. binary functions taking either the value zero or one)
+
+Let's first approach this problem by making a table designating potential losses based on outcomes. Here we let the numbers be in millions of dollars.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{l|m{3cm}|m{3cm}|m{3cm}|}
+          & $y = 1$ & $y = 0$ \\ \hline
+$a = 1$ & Loss of \textbf{2}. You don't get your insurance deposit back. & Loss of \textbf{-100}. The rocket crashes and you get your money back. \\ \hline
+$a = 0$ & Loss of \textbf{0}. You spend nothing on insurance, and the rocket is fine. & Loss of \textbf{100}. The rocket crashes and you were not insured. \\ \hline
+\end{tabular}
+\end{table}
+
+With this in mind, we can write our loss function as follows. **NOTE** the command `\mathbb{1}` doesn't work in my version of latex, so I used `\mathbb{I}` for the indicator function instead.
+$$
+L(a,y) = 2 \mathbb{I}(a = 1, y = 1) + 0 \mathbb{I}\big(a = 0, y = 1) - 100 \mathbb{I}\big(a = 1, y = 0) + 100 \mathbb{I}\big(a = 0, y = 0)
+$$
+Which simplifies to:
+$$
+L(a,y) = 2 \big(\mathbb{I}(a = 1)\mathbb{I}(y = 1)\big) -100 \big(\mathbb{I}(a = 1)\mathbb{I}(y = 0)\big) + 100 \big(\mathbb{I}(a = 0)\mathbb{I}(y = 0)\big)
+$$
