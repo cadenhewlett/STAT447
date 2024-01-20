@@ -48,16 +48,26 @@ In this case, the data is given in the setup section, and is simply that as of J
 
 ## Part 2
 
+To easily define the joint distribution, we will use the following fact discussed in class.
+$$
+{\underbrace{p_X(x)}_{\text{prior}}}\;{\underbrace{p_{Y \mid X}(y \mid x)}_{\text{likelihood}}} \equiv {\underbrace{p_{X,Y}(x,y)}_{\text{joint}}}
+$$
+This follows from chain rule.
+
 Here, letting $k = 20$, we can think of the random Variable $X$ as the probability that the rocket has failure rate $k$, for $k \in [0, 20]$ i.e.
 
 $$ X \sim \text{unif}(\{0, 1,2, \dots, 20\}) $$
 
+Directly, $p_X(x) = P(X = x)$.
+
+
 Similarly, the conditional distribution of $Y_i$ given $X$ can be written as:
 $$
-Y_i \sim \text{bern}\bigg(\dfrac{X}{20}\Big(1 - \dfrac{X}{20}\Big) \bigg)
+Y \mid X \sim \text{bern}\bigg(\dfrac{X}{20}\Big(1 - \dfrac{X}{20}\Big) \bigg)
 $$
+Directly, $p_{Y \mid X}(y \mid x) = P(Y \mid X = y \mid x)$ (*note*, I'm not sure if the terminology should be the random variable $X$ or the realization $x$)
 
-Together, these form the joint distribution $p_{X, Y}(x, y)$ as we saw in lecture, due to the chain rule.
+Then, together, these form the joint distribution $p_{X, Y}(x, y)$ by the equivalency discussed earlier.
 
 # Question 2 :  Posterior and Point Estimates
 
@@ -69,7 +79,8 @@ $i$ containing the prior probability $\rho_{i-1}$ defined in Q1 (the minus one r
 
 ```{r vectors}
 K = 20
-prior_probabilities = sapply(0:K, function(k){(k / K)*(1 - k/K)})
+priors = sapply(0:K, function(k){(k / K)*(1 - k/K)})
+prior_probabilities = priors/sum(priors)
 realizations = sapply(0:K, function(k){k/K})
 ```
 
@@ -284,7 +295,7 @@ $$
 If we wanted to, we could also use exact values and write it as an `R` function!
 ```{r loss_function}
 L <- function(a){
-  pmean = 0.7#get_posterior_mean()
+  pmean = get_posterior_mean()
   if(a == 0){
     return(100*(1 - pmean))
   }
