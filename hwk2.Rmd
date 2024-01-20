@@ -65,7 +65,7 @@ Similarly, the conditional distribution of $Y_i$ given $X$ can be written as:
 $$
 Y \mid X \sim \text{bern}\bigg(\dfrac{X}{20}\Big(1 - \dfrac{X}{20}\Big) \bigg)
 $$
-Directly, $p_{Y \mid X}(y \mid x) = P(Y \mid X = y \mid x)$ (*note*, I'm not sure if the terminology should be the random variable $X$ or the realization $x$)
+Directly, $p_{Y \mid X}(y \mid x) = P(Y \mid X = y \mid x)$.
 
 Then, together, these form the joint distribution $p_{X, Y}(x, y)$ by the equivalency discussed earlier.
 
@@ -229,9 +229,9 @@ We now consider the expected loss under the posterior predictive distribution:
 $$
 \mathcal{L}(a) := \mathbb{E}[L(a,Y_4)|Y_{1:3}=\vec{1}\,]
 $$
-We wish to write $\mathcal{L}(a)$ in terms of $P\left(Y_4=1 \middle| Y_{1:3}=\vec{1}\, \right)$, using the fact that $P\left(Y_4=1 \middle| Y_{1:3}=\vec{1}\, \right) = \mathbb{E}[p | Y_{1:3} = \vec{1}\,]$, a special property of a Bernoulli likelihood model.
+We wish to write $\mathcal{L}(a)$ in terms of $P\left(Y_4=1 \middle| Y_{1:3}=\vec{1}\, \right)$, using $P\left(Y_4=1 \middle| Y_{1:3}=\vec{1}\, \right) = \mathbb{E}[p | Y_{1:3} = \vec{1}\,]$, a special property of a Bernoulli likelihood model.
 
-We know in general that"
+We know in general that
 $$
 \mathbb{E}[L(a, X) | Y = y] = \sum_x L(a, x) p_{X|Y}(x|y)
 $$
