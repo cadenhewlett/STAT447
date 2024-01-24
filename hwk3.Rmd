@@ -1,0 +1,88 @@
+---
+title: "STAT 447 Assignment 3"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{bbm}
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+```
+
+
+# Question 1 : Functions on the Unit Interval
+
+For this question, use Simple Monte Carlo. The main twist compared to week one is that you will use a continuous random variable.
+
+
+## Part 1
+
+Write a function called `mc_estimate` that takes a function $f : [0, 1] \rightarrow \mathbb{R}$ and outputs the Monte Carlo estimato of $\int_0^1 f(x)dx$ using $n = 10,000$ independent samples from $\text{unif}(0, 1)$.
+ 
+
+## Part 2
+
+Consider the function $f: [0, 1] \rightarrow [0, \infty)$ given by:
+
+$$
+f(x) = \dfrac{1}{\sqrt[3]{x^2(1- x)}}
+$$
+Note, importantly, that 
+
+$$
+\mathcal{I}_1 =\int_0^1 f(x)\text{d}x = \dfrac{\pi}{\sin\left(\frac{\pi}{3}\right)}
+$$
+Test your implementation of `mc_estimate` by checking that it produces an answer close to the value above.
+
+```{r equation1result}
+eq_1_result = pi / (sin(pi/3))
+eq_1_result
+```
+
+## Part 3
+
+The following integral, known as the sine integral, does not admit a closed-form expression. 
+
+$$
+\mathcal{I}_2 = \int_0^1 \dfrac{\sin(t)}{t}\text{d}t
+$$
+
+It does not admit a closed-form expression. Estimate its value using `mc_estimate(f)`.
+
+
+**Solution**
+
+
+To test our Monte Carlo Approximation, we will evaluate $\text{Si}(1)$ using the `pracma` package.
+
+```{r six}
+Si(1)
+```
+
+
+# Question 2 :  Posterior and Point Estimates
+
+## Part 1
+
+## Part 2 
+
+
+## Part 3
+
+## Part 4
+
+
+# Question 3 : Bayes Action
+
+
+
+## Part 1
+
+
+## Part 2
