@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(extraDistr)
 library(ggplot2)
 library(pracma)
+library(distr)
 ```
 
 
@@ -164,18 +165,96 @@ For completeness, I will work through the tutorial on my own and place the resul
 
 Read the “scaffold code”, and use `distr` and two of the functions in the example to create a fair coin, flip it, and to compute the probability of that flip:
 
+The scaffold code is given below:
+
+```{r scaffold}
+## Utilities to make the distr library a bit nicer to use
+
+p <- function(distribution, realization) {
+  d(distribution)(realization) # return the PMF or density 
+}
+
+Bern = function(probability_to_get_one) {
+  DiscreteDistribution(supp = 0:1, prob = c(1-probability_to_get_one, probability_to_get_one))
+}
+
+## Key functions called by simPPLe programs
+
+# Use simulate(distribution) for unobserved random variables
+simulate <- function(distribution) {
+  r(distribution)(1) # sample once from the given distribution
+}
+
+# Use observe(realization, distribution) for observed random variables
+observe = function(realization, distribution) {
+  # `<<-` lets us modify variables that live in the global scope from inside a function
+  weight <<- weight * p(distribution, realization) 
+}
+```
+
+The documented code to complete this task is shown below:
+
+```{r part3}
+# create the coin (Bernoulli distribution)
+coin <- Bern(1/2)
+# flip the coin once
+flip <- simulate(coin)
+# compute the probability of the flip
+prob <- p(coin, flip)
+# report the findings
+print(paste("The coin flipped a ", flip, 
+      ". The probability of this flip is ",
+       prob, sep = ""))
+```
+
 
 ## Part 4
 
 Complete the implementation of the function `posterior`:
 
+
+To do this, let's consider what inputs we are given, relative to the Importance Sampling procedure we discussed in lecture.
+
+
+For starters, we are given $M$ with the `number_of_iterations` parameter. We're also given the proposal function $q(x)$ with the `ppl_function`. 
+
+
+Notably, we aren't given a test function $g(x)$ so we will assume it is the indicator function.
+
+We will use:
+
+$$
+g(x) = \mathbbm{1}(X = 1)
+$$
+So we can approximate $P(X = 1 \mid Y = y)$.
+
+Following the Algorithm, the first thing we have to do is find $(X^{(m)})$ for iteration $m \in [1, \dots, M] \subseteq \mathbb{N}$.
+
+We'll do this by adding the line defining the `m` variable.
+
+Further, we'll define the function $g(x)$ prior to the `for` loop, explicitly as a function. This means we can return to this code later and improve it (perhaps allowing $g(x)$ to be passed as a parameter.) This allows us to compute $G^{(m)}= g(X^{(m)})$.
+
+
 ```{r posterior_fun}
 posterior = function(ppl_function, number_of_iterations) {
   numerator = 0.0
   denominator = 0.0
+  # add simple indicator function
+  g <- function(x){x == 1}
   for (i in 1:number_of_iterations) {
+    # Step 1: Simulate Iteration m
+    m <- simulate(ppl_function)
+    # Step 2: Compute G^m = g(X^m)
+    G <- g(m)
+    # Step 3: Compute gamma(X^m) p(X)L(y|x)
+    gamma <- p(ppl_function, m)
+    # Step 4: Compute w(X^m) = gamma(X^m)/q(X^m)
     weight <<- 1.0
-    # update numerator and denominator
+    observe(m, ppl_function)
+    # Step 5: Add this to our rolling weight total
+    denominator <<- denominator + weight
+    # Step 6: Update the rolling numerator
+    numerator <<- numerator + (w*G)
   }
   return(numerator/denominator)
 }
