@@ -27,7 +27,6 @@ Write a function called `mc_estimate` that takes a function $f : [0, 1] \rightar
 
 **NOTE:** Because my computer could handle it, I used $M = 100,000$ rather than $M = 10,000$ just for fun. The results are similar (but obviously more precise for larger $M$.)
 
-**Solution**
 
 The function is created using the code below:
 ```{r mc_estimate}
@@ -59,7 +58,6 @@ $$
 $$
 Test your implementation of `mc_estimate` by checking that it produces an answer close to the value above.
 
-**Solution**
 
 We'll start by computing the actual result:
 
@@ -103,9 +101,6 @@ $$
 It does not admit a closed-form expression. Estimate its value using `mc_estimate(f)`.
 
 
-**Solution**
-
-
 To test our Monte Carlo Approximation, we will evaluate $\text{Si}(1)$ using the `pracma` package.
 
 ```{r six}
@@ -134,6 +129,7 @@ expected = Si(1)
 It looks like there's about a $0.03\%$ difference between $\hat{G}_M$ for $M = 100,000$.
 
 For completeness, I also ran the code with $M = 10,000$ and observed approximately a $0.09\%$ difference. 
+
 
 # Question 2 :  Implementing SNIS for simPPLe
 
