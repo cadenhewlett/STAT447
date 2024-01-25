@@ -147,19 +147,6 @@ Since this is a `.Rmd` file, all packages are loaded at the beginning in a hidde
 
 Read this short tutorial on `distr`. Nothing to submit for this item.
 
-For completeness, I will work through the tutorial on my own and place the results here.
-
-```{r distr_playground}
-# Commented out to avoid spamming outputs
-# distPoisson <- Pois(lambda = 3.2)
-# 
-# d(distPoisson)(2)
-# 
-# sum(r(distPoisson)(10))
-# 
-# d(sqrt(distPoisson))(2)
-```
-
 
 ## Part 3
 
@@ -168,28 +155,7 @@ Read the “scaffold code”, and use `distr` and two of the functions in the ex
 The scaffold code is given below:
 
 ```{r scaffold}
-## Utilities to make the distr library a bit nicer to use
-
-p <- function(distribution, realization) {
-  d(distribution)(realization) # return the PMF or density 
-}
-
-Bern = function(probability_to_get_one) {
-  DiscreteDistribution(supp = 0:1, prob = c(1-probability_to_get_one, probability_to_get_one))
-}
-
-## Key functions called by simPPLe programs
-
-# Use simulate(distribution) for unobserved random variables
-simulate <- function(distribution) {
-  r(distribution)(1) # sample once from the given distribution
-}
-
-# Use observe(realization, distribution) for observed random variables
-observe = function(realization, distribution) {
-  # `<<-` lets us modify variables that live in the global scope from inside a function
-  weight <<- weight * p(distribution, realization) 
-}
+source("scaffold.R")
 ```
 
 The documented code to complete this task is shown below:
@@ -216,9 +182,6 @@ Complete the implementation of the function `posterior`:
 To do this, let's consider what inputs we are given, relative to the Importance Sampling procedure we discussed in lecture.
 
 
-For starters, we are given $M$ with the `number_of_iterations` parameter. We're also given the proposal function $q(x)$ with the `ppl_function`. 
-
-
 Notably, we aren't given a test function $g(x)$ so we will assume it is the indicator function.
 
 We will use:
@@ -239,22 +202,14 @@ Further, we'll define the function $g(x)$ prior to the `for` loop, explicitly as
 posterior = function(ppl_function, number_of_iterations) {
   numerator = 0.0
   denominator = 0.0
-  # add simple indicator function
-  g <- function(x){x == 1}
+  g = function(x){x == 1}
   for (i in 1:number_of_iterations) {
-    # Step 1: Simulate Iteration m
-    m <- simulate(ppl_function)
-    # Step 2: Compute G^m = g(X^m)
-    G <- g(m)
-    # Step 3: Compute gamma(X^m) p(X)L(y|x)
-    gamma <- p(ppl_function, m)
-    # Step 4: Compute w(X^m) = gamma(X^m)/q(X^m)
     weight <<- 1.0
-    observe(m, ppl_function)
-    # Step 5: Add this to our rolling weight total
-    denominator <<- denominator + weight
-    # Step 6: Update the rolling numerator
-    numerator <<- numerator + (w*G)
+    m <- ppl_function()
+    G <- g(m)
+    # update numerator and denominator
+    numerator <- numerator + (weight*G)
+    denominator <- denominator + weight
   }
   return(numerator/denominator)
 }
@@ -263,3 +218,50 @@ posterior = function(ppl_function, number_of_iterations) {
 ## Part 5
 
 Test your program by checking that you can approximate the posterior probability of the fair coin obtained in exercise 1, Q.2.
+
+We'll first recite the Coin Flip example in the context of simPPLe, and load the scaffold.
+
+```{r simpple}
+coin_flips = rep(0, 4) # "dataset" of four identical coin flips = (0, 0, 0, 0) 
+# simPPLe's description of our "bag of coins" example
+my_first_probabilistic_program = function() {
+  # Similar to forward sampling, but use 'observe' when the variable is observed
+  coin_index = simulate(DiscreteDistribution(supp = 0:2))
+  for (i in seq_along(coin_flips)) { 
+    prob_heads = coin_index/2
+    observe(coin_flips[i], Bern(1 - prob_heads)) 
+}
+  
+  # return the test function g(x, y)
+  return(ifelse(coin_index == 1, 1, 0))
+}
+```
+
+Recalling my answer from $1.2$ we know that we should be convergent in probability to $1/17$. 
+
+In other words, since $g(X) = \mathbbm{1}(X = 1)$, 
+$$
+\lim_{M \rightarrow \infty} \big(\hat{G}_m  \big) = \mathbb{E}[g(X)] = P(X = 1 \mid Y_{1:4} = \vec{0}) = \dfrac{1}{17}
+$$
+
+Let's try some different values of $M$.
+
+```{r M100}
+set.seed(08041961)
+posterior(my_first_probabilistic_program, 100)
+```
+
+```{r M1000}
+set.seed(08041961)
+posterior(my_first_probabilistic_program, 1000)
+```
+
+```{r M5000}
+set.seed(08041961)
+posterior(my_first_probabilistic_program, 5000)
+```
+
+We seem to be getting closer to the truth as we increase $M$.
+```{r truth}
+1/17
+```

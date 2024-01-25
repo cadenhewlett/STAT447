@@ -110,9 +110,20 @@ posterior = function(ppl_function, number_of_iterations) {
   return(numerator/denominator)
 }
 
+posterior = function(ppl_function, number_of_iterations) {
+  numerator = 0.0
+  denominator = 0.0
+  for (i in 1:number_of_iterations) {
+    weight <<- 1.0
+    # update numerator and denominator
+  }
+  return(numerator/denominator)
+}
+
 posterior(my_first_probabilistic_program, 1)
 
 
+simulate(my_first_probabilistic_program)
 # numerator = 0.0
 # denominator = 0.0
 # for(i in 1:1){
