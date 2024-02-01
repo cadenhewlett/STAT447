@@ -1,0 +1,62 @@
+---
+title: "STAT 447 Assignment 4"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{bbm}
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+```
+
+
+# Question 1 : Logistic Rocket Improvement
+
+Recall the Rocket data from last week:
+```{r rocketdat}
+success_indicators = c(1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1)
+```
+
+Recall that we discussed a model where the reliability of the rocket changes in time. This will allow us to incorporate, for example, the fact that engineering teams implement fixes based on past launches and therefore the probability of success should increase.
+
+## Part 1
+
+Write a function called `logistic_regression` containing a `simPPLe` probabilistic programming description of the model described in class. 
+
+
+Your function should return a vector containing 3 elements in the following order:
+
+The intercept, $\beta_0 \in \mathbb{R}$, the slope ($\beta_1 \in \mathbb{R}$), a prediction if one more launch would have been successful (1) or a failure (0) ($s \in \{0,1\}$).
+
+
+## Part 2
+
+
+Follow the instructions in the appendix below to get some helper functions. Use these functions to reproduce the lecture’s bivariate posterior plot over the intercept and slope parameters.
+
+
+## Part 3
+
+
+Estimate the probability that the next launch is a success given the data under the **logistic model**.
+
+
+## Part 4
+
+Create a variant of the same model but where the **slope is set to zero**. Estimate the probability that the next launch is a success given the data under this simplified model.
+
+
+
+# Question 2 : Choosing a Model
+
+You debate with your friend whether the logistic model or the simplified model (with slope equals to zero) should be preferred. To stop that debate, write a **unified** model which gives probability 1/2 to the simplified model, and 1/2 to the logistic model. 
+
+
+Estimate the posterior probability that the logistic model is preferred under the unified model given the same data as in Q.1.
