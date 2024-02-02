@@ -124,7 +124,7 @@ $$
 Then, by running our forward simulator, we find the an *approximation* to the *posterior* expectation, i.e. approximating
 
 $$
-\mathbb{E}(\mathcal{P}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
+\hat{G}_M \approx\mathbb{E}(\mathcal{P}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
 $$ 
 
 Recalling we're using $Y_{1:12}$ because we want to approximate the posterior expectation that the 12th launch is a success, meaning we have added $1$ to the "observations" (like we did prediction in lecture.)
