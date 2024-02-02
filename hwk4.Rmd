@@ -14,6 +14,10 @@ library(extraDistr)
 library(ggplot2)
 library(pracma)
 library(distr)
+library(latex2exp)
+source("scaffold.R")
+source("simple.R")
+source("simple_utils.R")
 ```
 
 
@@ -21,8 +25,7 @@ library(distr)
 
 Recall the Rocket data from last week:
 ```{r rocketdat}
-success_indicators = c(1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1)
-launches = success_indicators
+launches = c(1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1)
 ```
 
 Recall that we discussed a model where the reliability of the rocket changes in time. This will allow us to incorporate, for example, the fact that engineering teams implement fixes based on past launches and therefore the probability of success should increase.
@@ -30,11 +33,6 @@ Recall that we discussed a model where the reliability of the rocket changes in 
 ## Part 1
 
 Write a function called `logistic_regression` containing a `simPPLe` probabilistic programming description of the model described in class. 
-
-```{r log_reg}
-source("scaffold.R")
-source("simple.R")
-```
 
 We recall that the model was of the following form, where $\ell$ is the launch and $\ell \in \{1, 2, \dots 11\}$.
 
@@ -53,15 +51,18 @@ Let's begin to design our function.
 
 ```{r logisticreg}
 
-logistic_regression <- function(){
+logistic_regression = function() {
   beta_1 = simulate(Norm(0, 1))
   beta_0 = simulate(Norm(0, 1))
   sapply(1:length(launches),
-         function(L){
-           observe(launches[L], 
-                   beta_0 + beta_1*L)
-         })
+           function(L){
+             observe(launches[L],
+                     Bern(plogis(beta_0 + beta_1*L)))
+           })
+
+  return(c(beta_0, beta_1, weight))
 }
+
 
 ```
 
@@ -74,6 +75,21 @@ The intercept, $\beta_0 \in \mathbb{R}$, the slope ($\beta_1 \in \mathbb{R}$), a
 
 
 Follow the instructions in the appendix below to get some helper functions. Use these functions to reproduce the lecture’s bivariate posterior plot over the intercept and slope parameters.
+
+
+The code to produce the bivariate posterior plot is below:
+
+```{r bivariatepost}
+set.seed(11292023)
+posterior = posterior_particles(logistic_regression, 1000)
+weighted_scatter_plot(posterior,
+                      plot_options =
+                        list(
+                          xlab = TeX(r'($\hat{\beta}_0, Intercept \; Terms$)'),
+                          ylab = TeX(r'($\hat{\beta}_1, Slope \; Terms$)'),
+                          main = TeX(r'(Weighted Forward Simulated Values for m\in\{1, 2, ..., M\})')
+                        ))
+```
 
 
 ## Part 3
