@@ -18,7 +18,7 @@ logistic_regression = function() {
 }
 logistic_regression()
 # posterior(logistic_regression, 1000)
-set.seed(11292023)
+
 posterior(logistic_regression, 100)
 
 
@@ -68,5 +68,7 @@ idea()
 ## less than 0.50 -> prefers no log
 ## 0.50 -> no preference, posterior prob = prior
 ## more than 0.50 -> prefers log
-posterior(idea, 10000)
+set.seed(447)
+## so freaking cool
+posterior(idea, 1000)
 

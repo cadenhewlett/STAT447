@@ -137,3 +137,15 @@ You debate with your friend whether the logistic model or the simplified model (
 
 
 Estimate the posterior probability that the logistic model is preferred under the unified model given the same data as in Q.1.
+
+Where $\psi \in \{0, 1\}$ is whether we choose no slope ($\psi = 0$) or to include slope ($\psi = 1$.) We begin by assuming each outcome is equally likely. 
+
+\begin{align*}
+\beta_1 &\sim {N}(0, 1) \\
+\beta_0 &\sim {N}(0, 1) \\
+\psi &\sim \text{bern}(1/2)\\
+\theta(\ell)  = \big(1 + \exp(-\big(\beta_1 \cdot \psi \cdot\ell \big)+ \beta_0)\big)^{-1}
+\end{align*}
+
+<!-- Understanding $\psi_{\text{post}}$ is posterior Bernoulli probability density function, while its parameter, $p_{\text{prior}} = 1/2$ to $p_{\text{prior}} = \text{?}$, is what we'd like to observe for this decision making process. In other words, the parameter of the posterior Bernoulli distribution. -->
+trivariate posterior I think
