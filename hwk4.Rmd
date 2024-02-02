@@ -116,12 +116,36 @@ P(Y_{12} = 1 \mid Y_{1:12} = \vec{y}\,)
 $$
 In order to find this probability, all we need to do is add this outcome of $Y_{12}$ and use our forward simulator. 
 
-We do this as follows:
+Recall the third element of our random vector, predicting if the "next launch" would be a success. We'll denote this as $\mathcal{P}$.
+
+$$
+\mathcal{P} = \mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big]
+$$
+Then, by running our forward simulator, we find the an *approximation* to the *posterior* expectation, i.e. approximating
+
+$$
+\mathbb{E}(\mathcal{P}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
+$$ 
+
+Recalling we're using $Y_{1:12}$ because we want to approximate the posterior expectation that the 12th launch is a success, meaning we have added $1$ to the "observations" (like we did prediction in lecture.)
+
+Then, since we are approximating expectation of an indicator on an event, we are getting you get the probability of said event.
+
+
+Hence we can interpret the simulated expectation as the probability of the belief of the event that the next launch ($Y_{12}$) is a $1$. In other words, the probability that the next launch is successful.
+
+We do this whole process as follows:
 
 ```{r whatdaheck}
+# add our theorized value for Y_{12}
 launches = c(launches, 1)
+# run the forward simulator
 next_launch_post = posterior(logistic_regression, 1000)
-rbind(c("beta_0", "beta_1", "success"), next_launch_post)
+# report our findings
+data.frame(
+  rbind(c("beta_0", "beta_1", "success"), 
+        round(next_launch_post, digits = 4))
+)
 ```
 
 
