@@ -50,25 +50,26 @@ Therefore, by the reasoning dicsussed in class,
 Let's begin to design our function.
 
 ```{r logisticreg}
-
 logistic_regression = function() {
-  beta_1 = simulate(Norm(0, 1))
-  beta_0 = simulate(Norm(0, 1))
+  beta_1 = simulate(distr::Norm(0, 1))
+  beta_0 = simulate(distr::Norm(0, 1))
   sapply(1:length(launches),
-           function(L){
-             observe(launches[L],
-                     Bern(plogis(beta_0 + beta_1*L)))
-           })
-
-  return(c(beta_0, beta_1, weight))
+         function(L) {
+           observe(launches[L],
+                   Bern(plogis(beta_0 + beta_1 * L)))
+         })
+  next_p = plogis(beta_0 + beta_1 * 12)
+  return(c(beta_0, beta_1, simulate(Bern(next_p))))
 }
-
-
 ```
 
 Your function should return a vector containing 3 elements in the following order:
 
 The intercept, $\beta_0 \in \mathbb{R}$, the slope ($\beta_1 \in \mathbb{R}$), a prediction if one more launch would have been successful (1) or a failure (0) ($s \in \{0,1\}$).
+
+```{r evidence}
+logistic_regression()
+```
 
 
 ## Part 2
@@ -81,13 +82,13 @@ The code to produce the bivariate posterior plot is below:
 
 ```{r bivariatepost}
 set.seed(11292023)
-posterior = posterior_particles(logistic_regression, 1000)
-weighted_scatter_plot(posterior,
+post = posterior_particles(logistic_regression, 1000)
+weighted_scatter_plot(post,
                       plot_options =
                         list(
-                          xlab = TeX(r'($\hat{\beta}_0, Intercept \; Terms$)'),
-                          ylab = TeX(r'($\hat{\beta}_1, Slope \; Terms$)'),
-                          main = TeX(r'(Weighted Forward Simulated Values for m\in\{1, 2, ..., M\})')
+    xlab = TeX(r'($\hat{\beta}_0, Intercept \; Terms$)'),
+    ylab = TeX(r'($\hat{\beta}_1, Slope \; Terms$)'),
+    main = TeX(r'(Weighted Forward Simulated Values for m\in\{1, 2, ..., M\})')
                         ))
 ```
 
@@ -96,6 +97,32 @@ weighted_scatter_plot(posterior,
 
 
 Estimate the probability that the next launch is a success given the data under the **logistic model**.
+
+We know that the launches so far can be thought of as realizations of the random vector $\vec{Y} = Y_{1:11 } = \{Y_1, Y_2, Y_3, \dots, Y_{11} \}$. From these, we have the specific realizations (i.e. "our data")  $\vec{y} = \{1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1 \}$. 
+
+
+Note that there are $n = 11$ launches so far.
+
+
+We wish to find:
+
+$$
+P(Y_{12} = 1 \mid Y_1 = 1, Y_2 = 0, Y_3 = 1, \dots Y_{11} = 1)
+$$
+Or, in a simpler sense, using the variables defined earlier, 
+
+$$
+P(Y_{12} = 1 \mid Y_{1:12} = \vec{y}\,)
+$$
+In order to find this probability, all we need to do is add this outcome of $Y_{12}$ and use our forward simulator. 
+
+We do this as follows:
+
+```{r whatdaheck}
+launches = c(launches, 1)
+next_launch_post = posterior(logistic_regression, 1000)
+rbind(c("beta_0", "beta_1", "success"), next_launch_post)
+```
 
 
 ## Part 4
