@@ -29,6 +29,18 @@ rbind(c("beta_0", "beta_1", "success"), next_launch_post)
 plogis(next_launch_post[1] + next_launch_post[2]*12)
 posterior(logistic_regression, 1000)
 
+simplified = function() {
+  beta_0 = simulate(distr::Norm(0, 1))
+  sapply(1:length(launches),
+         function(L) {
+           observe(launches[L],
+                   Bern(plogis(beta_0)))
+         })
+  next_p = plogis(beta_0)
+  return(c(beta_0, simulate(Bern(next_p))))
+}
+simplified()
+
 ##  FOR THE LAST PART ##
 ##  SET BOTH AT 1/2  ##
 ##  BUT MAKE THIS A VARIABLE ##

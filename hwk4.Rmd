@@ -20,6 +20,10 @@ source("simple.R")
 source("simple_utils.R")
 ```
 
+```{r}
+# integer for keeping seeds consistent across rmarkdown cells
+seed_int = 447
+```
 
 # Question 1 : Logistic Rocket Improvement
 
@@ -81,7 +85,7 @@ Follow the instructions in the appendix below to get some helper functions. Use 
 The code to produce the bivariate posterior plot is below:
 
 ```{r bivariatepost}
-set.seed(11292023)
+set.seed(seed_int)
 post = posterior_particles(logistic_regression, 1000)
 weighted_scatter_plot(post,
                       plot_options =
@@ -124,19 +128,20 @@ $$
 Then, by running our forward simulator, we find the an *approximation* to the *posterior* expectation, i.e. approximating
 
 $$
-\hat{G}_M \approx\mathbb{E}(\mathcal{P}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
+\hat{G}_M \approx\mathbb{E}(\mathcal{P} \mid Y_{1:12} = \vec{y}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 + 12\beta_1)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
 $$ 
 
-Recalling we're using $Y_{1:12}$ because we want to approximate the posterior expectation that the 12th launch is a success, meaning we have added $1$ to the "observations" (like we did prediction in lecture.)
+Recalling we're using $Y_{1:12}$ because we want to approximate the posterior expectation that the 12th launch is a success, meaning we have added $1$ to the "observations" (like we did in the prediction lecture.)
 
-Then, since we are approximating expectation of an indicator on an event, we are getting you get the probability of said event.
+Then, since we are approximating expectation of an indicator the event that the launch is a success, we are in turn computing the probability of the 12th is a success.
 
 
-Hence we can interpret the simulated expectation as the probability of the belief of the event that the next launch ($Y_{12}$) is a $1$. In other words, the probability that the next launch is successful.
+Hence, we can interpret the simulated expectation as the probability of the belief of the event that the next launch ($Y_{12}$) is a $1$. In other words, the probability that the next launch is successful.
 
 We do this whole process as follows:
 
 ```{r whatdaheck}
+set.seed(seed_int)
 # add our theorized value for Y_{12}
 launches = c(launches, 1)
 # run the forward simulator
@@ -148,11 +153,59 @@ data.frame(
 )
 ```
 
+So, from this, we estimate $\mathbb{E}(\mathcal{P}) \approx 0.9513$, so the posterior probability of a successful Launch 12 given Launches 1 to 11 is around $95.13\%$. We can be pretty certain the next launch will be a success.
 
 ## Part 4
 
 Create a variant of the same model but where the **slope is set to zero**. Estimate the probability that the next launch is a success given the data under this simplified model.
 
+Now, we repeat our methodology, considering the following setting:
+\begin{align*}
+\beta_0 &\sim {N}(0, 1) \\
+\theta(\ell) &= \text{logistic}(\beta_0)
+\end{align*}
+With the following function describing this process:
+
+```{r simplified}
+simplified = function() {
+  beta_0 = simulate(distr::Norm(0, 1))
+  sapply(1:length(launches),
+         function(L) {
+           observe(launches[L],
+                   Bern(plogis(beta_0)))
+         })
+  next_p = plogis(beta_0)
+  return(c(beta_0, simulate(Bern(next_p))))
+}
+simplified()
+```
+
+Then, similar to last time, we let 
+$$
+\mathcal{S} = \mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0 )\big) = 1 \big]
+$$
+And use our forward-simulator to approximate:
+$$
+\hat{G}_M \approx\mathbb{E}(\mathcal{S} \mid Y_{1:12} = \vec{y}) = \mathbb{E}\Big(\mathbbm{1}\big[ \text{bern}\big(\text{logistic}(\beta_0)\big) = 1 \big] \mid Y_{1:12} = \vec{y}\Big)
+$$
+Which gives us the posterior probability by the same logic discussed in the last question.
+
+```{r whodaheck}
+set.seed(seed_int)
+# re-declare our data
+launches = c(1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1)
+# add our theorized value for Y_{12}
+launches = c(launches, 1)
+# run the forward simulator
+next_launch_post = posterior(simplified, 1000)
+# report our findings
+data.frame(
+  rbind(c("beta_0", "success"), 
+        round(next_launch_post, digits = 4))
+)
+```
+
+So the posterior probability of a successful Launch 12 given Launches 1 to 11 for the simplified model is around $70.89\%$. It's a bit more conservative than the full model. 
 
 
 # Question 2 : Choosing a Model
@@ -162,14 +215,90 @@ You debate with your friend whether the logistic model or the simplified model (
 
 Estimate the posterior probability that the logistic model is preferred under the unified model given the same data as in Q.1.
 
-Where $\psi \in \{0, 1\}$ is whether we choose no slope ($\psi = 0$) or to include slope ($\psi = 1$.) We begin by assuming each outcome is equally likely. 
 
+### Solution
+
+Now, we will incorporate a new variable, in our model, which I will call $\psi$. We can think of $\psi$ as the "unifier." 
+
+Our new variable takes values in  $\{0, 1\}$, dictating whether we choose the Simplified Model ($\psi = 0$) or to include the Slope ($\psi = 1$.) 
+
+We begin by assuming each outcome is equally likely. To model this effectively, we let the prior on $\psi$ be Bernoulli, with $p = 1/2$.
 \begin{align*}
 \beta_1 &\sim {N}(0, 1) \\
 \beta_0 &\sim {N}(0, 1) \\
-\psi &\sim \text{bern}(1/2)\\
-\theta(\ell)  = \big(1 + \exp(-\big(\beta_1 \cdot \psi \cdot\ell \big)+ \beta_0)\big)^{-1}
+\psi &\sim \text{bern}(1/2)
 \end{align*}
+Then, our regression model is now of the form:
+$$
+\theta(\ell)  = \big(1 + \exp[-(\psi\beta_1 \,\ell + \beta_0)\big]\big)^{-1}
+$$
+Or, in a slightly nicer-to-read form:
+$$
+\theta(\ell)  = \text{logistic}\big( (\beta_1 \cdot \psi \cdot\ell) + \beta_0\big)
+$$
+Noting that $\psi = 0$ eliminates the $\beta_1$ term, as we would expect.
+
+Let's recall some of the properties of the Bernoulli distribution. If $X \sim \text{bern}(p)$, where $P(X = 1) = p$, we know that :
+$$
+\mathbb{E}(X) = \sum_{x \in \{0, 1\}} xP(X = x) = (1\cdot p) + 0\cdot(1-p)  = p
+$$
+In other words, its expectation is its parameter. 
+
+This will prove very useful for $\psi$, since by using an adjusted version of our forward simulator, we can compute its conditional expectation given the launches, $\mathbb{E}(\psi \mid Y_{1:11} = \vec{y})$. 
+
+This means, once we've run the simulator and approximate it's expectation this will give us the posterior of the parameter $p$. This follows the same logic of taking the expectation of an indicator on an event, and receiving the probability of that event. We established earlier that $p$ is $P(\text{Choose Logistic})$ and shows no initial preferences.  
+
+So, we can combine our definition of $\psi$ with the properties of Bernoulli random variables to write:
+$$
+\mathbb{E}(\psi \mid Y_{1:11} = \vec{y}) = p_{\,\text{posterior}} = P(\text{ Choose Logistic }\mid Y_{1:11} = \vec{y}\,)
+$$
+Yielding the posterior probability that the logistic model is preferred. *Note:* Alternatively, you can think of this as the posterior probability $P( \psi = 1 \mid Y_{1:11} = \vec{y} )$.
+
+Before we run the simulator, we should think a bit about what different values of $p_{\,\text{posterior}}$ represent.
+
+Firstly, recalling $p_{\text{prior}} = 1/2$, we know:
+$$
+\text{ Outcomes}  =\begin{cases}p_{\,\text{posterior}} \approx p_{\,\text{prior}} &\implies \text{ No Preference }\\
+p_{\,\text{posterior}} >p_{\,\text{prior}} &\implies \text{ Prefer Logistic } \\
+p_{\,\text{posterior}} <p_{\,\text{prior}} &\implies \text{ Prefer Simplified} \\
+ \end{cases} 
+$$
+
+In our posterior probability is roughly the same as our prior, the evidence of new launches has not added any significant weight towards one model type or another. If it's greater, our evidence has given support to the Logistic. Logically if it is less, our evidence has given support to the Simplified model.
+
+The code for this unified model in PPL is below. 
+
+```{r unified}
+unified = function() {
+  choose_log = simulate(Bern(1/2))
+  beta_1 = simulate(distr::Norm(0, 1))
+  beta_0 = simulate(distr::Norm(0, 1))
+
+  sapply(1:length(launches),
+         function(L) {
+           observe(launches[L],
+                   Bern(plogis(beta_0 + choose_log * beta_1 * L)))
+         })
+  next_p = plogis(beta_0 + beta_1 * 12)
+  return(c(beta_0, beta_1, choose_log))
+}
+unified()
+```
+
+Now, we run the forward simulator to get the posterior values. It's interesting to note that we technically have a trivariate posterior here. I wonder what the plot of it would look like.
+
+```{r run_unified}
+set.seed(seed_int)
+## simulate the unified model's posterior
+unified_post = posterior(unified, 1000)
+data.frame(
+  rbind(c("beta_0", "beta_1", "psi"), 
+        round(unified_post, digits = 4))
+)
+```
+
+So, the posterior probability that the logistic model is preferred under the unified model given the
+launch data is approximately $0.64444$, or approximately $64.44\%$. This tells us that $p_{\text{posterior}} >p_{\,\text{prior}}$, implying that the complete logistic model is somewhat preferred to the simplified one. 
 
 <!-- Understanding $\psi_{\text{post}}$ is posterior Bernoulli probability density function, while its parameter, $p_{\text{prior}} = 1/2$ to $p_{\text{prior}} = \text{?}$, is what we'd like to observe for this decision making process. In other words, the parameter of the posterior Bernoulli distribution. -->
-trivariate posterior I think
+ <!-- trivariate posterior I think -->
