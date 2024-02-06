@@ -208,7 +208,7 @@ data.frame(
 So the posterior probability of a successful Launch 12 given Launches 1 to 11 for the simplified model is around $70.89\%$. It's a bit more conservative than the full model. 
 
 
-# Question 2 : Choosing a Model
+# Question 2 : Choosing a Model : Spike-and-Slab
 
 You debate with your friend whether the logistic model or the simplified model (with slope equals to zero) should be preferred. To stop that debate, write a **unified** model which gives probability 1/2 to the simplified model, and 1/2 to the logistic model. 
 
