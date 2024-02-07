@@ -1,0 +1,40 @@
+---
+title: "STAT 447 Assignment 5"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{bbm}
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+source("scaffold.R")
+source("simple.R")
+source("simple_utils.R")
+```
+
+# Question 1: Sequential Updating
+
+Consider a joint a joint probabilistic model given by
+$$
+\theta \sim \rho, \text{ and } (x_i \mid \theta) \; \overset{iid}{\sim} \nu_{\theta}, \text{ where } i \in \{1, 2, \dots , n\}
+$$
+ 
+where $\rho$ is a prior distribution for the unknown parameter $\theta$, and $\{x_i\}_{i=1}^n$ is a sequence of observations with conditional distribution $\nu_{\theta}$.
+
+## Part 1
+
+Write down the posterior distribution of $\theta$ given $\{x_i\}_{i=1}^n$.
+
+## Part 2
+
+Suppose now we get an additional data point $x_{n + 1}$ with the same conditional distribution $\nu_{\theta}$. Show that using the posterior from part 1 as the *prior* and data equal to just $x_{n + 1}$ gives the same posterior distribution as redoing part 1 with the $n + 1$ data points.
+
+# Question 2: Baesian Inference in the Limit of Increasing Data
