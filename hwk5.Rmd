@@ -4,6 +4,7 @@ author: "Caden Hewlett"
 date: "`r Sys.Date()`"
 header-includes:
    - \usepackage{bbm}
+   - \usepackage{upgreek}
 output: pdf_document
 ---
 
@@ -20,6 +21,7 @@ source("simple.R")
 source("simple_utils.R")
 ```
 
+<!-- Will the posterior be discrete? I think so.  -->
 # Question 1: Sequential Updating
 
 Consider a joint a joint probabilistic model given by
@@ -33,19 +35,19 @@ where $\rho$ is a prior distribution for the unknown parameter $\theta$, and $\{
 
 Write down the posterior distribution of $\theta$ given $\{x_i\}_{i=1}^n$.
 
-In a more verbose sense, let $\Theta$ be the random variable for the unknown parameter, and $\theta$ be the realization. We can then write. 
+In a more verbose sense, let $\Theta$ be the random variable for the unknown parameter, and $\theta$ be the realization of this random variable under the proposed prior distribution. We can then write the following (*purely for nomenclature reasons*)
 
 $$
-\text{ Prior follows } p_{\Theta}(\theta), \text{ where } p_{\Theta}(\theta) \text{ is the PMF/PDF given by } \rho
+\rho = p_{\Theta}(\theta), \text{ where } p_{\Theta}(\theta) \text{ is the PMF/PDF given by } \rho
 $$
 $$
-P(X = x \mid \theta ) = p_{X \mid \theta}(x, \theta), \text{ where } p_{X \mid \theta}(x, \theta) \text{ is the PMF given by } \nu_{\theta}
+P(X = x \mid \theta ) = p_{X \mid \Theta}(x, \theta), \text{ where } p_{X \mid \Theta}(x, \theta) \text{ is the PMF given by } \nu_{\theta}
 $$
 With this in mind, we can write the posterior of $\theta$ given $\{x_i\}_{i=1}^n$, where we describe the event that $\{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n$ using Bayes' Rule.
 
 We will begin by using the most verbose notation possible, for complete clarity.
 $$
-P(\Theta =\theta \mid \{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n) = \dfrac{P(\Theta = \theta)P\big(\{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n \mid \Theta =\theta\big)}{P\big(\{X_i\}_{i=1}^n  = \{x_i\}_{i=1}^n\big)}
+P(\Theta =\theta \mid \{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n) = \dfrac{p_{\Theta}(\theta)P\big(\{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n \mid \Theta =\theta\big)}{P\big(\{X_i\}_{i=1}^n  = \{x_i\}_{i=1}^n\big)}
 $$
 We start by considering the joint likelihood function.
 $$
@@ -65,6 +67,14 @@ P\big(\{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n \mid \Theta =\theta\big) = \prod_{i = 1}
 $$
 Which, as you can see, simplifies nicely to $(\nu_{\theta})^n$.
 
+Now, our expression simplifies a little bit to the following:
+$$
+P(\Theta =\theta \mid \{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n) = \dfrac{p_{\Theta}(\theta)\nu_{\theta}^n}{P\big(\{X_i\}_{i=1}^n  = \{x_i\}_{i=1}^n\big)}
+$$
+If we wished to, we could write the following proportionality directly to conclude:
+$$
+p_{\Theta \mid {X}_{1:n}}(\theta, \{x_i\}_{i=1}^n)  =\uppi_n \propto \rho\cdot\nu_{\theta}^n
+$$
 <!-- (x_i \mid \theta) \; \overset{iid}{\sim} \nu_{\theta}, \text{ where } i \in \{1, 2, \dots , n\} -->
 
 ## Part 2
