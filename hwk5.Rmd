@@ -59,7 +59,7 @@ P\big(\{X_i\}_{i=1}^n = \{x_i\}_{i=1}^n \mid \Theta =\theta\big) = P\Big(  \bigc
 $$
 Now, we use the following property of *iid* random variables
 $$
-\text{I.I.D} \implies \forall (i \neq j) \in [1,n], \; X_i \perp X_j \implies \forall (i \neq j) \in [1,n], P(X_i \cap X_j) = P(X_i)P(X_j)
+\text{I.I.D} \implies \forall (i \neq j) \in [1,n], \; (X_i \mid \Theta) \perp (X_j \mid \Theta) \implies \forall (i \neq j) \in [1,n], P(X_i \cap X_j \mid \Theta) = P(X_i \mid \Theta)P(X_j \mid \Theta)
 $$
 Hence, we can write the likelihood as:
 $$
@@ -75,10 +75,37 @@ If we wished to, we could write the following proportionality directly to conclu
 $$
 p_{\Theta \mid {X}_{1:n}}(\theta, \{x_i\}_{i=1}^n)  =\uppi_n \propto \rho\cdot\nu_{\theta}^n
 $$
+Or, letting normalizing constant $\mathcal{Z}_{1:n} = P\big(\{X_i\}_{i=1}^n  = \{x_i\}_{i=1}^n\big)$, we can write:
+$$
+\uppi_n(\theta) = \dfrac{\rho\cdot\nu_{\theta}^n}{P\big(\{X_i\}_{i=1}^n  = \{x_i\}_{i=1}^n\big)} = ({\mathcal{Z}^{-1}_{1:n}})\cdot{\rho\cdot\nu_{\theta}^n}
+$$
+Giving us a nice expression for the posterior, both in proportionality and equality according to a normalizing constant.
 <!-- (x_i \mid \theta) \; \overset{iid}{\sim} \nu_{\theta}, \text{ where } i \in \{1, 2, \dots , n\} -->
 
 ## Part 2
 
 Suppose now we get an additional data point $x_{n + 1}$ with the same conditional distribution $\nu_{\theta}$. Show that using the posterior from part 1 as the *prior* and data equal to just $x_{n + 1}$ gives the same posterior distribution as redoing part 1 with the $n + 1$ data points.
+
+We wish to show that:
+$$
+\uppi_{(n + 1)}(\theta) = \dfrac{p_{\Theta}(\theta)P\big(\{X_i\}_{i=1}^{n+1} = \{x_i\}_{i=1}^{n+1} \mid \Theta =\theta\big)}{P\big(\{X_i\}_{i=1}^{n+1}  = \{x_i\}_{i=1}^{n+1}\big)} = \dfrac{\uppi_n(\theta)P(X_{n+1} = x_{n+1} \mid \Theta = \theta)}{P(X_{n+1} = x_{n+1})}
+$$
+We'll evaluate each expression in turn.
+
+With the first term, we can say directly that:
+$$
+\text{LHS}= \dfrac{p_{\Theta}(\theta)P\big(\{X_i\}_{i=1}^{n+1} = \{x_i\}_{i=1}^{n+1} \mid \Theta =\theta\big)}{P\big(\{X_i\}_{i=1}^{n+1}  = \{x_i\}_{i=1}^{n+1}\big)} = (\mathcal{Z}_{1:(n+1)}^{-1}) \cdot \rho \cdot \nu_{\theta}^{n+1}  \propto \rho \cdot \nu_{\theta}^{n+1}
+$$
+By the exact process used in **Part 1**.
+
+More interestingly, we can expand the second term to as follows:
+$$
+\uppi_{(n+1)}(\theta) = \dfrac{\uppi_n(\theta)P(X_{n+1} = x_{n+1} \mid \Theta = \theta)}{P(X_{n+1} = x_{n+1})} = (\mathcal{Z}_{n+1}^{-1})\uppi_n(\theta) \nu_{\theta}
+$$
+Then, substituting our expression for $\uppi_n(\theta)$ from **Part 1**:
+$$
+\text{RHS} =  (\mathcal{Z}_{n+1}^{-1})\Big(({\mathcal{Z}^{-1}_{1:n}})\cdot{\rho\cdot\nu_{\theta}^n} \Big)\nu_{\theta} = \big(\mathcal{Z}_{n+1}^{-1} \cdot{\mathcal{Z}^{-1}_{1:n}} \big)\rho \big(\nu^n \cdot \nu^1) = (\mathcal{Z}_{n+1}^{-1} \cdot{\mathcal{Z}^{-1}_{1:n}})^{-1} \rho \cdot \nu_{\theta}^{n+1} \propto \rho \cdot \nu_{\theta}^{n+1}
+$$
+
 
 # Question 2: Baesian Inference in the Limit of Increasing Data
