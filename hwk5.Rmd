@@ -122,7 +122,7 @@ So, we can write:
 $$
 \text{Let } c = \dfrac{(\mathcal{Z}_{n+1} \cdot{\mathcal{Z}_{1:n}})^{-1}}{(\mathcal{Z}_{1:(n+1)})^{-1}} = \dfrac{\mathcal{Z}_{1:(n+1)}}{\mathcal{Z}_{n+1} \cdot{\mathcal{Z}_{1:n}}}, \text{ then } \text{LHS} = c\cdot\text{RHS}
 $$
-Which would imply that the two are equivalent under proportionality, and, assuming $c \in \mathbb{R}$, are equivalent under normalization. 
+Which would imply that the two are equivalent under proportionality, and, assuming $c \in \mathbb{R}^{+}$, are equivalent under normalization. 
 
 # Question 2: Bayesian Inference in the Limit of Increasing Data
 
@@ -159,11 +159,11 @@ Write a function `posterior_mean` that computes the posterior mean given the out
 
 We recall that the posterior mean is computed as follows:
 $$
-\mathbb{E}(Y\mid p =p_{\text{obs}}) = \sum_{\{y\, : \,\uppi(y) > 0 \}}y\,\uppi(y)
+\mathbb{E}(p \mid Y = y)= \sum_{\{p\, : \,\uppi(p) > 0 \}}p\,\uppi(p)
 $$
 From our "original" coin flip example, we'd have $K=2$ and
 $$
-\mathbb{E}(Y\mid p_{\text{obs}}) = \Big(\dfrac{1}{K}\Big) \pi(1) + \Big(\dfrac{2}{K}\Big) \pi(2) = \Big(\dfrac{1}{2}\Big)\cdot\dfrac{1}{17} + \Big(\dfrac{2}{2}\Big) \dfrac{16}{17} = \frac{33}{34}
+\mathbb{E}(p \mid Y = y) = \Big(\dfrac{1}{K}\Big) \pi(1) + \Big(\dfrac{2}{K}\Big) \pi(2) = \Big(\dfrac{1}{2}\Big)\cdot\dfrac{1}{17} + \Big(\dfrac{2}{2}\Big) \dfrac{16}{17} = \frac{33}{34}
 $$
 Which we will use to test our function. 
 
@@ -192,15 +192,15 @@ This is done as follows (using the Assignment 1 coin flip example)
 ```{r}
 rho_true = c(0, 0.5, 1)/sum(c(0, 0.5, 1)); K = length(rho_true)-1
 p_true <- DiscreteDistribution(supp = (0:K)/K, rho_true)
-p_obs = simulate(p_true)
-p_obs
+p_true_obs = simulate(p_true)
+p_true_obs
 ```
 b.) Simulates $\{y_i\}_{i = 1}^{n_{\text{obs}}} = \{y_1, y_2, \dots, y_{n_{\text{obs}}}\} = y_{1:n_{\text{obs}}}$ conditional on the simulated $p_{\text{true}}$. We recall that $\forall i \in [1, n_{\text{obs}}], (y_i \mid p_{\text{true}}) \sim \text{bern}(p_{\text{true}})$, where it should be noted that $n_{\text{obs}} = $`n_observations` is supplied to the function.
 
 ```{r}
 n_observations = 3
 n = n_observations
-y_obs = rbern(n, p_obs)
+y_obs = rbern(n, p_true_obs)
 y_obs
 ```
 
@@ -208,12 +208,23 @@ c.) Calls `posterior_distribution` using and the simulated data. Note that $\rho
 ```{r}
 # in the coin flip, we assumed all were equally likely
 rho_prior = c(0, 1/2, 1)
-posterior_distribution(
-  rho = rho_prior,
-  n_heads = sum(y_obs),
-  n_observations = n
+pi_obs = posterior_distribution(
+  rho_prior, sum(y_obs), 3
 )
+pi_obs
 ```
+d.) Computes the posterior mean $\mathbb{E}(p \mid y_{\text{obs}})$, given the observed posterior $\uppi_{\text{obs}}(p)$.
+
+```{r}
+post_mean = posterior_mean(pi_obs)
+post_mean
+```
+e.) Compute the absolute error $\varepsilon_{\text{obs}}$ $$\varepsilon_{\text{obs}} = \big|p_{\text{true}} - \mathbb{E}(p \mid y_{1:n_{\text{obs}}})\big|$$.
+```{r}
+epsilon_obs = abs(p_true_obs - post_mean)
+epsilon_obs
+```
+
 ```{r simulate_posterior_mean_error}
 simulate_posterior_mean_error = function(rho_true, rho_prior, n_observations){
   
