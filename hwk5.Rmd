@@ -124,7 +124,7 @@ $$
 $$
 Which would imply that the two are equivalent under proportionality, and, assuming $c \in \mathbb{R}$, are equivalent under normalization. 
 
-# Question 2: Baesian Inference in the Limit of Increasing Data
+# Question 2: Bayesian Inference in the Limit of Increasing Data
 
 We will use the tractability of the coin bag example to explore the behavior of the posterior distribution as the number of observations goes to infinity. Recall that its joint distribution is
 $$
@@ -182,8 +182,38 @@ posterior_mean(posterior_distribution(c(0,0,1), 5, 5))
 
 ## Part 3
 
-Write another function called `simulate_posterior_mean_error`/
+Write another function called `simulate_posterior_mean_error`.
 
+It will perform the following tasks:
+
+a.) Simulate $p_{\text{true}} \sim \text{discrete}(\{0, 1/K, \dots, K/K\}, \rho_{\text{true}})$, where $\rho_{\text{true}}$ is supplied to the function.
+
+This is done as follows (using the Assignment 1 coin flip example)
+```{r}
+rho_true = c(0, 0.5, 1)/sum(c(0, 0.5, 1)); K = length(rho_true)-1
+p_true <- DiscreteDistribution(supp = (0:K)/K, rho_true)
+p_obs = simulate(p_true)
+p_obs
+```
+b.) Simulates $\{y_i\}_{i = 1}^{n_{\text{obs}}} = \{y_1, y_2, \dots, y_{n_{\text{obs}}}\} = y_{1:n_{\text{obs}}}$ conditional on the simulated $p_{\text{true}}$. We recall that $\forall i \in [1, n_{\text{obs}}], (y_i \mid p_{\text{true}}) \sim \text{bern}(p_{\text{true}})$, where it should be noted that $n_{\text{obs}} = $`n_observations` is supplied to the function.
+
+```{r}
+n_observations = 3
+n = n_observations
+y_obs = rbern(n, p_obs)
+y_obs
+```
+
+c.) Calls `posterior_distribution` using and the simulated data. Note that $\rho_{\text{prior}}$ is the final parameter to the function.
+```{r}
+# in the coin flip, we assumed all were equally likely
+rho_prior = c(0, 1/2, 1)
+posterior_distribution(
+  rho = rho_prior,
+  n_heads = sum(y_obs),
+  n_observations = n
+)
+```
 ```{r simulate_posterior_mean_error}
 simulate_posterior_mean_error = function(rho_true, rho_prior, n_observations){
   
