@@ -16,6 +16,7 @@ library(ggplot2)
 library(pracma)
 library(distr)
 library(latex2exp)
+library(knitr)
 source("scaffold.R")
 source("simple.R")
 source("simple_utils.R")
@@ -240,4 +241,93 @@ simulate_posterior_mean_error = function(rho_true, rho_prior, n_observations){
   # returns error
   return(epsilon_obs)
 }
+simulate_posterior_mean_error(rho_true, rho_prior, n)
 ```
+
+## Part 4
+
+Now, we use the following setup, normalizing the given $\rho$ values so it can work with the `DiscreteDistribution` function.
+```{r}
+K = 100
+rho_true = rho_prior = rep(1, K+1) / (K+1)
+```
+Applying it to each $n \in  \{1,  2,  4,  8, 16, 32, 64\}$
+```{r}
+n_obs_vector <- 2^(0:6)
+```
+Repeating each case $M = 1,000$ times.
+
+```{r simulations}
+set.seed(0904)
+M = 1000
+all_simulations =
+  matrix(sapply(1:M, function(m){
+       sapply(n_obs_vector,
+        function(n){
+         simulate_posterior_mean_error(rho_true, rho_prior, n)})}), nrow = M)
+```
+While the method of using `apply` logic is a nice vectorized operation to improve simulation time, our current matrix does not have the desired column order (it has a column for each $n$, and each row represents the simulation number.) Let's fix this.
+```{r}
+experiment_results  <- matrix(nrow = 0, ncol = 3)
+for(i in 1:length(n_obs_vector)) {
+  n_sim_results <- cbind( n_obs_vector[i], 1:M, all_simulations[, i])
+  experiment_results <- rbind(experiment_results, n_sim_results)
+}
+
+colnames(experiment_results) = c("n_observations", "replication", "errors")
+experiment_results = data.frame(experiment_results)
+rownames(experiment_results) = 1:(7*M)
+```
+Then we can display the `head` and `tail` of this data frame. 
+```{r}
+kable(head(experiment_results))
+kable(tail(experiment_results))
+```
+The following checks that our transformation did not obscure or misplace any of the data.
+```{r}
+sum((all_simulations[, 1]) - 
+      experiment_results$errors[experiment_results$n_observations == 1]) == 0
+```
+
+## Part 5
+
+Visualize the above data using a log-log plot using the following code:
+```{r}
+ggplot(experiment_results, aes(x=n_observations, y=errors+1e-9)) + # avoid log(0)
+  stat_summary(fun = mean, geom="line") + # Line averages over 1000 replicates
+  scale_x_log10() +  # Show result in log-log scale
+  scale_y_log10(n.breaks=16) +
+  coord_cartesian(ylim = c(1e-3, 1)) +
+  theme_minimal() +
+  geom_point() +
+  labs(x = "Number of observations",
+       y = "Absolute error of the posterior mean")
+```
+
+## Part 6
+We'll estimate the slope with the following function, again letting $\varepsilon$ be the error. 
+$$
+\hat{m} = \frac{y_7-y_5}{x_7-x_5} =  \frac{\log_{10}(\bar{\varepsilon}_7) - \log_{10}(\bar{\varepsilon}_5)}{\log_{10}(n_7)-\log_{10}(n_5)} 
+$$
+
+Where, as shown above, $x$  is  $\log_{10}(n_i)$, is $y$  is  $\log_{10}(\bar{\varepsilon}_i)$, where $\bar{\varepsilon}$ is the mean absolute error of the posterior mean and the subscript indicates the column of points from left to right. 
+
+So, in this case, the $7$th column
+
+```{r}
+x7 = log10(n_obs_vector[7])
+x5 = log10(n_obs_vector[5])
+y7 = log10( mean(all_simulations[, 7]) )
+y5 = log10( mean(all_simulations[, 5]) )
+
+m = (y7 - y5) / (x7 - x5)
+(m)
+```
+What can you deduce about the scaling law of the error?
+
+notes before I gtg break
+- slope is greater than zero (and nearly zero)
+- implies that increasing sample size has neglible effect on the error between ptrue and simulated values (E[p given data])
+- makes sense, since rho post and rho true are in fact the same
+- perhaps produce a plot of means as well as error bands (also inspect non loglog)
+- oh shit tyto is messaging me
