@@ -171,7 +171,7 @@ Which we will use to test our function.
 ```{r}
 posterior_mean <- function(pi){
   K = length(pi)-1
-  return(sum((0:K)/K*pi))
+  return(sum(((0:K)/K)*pi))
 }
 all.equal(posterior_mean(assign_1), 33/34)
 ```
@@ -191,7 +191,8 @@ a.) Simulate $p_{\text{true}} \sim \text{discrete}(\{0, 1/K, \dots, K/K\}, \rho_
 
 This is done as follows (using the Assignment 1 coin flip example)
 ```{r}
-rho_true = c(0, 0.5, 1)/sum(c(0, 0.5, 1)); K = length(rho_true)-1
+rho_true = c(0, 0.5, 1)/sum(c(0, 0.5, 1)); 
+K = length(rho_true)-1
 p_true <- DiscreteDistribution(supp = (0:K)/K, rho_true)
 p_true_obs = simulate(p_true)
 p_true_obs
@@ -208,7 +209,7 @@ y_obs
 c.) Calls `posterior_distribution` using and the simulated data. Note that $\rho_{\text{prior}}$ is the final parameter to the function.
 ```{r}
 # in the coin flip, we assumed all were equally likely
-rho_prior = c(0, 1/2, 1)
+rho_prior = c(1, 1, 1)
 pi_obs = posterior_distribution(
   rho_prior, sum(y_obs), 3
 )
@@ -227,23 +228,28 @@ epsilon_obs
 ```
 Then we combine this all into one process
 ```{r simulate_posterior_mean_error}
+set.seed(200)
 simulate_posterior_mean_error = function(rho_true, rho_prior, n_observations){
   # step 1
   p_true = DiscreteDistribution(supp = (0:K)/K, rho_true)
   p_true_obs = simulate(p_true)
+  # print(p_true_obs)
   # step 2
-  n = n_observations
-  y_obs = rbern(n, p_true_obs)
-  # step 3
-  pi_obs = posterior_distribution(rho_prior, sum(y_obs), n)
-  # step 4
-  epsilon_obs = abs(p_true_obs - post_mean)
-  # returns error
-  return(epsilon_obs)
+  epsilons = c()
+  for (value in n_observations){
+    y_obs = rbern(value, p_true_obs)
+    # step 3
+    pi_obs = posterior_distribution(rho_prior, sum(y_obs), value)
+    post_mean = posterior_mean(pi_obs)
+    # step 4
+    epsilons = c(epsilons, abs(p_true_obs - post_mean))
+  }
+  return(epsilons)
 }
-simulate_posterior_mean_error(rho_true, rho_prior, n)
+# plot(simulate_posterior_mean_error(rho_true, rho_prior, 1:1000), type = 'l')
 ```
-
+```{r testzone}
+```
 ## Part 4
 
 Now, we use the following setup, normalizing the given $\rho$ values so it can work with the `DiscreteDistribution` function.
@@ -251,42 +257,31 @@ Now, we use the following setup, normalizing the given $\rho$ values so it can w
 K = 100
 rho_true = rho_prior = rep(1, K+1) / (K+1)
 ```
+
 Applying it to each $n \in  \{1,  2,  4,  8, 16, 32, 64\}$
 ```{r}
 n_obs_vector <- 2^(0:6)
+simulate_posterior_mean_error(rho_true, rho_prior, n_obs_vector)
 ```
 Repeating each case $M = 1,000$ times.
 
 ```{r simulations}
-set.seed(0904)
+set.seed(101)
 M = 1000
-all_simulations =
-  matrix(sapply(1:M, function(m){
-       sapply(n_obs_vector,
-        function(n){
-         simulate_posterior_mean_error(rho_true, rho_prior, n)})}), nrow = M)
-```
-While the method of using `apply` logic is a nice vectorized operation to improve simulation time, our current matrix does not have the desired column order (it has a column for each $n$, and each row represents the simulation number.) Let's fix this.
-```{r}
-experiment_results  <- matrix(nrow = 0, ncol = 3)
-for(i in 1:length(n_obs_vector)) {
-  n_sim_results <- cbind( n_obs_vector[i], 1:M, all_simulations[, i])
-  experiment_results <- rbind(experiment_results, n_sim_results)
+rsf = c()
+for (m in 1:M){
+  rsf = c(rsf, simulate_posterior_mean_error(rho_true, rho_prior, n_obs_vector))
 }
-
-colnames(experiment_results) = c("n_observations", "replication", "errors")
-experiment_results = data.frame(experiment_results)
-rownames(experiment_results) = 1:(7*M)
+experiment_results = data.frame(errors = matrix(rsf))
+experiment_results$replication = rep(1:M, each = 7)
+experiment_results$n_observations = rep(n_obs_vector, times = M)
 ```
+
+
 Then we can display the `head` and `tail` of this data frame. 
 ```{r}
 kable(head(experiment_results))
 kable(tail(experiment_results))
-```
-The following checks that our transformation did not obscure or misplace any of the data.
-```{r}
-sum((all_simulations[, 1]) - 
-      experiment_results$errors[experiment_results$n_observations == 1]) == 0
 ```
 
 ## Part 5
@@ -305,6 +300,7 @@ ggplot(experiment_results, aes(x=n_observations, y=errors+1e-9)) + # avoid log(0
 ```
 
 ## Part 6
+
 We'll estimate the slope with the following function, again letting $\varepsilon$ be the error. 
 $$
 \hat{m} = \frac{y_7-y_5}{x_7-x_5} =  \frac{\log_{10}(\bar{\varepsilon}_7) - \log_{10}(\bar{\varepsilon}_5)}{\log_{10}(n_7)-\log_{10}(n_5)} 
@@ -312,22 +308,93 @@ $$
 
 Where, as shown above, $x$  is  $\log_{10}(n_i)$, is $y$  is  $\log_{10}(\bar{\varepsilon}_i)$, where $\bar{\varepsilon}$ is the mean absolute error of the posterior mean and the subscript indicates the column of points from left to right. 
 
-So, in this case, the $7$th column
 
 ```{r}
 x7 = log10(n_obs_vector[7])
 x5 = log10(n_obs_vector[5])
-y7 = log10( mean(all_simulations[, 7]) )
-y5 = log10( mean(all_simulations[, 5]) )
-
-m = (y7 - y5) / (x7 - x5)
-(m)
+y7 = log10(mean(experiment_results$errors[
+            experiment_results$n_observations == n_obs_vector[7]]))
+y5 = log10(mean(experiment_results$errors[
+            experiment_results$n_observations == n_obs_vector[5]]))
+# y7 = log10( mean(all_simulations[, 7]) )
+# y5 = log10( mean(all_simulations[, 5]) )
+# 
+#head(experiment_results)
+m = (y7 - y5)/(x7 - x5)
+m
 ```
 What can you deduce about the scaling law of the error?
 
-notes before I gtg break
-- slope is greater than zero (and nearly zero)
-- implies that increasing sample size has neglible effect on the error between ptrue and simulated values (E[p given data])
-- makes sense, since rho post and rho true are in fact the same
-- perhaps produce a plot of means as well as error bands (also inspect non loglog)
-- oh shit tyto is messaging me
+Well, if we recall the notation of $y = mx + b$, the slope $m$ can be employed linearly as  
+$$
+\log_{10}(\bar{\varepsilon}_i) = \hat{m}\log_{10}(n_i) + c, \text{ for some c }\in \mathbb{R}$$
+Then, by rearrangement, we would have:
+$$
+\bar{\varepsilon}_i = C n_i^{\hat m}, \text{ where } C = 10^c.
+$$
+Notably, our slope is negative. Assuming $C$ is negligible for the relationship between the variables, we can write the error values as:
+$$
+\bar{\varepsilon}_i \propto  n_i^{-\hat m} \approx n_i^{-0.46} 
+$$
+From this approximate relationship, to achieve an additional one decimal point of accuracy in $\bar{\varepsilon}_i$ for a given index $i$ of the vector of $\vec{n}$ observation we need to solve the following for $k$:
+$$
+0.10\bar{\varepsilon} = 0.10(n_i^{-0.46})  = (k n_i)^{-0.46}
+$$
+Simplifying we see:
+$$
+0.10(n_i^{-0.1})  = (k)^{-0.46}(n_i^{-0.1}), \text{ hence } 0.10 = (k)^{-0.46}
+$$
+$$
+\log_{10}(0.10) = -0.46\log_{10}(k), \; \therefore k = 10^{1/0.46} = 151.6115 \approx 150
+$$
+
+This means that - assuming my math here is correct and the approximation is decent - in order to increase the accuracy of $\bar{\varepsilon}$ by an additional decimal point the sample size must be increased by a factor of approximately $150$.
+
+We made quite a few simplifying assumptions for this metric, and the precise calculations here could be wrong. The larger point is to demonstrate that the scaling law of the error declines at a very slow rate. 
+
+## Part 7
+
+We repeat Part 4, but now we have the following:
+
+```{r}
+rho_true = rep(1, K+1) 
+rho_true = rho_true/sum(rho_true)
+rho_prior = 1:(K+1)
+rho_prior = rho_prior/sum(rho_prior)
+```
+
+Our simulation is here (to be called `new_results`.)
+
+```{r}
+rsf = c()
+for (m in 1:M){
+  rsf = c(rsf, simulate_posterior_mean_error(rho_true, rho_prior, n_obs_vector))
+}
+new_results = data.frame(errors = matrix(rsf))
+new_results$replication = rep(1:M, each = 7)
+new_results$n_observations = rep(n_obs_vector, times = M)
+```
+
+Then, we can plot the results. First, however we must make a unified data frame called `all_results`.
+```{r}
+new_results$prior_type = "Different"
+experiment_results$prior_type = "Match"
+all_results = rbind(experiment_results, new_results)
+```
+Now, we can make the unified plot.
+```{r}
+ggplot(all_results, aes(x=n_observations, y=errors+1e-9, # avoid log(0) 
+                        color=prior_type, shape=prior_type)) + 
+  stat_summary(fun = mean, geom="line") + # Line averages over 1000 replicates
+  scale_x_log10() +  # Show result in log-log scale
+  scale_y_log10(n.breaks=16) +
+  coord_cartesian(ylim = c(1e-3, 1)) +
+  theme_minimal() +
+  geom_point() +
+  labs(x = "Number of observations",
+       y = "Absolute error of the posterior mean")
+```
+
+The main visual difference is the faster convergence rate of the "Different" plot in absolute error difference. In other words, the errors begin larger for small $n$, but converge to nearly the same value by the time we reach $n_7$. This implies that the even a prior that is very different from $\rho_{\text{true}}$ will converge in $\varepsilon$ to the "correct" $\rho_{\text{prior}} = \rho_{\text{true}}$ error rate.
+
+This initial "ramping down" of the error rate for the "Different $\rho$" plot makes sense, as the posterior expectation of the incorrect model will quickly approach the true value $p_{\text{true}}$ as $n\uparrow$, regardless of the prior (by the nice properties of Bayesian methods we have discussed often in this course.). Then, the remaining difference between both models is due to the "simulation error", which will slowly converge by the reasoning discussed in the previous question.
