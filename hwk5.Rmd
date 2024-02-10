@@ -224,9 +224,20 @@ e.) Compute the absolute error $\varepsilon_{\text{obs}}$ $$\varepsilon_{\text{o
 epsilon_obs = abs(p_true_obs - post_mean)
 epsilon_obs
 ```
-
+Then we combine this all into one process
 ```{r simulate_posterior_mean_error}
 simulate_posterior_mean_error = function(rho_true, rho_prior, n_observations){
-  
+  # step 1
+  p_true = DiscreteDistribution(supp = (0:K)/K, rho_true)
+  p_true_obs = simulate(p_true)
+  # step 2
+  n = n_observations
+  y_obs = rbern(n, p_true_obs)
+  # step 3
+  pi_obs = posterior_distribution(rho_prior, sum(y_obs), n)
+  # step 4
+  epsilon_obs = abs(p_true_obs - post_mean)
+  # returns error
+  return(epsilon_obs)
 }
 ```
