@@ -78,10 +78,36 @@ $$
 \big(n_{\text{c}} \mid p) \sim \text{binom}(t_{\text{c}}, p)
 $$
 
-Now, with this very robust framework presented, we will inspect the data before introducing a Hierarchical Model to describe the setting. 
+## Part 1
+
+Expand the model in Equation 1 into a hierarchical model that covers both vaccines. The parameters 
+$\{\mu_\text{e},\lambda_\text{e},\mu_\text{p},\lambda_\text{p}\}$ must be shared across vaccines. 
+
+In contrast, each vaccine must have its own $(e, p)$ pair.
+
+First, we note the hyper-parameter choice for each of these variables. For uniform $\mu_\text{e}$, we declared parameters $\{a_\text{e}, b_\text{e}\}$ as $\{0, 1\}$. Similarly, we declared $\lambda_\text{e}$ and $\lambda_\text{p}$ as exponential random variables with parameters $\ell_\text{e} = \ell_\text{p} = 0.001$. Finally we declared $\mu_\text{p}$ as a Beta MP random variable with parameters $\{\vartheta_\text{p}, s_\text{p} \}$ as $\{0.1 ,10 \}$. We include these hyper-parameters as constants in our Graphical model, to reflect the fact that these choices were made by us, the designers, and could be changed. 
+<center>
+![Graph Model of Vaccine Hierarchy](447_hwk_6_img_1.png){#id .class width=85% height=85%}
+</center>
+
+
+
+\pagebreak 
+
+## Part 2
+
+Now, with this framework presented, we will inspect the data before implementing Hierarchical Model to describe the setting. 
 
 ```{r read_df_time}
 df = present = read.csv("vaccines.csv")
 colnames(present) = c("Trials", "Arms", "Group Sizes", "Number of Cases")
 kable(present)
+```
+
+We need to do a `simPPLe` implementation for this, too. The PPL function should return the indicator that Moderna is more effective than Pfizer. We include a hidden code cell that defines the `BetaMP` Distribution.
+
+```{r BetaMP, include=FALSE}
+BetaMP = function(mean, precision){
+  Beta(mean*precision, (1-mean)*precision)
+}
 ```
