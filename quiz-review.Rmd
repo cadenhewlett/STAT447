@@ -154,4 +154,5 @@ $$
 As the definition suggests, the indicator function *indicates* whether or not a specific outcome has occurred.
 
 
+## Common Distributions
 
