@@ -5,6 +5,7 @@ date: "`r Sys.Date()`"
 header-includes:
    - \usepackage{bbm}
    - \usepackage{upgreek}
+   - \usepackage{booktabs}
 output: pdf_document
 ---
 
@@ -154,5 +155,83 @@ $$
 As the definition suggests, the indicator function *indicates* whether or not a specific outcome has occurred.
 
 
-## Common Distributions
+# Common Distributions
 
+
+Distributions: Parameters and Support:
+
+\[
+\begin{array}{lll}
+\hline
+\textbf{Distribution} & \textbf{Parameters} & \textbf{Support} \\
+\hline
+\text{Bernoulli} & p \text{ (success probability)} & \{0, 1\} \\
+\text{Binomial} & n \text{ (trials)}, p \text{ (success probability)} & \{0, 1, \ldots, n\} \\
+\text{Discrete Uniform} & \{x_i\}_{i=1}^n \text{ (possible outcomes)} & \{x_1, x_2, \ldots, x_n\} \\
+\text{Continuous Uniform} & a \text{ (min)}, b \text{ (max)} & [a, b] \\
+\text{Categorical} & \{x_i\}_{i = 1}^n \text{ (outcomes)}, \{p_i\}_{i = 1}^n \text{ (probabilities)} & \{x_1, x_2, \ldots, x_n\} \\
+\text{Normal} & \mu \text{ (mean)}, \sigma^2 \text{ (variance)} & (-\infty, +\infty) \\
+\text{Exponential} & \lambda \text{ (rate)} & (0, +\infty) \\
+\text{Beta (mean, precision)} & \mu \in (0,1), s > 0 & (0, 1) \\
+\text{Beta (shape parameters)} & \alpha = \mu \cdot s, \beta = (1 - \mu) \cdot s & (0, 1) \\
+\hline
+\end{array}
+\]
+
+# Basic Bayesian Terminology
+
+For the following, we let $\Theta$ be the parameter and $Y$ be the data.
+
+
+* Prior Distribution: Given by PDF $p_{\Theta}(\theta)$ in the continuous case, or more simply as $P(\Theta = \theta)$ in the discrete case.
+* Likelihood: Probability of the observations given the parameter: $p_{Y \mid \Theta}(y, \theta)$ or $P(Y = y \mid \Theta = \theta)$.
+* Joint Distribution:  In a Bayesian context given by (discrete) $\gamma(x) = P(X = x, Y =y)$ which is:
+$$\gamma(x) = p_{X, Y}(x, y) = p_X(x) p_{X \mid Y}(x\mid y)$$
+
+* Normalizing Constant: Often given by $Z$, is the overall probability $P(Y = y)$. Often difficult to compute by hand, but can be done via the LOTP.
+
+* Posterior distribution (PMF/density): The posterior $P(\Theta \mid Y = y)$ is the distribution of the parameter given the data. 
+
+$$
+\uppi(x) = \dfrac{P(X = x, Y = y)}{P(Y = y)} = \dfrac{P(X = x)P(Y = y\mid X = x)}{P(Y = y)} = \frac{\gamma(x)}{Z}
+$$
+
+
+* Joint vs Marginal Posterior: 
+
+Let $\Theta_1$ and $\Theta_2$ be two parameters of interest. 
+
+
+The **Joint** posterior is given by the following (in the discrete case):
+$$
+\text{Joint Posterior}  = P(\Theta_1 = \theta_1, \Theta_2 = \theta_2 \mid Y = y)
+$$
+An example of this could be the Normal Distribution parameters.
+
+
+Conversely, the **Marginal** Posterior for $\Theta_1$ is:
+$$
+\text{Marginal Posterior}  = P(\Theta_1 = \theta_1 \mid Y = y) = \sum_{\theta_2 \in \Theta_2}P(\Theta_1 = \theta_1, \Theta_2 = \theta_2 \mid Y = y)
+$$
+Or, in the Continuous case,
+$$
+\text{Marginal Posterior of } \Theta_1  = \int p_{\Theta_1, \Theta_2 \mid Y}(\theta_1, \theta_2 \mid y) \text{d}\theta_2
+$$
+An example of this would be the marginal posterior of the Slope parameter of a regression model.
+
+* Predictive Distribution: Involves plugging new values into the model using the parameters drawn from the posterior distribution. We saw this as $\mathbb{P}(Y_4 = 1 | Y_{1:3} = \vec{1}\,)$, but can be summarized using
+
+In the discrete case where $\uppi(x) = \mathbb{P}(X = x | Y = y)$
+$$
+ P(Y_{n+1} = y_{n+1}\mid Y_{1:n}=y_{1:n}) = \sum_{\theta \in \Theta} P(Y_{\text{new}} = y_{\text{new}} \mid \theta)P(\theta \mid Y_{1:n}=y_{1:n}) = \sum_{\theta \in \Theta}P(Y_{\text{new}} = y_{\text{new}} \mid \theta) \uppi(\theta)
+$$
+
+Notably, this uses the distribution of the \underline{data} given the posterior parameter.
+
+We have used the **unique case** where we have a Bernoulli likelihood model:
+$$
+\mathbb{P}(Y_{n+1} = 1\mid Y_{1:n}=y_{1:n}) = \mathbb{E}(p \mid Y_{1:n}=y_{1:n})
+$$
+In other words, the Predictive Distribution follows the Posterior Mean.
+
+# Sampling
