@@ -48,3 +48,4 @@ plot(samples[1:1000],
      type = "o", 
      col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2))
 print( mean(samples) )
+?rgb

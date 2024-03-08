@@ -108,7 +108,7 @@ ggplot(data.frame(q1model$p), aes(x = q1model.p)) +
                                 list(linetype = c("solid", "solid"))))
 ```
 
-So, both from the histogram we can see the posterior median is approximately $0.86$.
+So, from the histogram we can see the posterior median is approximately $0.86$.
 
 Precisely, it is the value below:
 ```{r}
@@ -288,7 +288,7 @@ Then, we implement our Metropolis-Hastings Algorithm below.
 
 ```{r my_mh}
 # define functions to be used within M.H.
-Q <- function(x){  rnorm(1, mean = x) }
+Q <- function(x, dim = 1){  rnorm(dim, mean = x) }
 R <- function(x_tilde, x_m, gamma_fn){ gamma_fn(x_tilde) / gamma_fn(x_m) }
 A <- function(R){ rbinom(1, size = 1, p = min(1, R)) }
 
@@ -304,7 +304,7 @@ simple_mh = function(gamma, initial_point, n_iters) {
     # declare proposed x value
     x_m <- X[m-1]
     # compute q(X^{m-1})
-    x_tilde <- Q(x_m)
+    x_tilde <- Q(x_m, dim)
     # compute ratio \gamma(\tilde{X}^{m}) / \gamma(X^{m-1})
     R_m <- R(x_tilde, x_m, gamma_fn = gamma)
     # compute bernoulli trial at p = min\{1, R^{(m)} \}
@@ -322,6 +322,8 @@ set.seed(447)
 samples = simple_mh(gamma_beta_binomial, 0.5, 1000)
 # create trace plot
 plot(samples[1:1000],
+     main = "Trace Plot of Metropolis Hastings \n In Beta-Binomial Setting",
+     ylab = "Posterior Probability (p)", xlab = "Iteration Number (M)",
      type = "o",
      col = rgb(
        red = 0,
@@ -329,4 +331,29 @@ plot(samples[1:1000],
        blue = 0,
        alpha = 0.2
      ))
+```
+
+We can also verify our results by properties of beta-binomial conjugacy:
+$$
+\begin{aligned}
+\text{Posterior } &\propto \text{Prior } \times \text{Likelihood} \\
+\text{Posterior } &\propto \text{beta}(\alpha, \beta) \times \text{binom}(n, p) \\
+\text{Posterior } &\propto \dfrac{1}{\text{B}(\alpha, \beta)} p^{\alpha-1}(1-p)^{\beta - 1} \times {n \choose k}p^{k}(1 - p)^{n-k} \\
+\text{Posterior } &\propto 
+\underbrace{ {\dfrac{_nC_k}{\text{B}(\alpha, \beta)}} }_{\text{constant wrt } p} p^{\alpha-1} p^{k} (1-p)^{\beta - 1} (1 - p)^{n-k} \\
+\text{Posterior } &\propto  p^{(\alpha+k)-1} (1-p)^{(\beta + n-k) - 1}\\
+\text{Posterior } &\propto  \text{beta}(\alpha + k, \beta + n - k)\\
+\end{aligned}
+$$
+In our particular case,
+$$
+\text{Posterior } \propto  \text{beta}(1 + 3, 2 + 3 - 3) = \text{beta}(4,2)
+$$
+And, for a $X\sim \text{beta}(4,2)$ distribution,
+$$
+\mathbb{E}(X) = \dfrac{\alpha}{\alpha + \beta} = \frac{4}{6} = \frac{2}{3}
+$$
+Which we can see is very close to the posterior mean.
+```{r}
+c(mean(samples), 2/3)
 ```
