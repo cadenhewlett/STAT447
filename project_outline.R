@@ -1,7 +1,7 @@
 epsilon = 0.20
 alpha = 0.75
 gamma = 0.25
-M = 25
+M = 1000
 
 x = y = x_old = y_old = 3
 
@@ -137,7 +137,7 @@ plot_Q_table <- function(Q){
     scale_fill_gradient(low = "white", high = "red") +
     facet_wrap(~ Z, ncol = 2, labeller = my_labeller) +
     theme_minimal() +
-    labs(title = "Panel of Heatmaps for Each Action Index",
+    labs(title = "Panel of Heatmaps for Each Action Index, M = 1000",
          x = "Row Dimension",
          y = "Column Dimension",
          fill = "Value")
@@ -157,4 +157,6 @@ assess_performance <- function(Q_table){
   )
 }
 
+
 assess_performance(Q)
+plot_Q_table(Q)
