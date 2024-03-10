@@ -57,7 +57,7 @@ R = apply(order, MARGIN = c(1,2),
             }
           })
 
-R
+
 # Define Action Set
 A = list(
   UP <- function(){x <<- x - 1; },
@@ -66,8 +66,6 @@ A = list(
   LEFT <- function(){y <<- y - 1; },
   STAY <- function(){}
 )
-
-
 
 VERBOSE = c("UP", "DOWN", "RIGHT", "LEFT", "STAY")
 # Initialize random uniform Q-Table
@@ -251,16 +249,16 @@ P_QTB[, , 6]
 rawdf
 
 # TODO: Path from any given start point.
-for (x in 1:3){
-  for(y in 1:4){
-    print(
-      paste("If the Agent was in postition ", 
-            paste(c(x, y), collapse = ", "),
-            " it would go ",
-      VERBOSE[which.max(Q[x, y, ])],
-      ".", sep = ""))
-  }
-}
+# for (x in 1:3){
+#   for(y in 1:4){
+#     print(
+#       paste("If the Agent was in postition ", 
+#             paste(c(x, y), collapse = ", "),
+#             " it would go ",
+#       VERBOSE[which.max(Q[x, y, ])],
+#       ".", sep = ""))
+#   }
+# }
 
 
 #which.max(Q[1, 2, ])
