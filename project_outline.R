@@ -1,5 +1,5 @@
 epsilon = 0.20
-alpha = 0.95
+alpha = 0.99
 gamma = 0.25
 M = 1000
 

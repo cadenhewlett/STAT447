@@ -51,5 +51,16 @@ performance = c(1.66, 2.63, 3.11, 4.31, 4.56, 4.70, 4.81, 4.80, 4.84,
 # mid-high alpha: 0.75, mean = 4.83
 # mid-high alpha: 0.80, mean = 4.775
 # high alpha: 0.90, mean = 4.85
-# near-full learn: 0.95, mean = 
+# near-full learn: 0.95, mean = 4.805
+# very near full learn: 0.99, mean = 4.755
 # full learning: 1.00, mean = 4.785
+
+alphas <- c(0.0, 0.01, 0.02, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 
+            0.45, 0.5, 0.6, 0.65, 0.75, 0.8, 0.9, 0.95, 0.99, 1.0)
+
+means <- c(0.98, 2.54, 2.59, 2.66, 3.34, 3.81, 4.115, 4.405, 4.51, 4.62, 4.56, 
+           4.675, 4.655, 4.73, 4.76, 4.83, 4.775, 4.85, 4.805, 4.755, 4.785)
+plot(alphas, means)
+
+# Changing gamma, well-tuned parameters otherwise
+# M = 1000, alpha = 0.75, gamma = 0.25. 
