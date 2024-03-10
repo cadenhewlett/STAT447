@@ -81,7 +81,8 @@ r_t = 0
 # Attempt Movement at Time t
 iter = 0
 DEBUG = FALSE
-while( iter < M) {
+
+while( iter < ifelse(DEBUG, 10, M)) {
 tryCatch({
   if(DEBUG){cat(paste("*** ROUND", iter+1, "***\n"))}
   # Epsilon-Greedy
@@ -133,13 +134,7 @@ iter = iter + 1
 #print(paste("Reward:", round(r_t, 3)))
 if(DEBUG){ Sys.sleep(0.5) }
 }
-#Q[3, 3, ]
 
-VERBOSE[ which.max( Q[3, 3, ] ) ] # LEFT
-VERBOSE[ which.max( Q[3, 2, ] ) ] # LEFT
-VERBOSE[ which.max( Q[3, 1, ] ) ] # UP
-VERBOSE[ which.max( Q[2, 1, ] ) ] # UP
-VERBOSE[ which.max( Q[1, 1, ] ) ] # STAY
 
 
 plot_Q_table <- function(Q){
@@ -224,8 +219,48 @@ R
 ## REWARD (WHICH WE WOULD HAVE TO PUT LIKELIHOODS ON)
 ## 
 
+
+## Could also monitor convergence of algorithm by placing priors, etc. 
+## On the Q-Table. And then compare it with a random uniform table.
+## Then, the observed difference of that table from the random uniform 
+## Is the probability of learned action.
+
+
+## Alternatively, could treat this as the "Frequentist" method.
+## And implement a bayesian one
+## Bayesian Version: 
+## Each cell is a variable X_1, ... X_n
+## From each cell, there are actions available
+## Action ~ categroical({a1, a2, a3, a4}, {p1, p2, p3, p4})
+## Alternatively, it has a 1/4 chance of going any direction
+## And a Bernoulli trial to stay (maybe)
+## However, each direction has a probability associated with it
+## and these are changed over time from the reward states
+## this would require thinky-times but it would basically be
+## P(Go Left | X1), updated by P(Go Left | {Reward, X1})
+## However this would have serial dependence and be a DTMC with 12 interconnected states
+## Which is slightly complicated.
+## But may be more performant
+## It would be cool to compare iteration requirements
+
+
 P_QTB
 length(A)
 P_QTB[, , 6]
 
 rawdf
+
+# TODO: Path from any given start point.
+for (x in 1:3){
+  for(y in 1:4){
+    print(
+      paste("If the Agent was in postition ", 
+            paste(c(x, y), collapse = ", "),
+            " it would go ",
+      VERBOSE[which.max(Q[x, y, ])],
+      ".", sep = ""))
+  }
+}
+
+
+#which.max(Q[1, 2, ])
