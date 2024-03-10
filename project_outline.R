@@ -1,11 +1,14 @@
-epsilon = 0.2
-alpha = 0.5
-gamma = 0.5
+epsilon = 0.20
+alpha = 0.75
+gamma = 0.75
 
 x = y = x_old = y_old = 3
 
 library(pracma)
 library(extraDistr)
+library(ggplot2)
+library(tidyr)
+
 ## Define the obstacle course
 course = matrix(
   c(0, 1, 1,
@@ -16,8 +19,9 @@ course = matrix(
 )
 ## set the starting position
 course[x, y] = 2
+course
 
-## set the Optimal Learning Envrionment (OLE) move order
+## set the Optimal Learning Environment (OLE) move order
 order = matrix(
   c(5, 0, 0,
     4, 0, 0,
@@ -32,11 +36,11 @@ R = apply(order, MARGIN = c(1,2),
         runif(1, min = -1 + cell, max = cell)
       })
 
-# Create Pad for out of bounds movement
-PAD <- matrix(-2, nrow = 5, ncol = 5)
-PAD[2:4, 2:4] <- R
-# Padded rewards matrix penalizes moving out of bounds
-R <- PAD
+# # Create Pad for out of bounds movement
+# PAD <- matrix(-2, nrow = 5, ncol = 5)
+# PAD[2:4, 2:4] <- R
+# # Padded rewards matrix penalizes moving out of bounds
+# R <- PAD
 
 # Define Action Set
 A = list(
@@ -50,56 +54,86 @@ VERBOSE = c("UP", "DOWN", "RIGHT", "LEFT")
 Q = array(runif(3*3*4, min = 0, max = 0.05), dim = c(3, 3, 4))
 r_t = 0
 # Attempt Movement at Time t
-while( FALSE ) { #sum(c(x, y) == c(1, 1)) <= 2
+iter = 0
+while( iter < 50) { #sum(c(x, y) == c(1, 1)) <= 2
 tryCatch({
   # Epsilon-Greedy
   if(rbern(1, epsilon) == 1){
-    print("Exploring...")
+#    print("Exploring...")
     a = rdunif(1, min = 1, max = 4)
   } else {
-    print("Exploiting...")
+#    print("Exploiting...")
     a = which.max( Q[x, y,] )
   }
   # Save Previous Position
   x_t = x; y_t = y;
   # Set old spot to zero
-  course[x_t, y_t] = 0
-  print(
-    paste("Selected action:", VERBOSE[a] )
-  )
+  course[x_t, y_t] = ifelse(y == 1 || x == 3, 0, 1)
+#  print( paste("Selected action:", VERBOSE[a] ) )
   # perform epsilon-greedy and select action
-  cat("Moving... \n")
+#  cat("Moving... \n")
   A[[a]]()
-  print(paste("New Position:", x, y))
+#  print(paste("New Position:", x, y))
   # attempt to update location from new movement
   course[x, y] = 2
   # fetch reward
   r_t =  R[x,y]
-  print(paste("Reward:", r_t))
+  # 
+  if(length(course[x,y]) == 0){
+    stop("subscript out of bounds")
+  }
 }, error = function(e) {
   if(grepl("subscript out of bounds", e$message)) {
-    cat("Agent attempted to move out of bounds. \n")
+#    cat("Agent attempted to move out of bounds. \n")
     # agent stays in the same location
-    print(c(x, y))
-    r_t <<- R[x, y]
+#    print(c(x, y))
+    r_t <<- -1
     x <<- x_t
     y <<- y_t
-    print(paste("New Position:",x, y))
-    print(paste("Reward:", r_t))
+#    print(paste("New Position:",x, y))
+#    print(paste("Reward:", r_t))
   } 
 }, finally = {
   course[x, y] = 2
-  cat("Updating Q(x,y,a)...\n")
-  print( paste("Old Q-Score:", Q[x_t, y_t, a]) )
+#  cat("Updating Q(x,y,a)...\n")
+#  print( paste("Old Q-Score:", round(Q[x_t, y_t, a], 3) ) )
   # Q-Table Update
   Q[x_t, y_t, a] = Q[x_t, y_t, a] + alpha*(
     r_t + gamma*Q[x, y, which.max( Q[x, y, ])] 
     - Q[x_t, y_t, a])
-  print( paste("New Q-Score:", Q[x_t, y_t, a]) )
+#  print( paste("New Q-Score:", round(Q[x_t, y_t, a], 3) ) )
 })
-Sys.sleep(1)
+#print(course)
+iter = iter + 1
+#print(paste("Reward:", round(r_t, 3)))
+if(x == 1 & y == 1){print(paste(
+  "Target Reached in", iter, "steps."));  break}
+#Sys.sleep(0.5)
 }
-course
-# TODO: create offset schema for R indexing
-R[4,2]
+#Q[3, 3, ]
+VERBOSE[ which.max( Q[3, 3, ] ) ]
+VERBOSE[ which.max( Q[3, 2, ] ) ]
+VERBOSE[ which.max( Q[3, 1, ] ) ]
+VERBOSE[ which.max( Q[2, 1, ] ) ]
+
+Q
+
+
+## Plotting the Q-Table
+rawdf <- expand.grid(X = 1:dim(Q)[1], Y = 1:dim(Q)[2], Z = 1:dim(Q)[3])
+values <- as.vector(Q)
+df <- cbind(rawdf, Value = values)
+
+my_labeller <- as_labeller(function(z_index) VERBOSE[as.numeric(z_index)])
+
+p = ggplot(df, aes(x = X, y = Y, fill = Value)) +
+  geom_tile() + 
+  scale_fill_gradient(low = "white", high = "red") +
+  facet_wrap(~ Z, ncol = 2, labeller = my_labeller) +
+  theme_minimal() +
+  labs(title = "Panel of Heatmaps for Each Action Index",
+       x = "Row Dimension",
+       y = "Column Dimension",
+       fill = "Value")
+print(p)
 R
