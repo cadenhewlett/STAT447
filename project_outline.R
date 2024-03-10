@@ -1,7 +1,7 @@
-epsilon = 0.20
-alpha = 0.75
-gamma = 0.25
-M = 1000
+epsilon = 0.50
+alpha = 0.5
+gamma = 0.15
+M = 5000
 
 x = y = x_old = y_old = 3
 
@@ -9,12 +9,21 @@ library(pracma)
 library(extraDistr)
 library(ggplot2)
 library(tidyr)
+library(abind)
 ## Define the obstacle course
+
+# course = matrix(
+#   c(0, 1, 1,
+#     0, 1, 1,
+#     0, 0, 0), 
+#   nrow = 3, ncol = 3,
+#   byrow = T
+# )
 course = matrix(
-  c(0, 1, 1,
-    0, 1, 1,
-    0, 0, 0), 
-  nrow = 3, ncol = 3,
+  c(0, 0, 0, 0,
+    1, 1, 1, 0,
+    1, 1, 0, 0),
+  nrow = 3, ncol = 4,
   byrow = T
 )
 ## set the starting position
@@ -22,14 +31,21 @@ course[x, y] = 2
 course
 
 ## set the Optimal Learning Environment (OLE) move order
+
+# order = matrix(
+#   c(5, 0, 0,
+#     4, 0, 0,
+#     3, 2, 1), 
+#   nrow = 3, ncol = 3,
+#   byrow = T
+# )
 order = matrix(
-  c(5, 0, 0,
-    4, 0, 0,
-    3, 2, 1), 
-  nrow = 3, ncol = 3,
+  c(7, 6, 5, 4,
+    0, 0, 0, 3,
+    0, 0, 0, 2),
+  nrow = 3, ncol = 4,
   byrow = T
 )
-
 # Create an OLE Rewards Schema
 R = apply(order, MARGIN = c(1,2), 
           FUN = function(cell){
@@ -41,7 +57,7 @@ R = apply(order, MARGIN = c(1,2),
             }
           })
 
-
+R
 # Define Action Set
 A = list(
   UP <- function(){x <<- x - 1; },
@@ -55,7 +71,9 @@ A = list(
 
 VERBOSE = c("UP", "DOWN", "RIGHT", "LEFT", "STAY")
 # Initialize random uniform Q-Table
-Q = array(runif(3*3*4, min = 0, max = 0.05), 
+Q = array(runif(dim(course)[1]*
+                dim(course)[1]*
+                length(A), min = 0, max = 0.05), 
           dim = c(dim(course)[1], 
                   dim(course)[2], 
                   length(A)))
@@ -157,6 +175,57 @@ assess_performance <- function(Q_table){
   )
 }
 
+print(paste("The Predicted Route is:",
+    paste(
+    VERBOSE[ which.max( Q[3, 3, ] ) ],
+    VERBOSE[ which.max( Q[3, 4, ] ) ],
+    VERBOSE[ which.max( Q[2, 4, ] ) ],
+    VERBOSE[ which.max( Q[1, 4, ] ) ],
+    VERBOSE[ which.max( Q[1, 3, ] ) ],
+    VERBOSE[ which.max( Q[1, 2, ] ) ],
+    VERBOSE[ which.max( Q[1, 1, ] ) ],
+    sep = ", ")))
 
-assess_performance(Q)
-plot_Q_table(Q)
+P_QTB = abind(Q, R, along = 3)
+dim(P_QTB)
+VPLOT = c("UP", "DOWN", "RIGHT", "LEFT", "STAY", "ORIGINAL COURSE")
+rawdf <- expand.grid(X = 1:dim(P_QTB)[1], 
+                     Y = 1:dim(P_QTB)[2], 
+                     Z = 1:dim(P_QTB)[3])
+rawdf
+values <- as.vector(P_QTB)
+df <- cbind(rawdf, Value = values)
+
+my_labeller <- as_labeller(function(z_index) VPLOT[as.numeric(z_index)])
+
+p = ggplot(df, aes(x = X, y = Y, fill = Value)) +
+  geom_tile() + 
+  scale_fill_gradient(low = "white", high = "red") +
+  facet_wrap(~ Z, ncol = 2, labeller = my_labeller) +
+  theme_minimal() +
+  labs(title = "Panel of Heatmaps for Each Action Index",
+       x = "Row Dimension",
+       y = "Column Dimension",
+       fill = "Value")
+print(p)
+P_QTB[, , 6] <- 0
+R
+
+## IDEA ##
+## 
+## FROM THIS, WE CAN ACTUALLY FIND A BAYESIAN MODEL OF 
+## P(Q-TABLE IS WELL-TUNED | OUTCOMES)
+## SO, RATHER THAN TUNE THE PARAMETERS, WE TAKE THE PARAMETERS
+## AS THEY ARE (OR IN A RANDOM COMBO), AND FIND P(TUNED | ROUTE, START )
+## THEN, FOR A GIVEN ROUTE, WE KNOW IN A ZERO-ONE STYLE WHETHER OR NOT
+## IT IS TUNED. I.E. P(ROUTE | TUNED, START) IS ALWAYS 0% OR 100%
+## THEN, A MORE INTERESTING APPROACH COULD BE IF THE TRUE OPTIMAL POLICY
+## IS UNKOWN. THEN, P(ROUTE | TUNED, START) IS SOME FUNCTION OF THE FINAL
+## REWARD (WHICH WE WOULD HAVE TO PUT LIKELIHOODS ON)
+## 
+
+P_QTB
+length(A)
+P_QTB[, , 6]
+
+rawdf
