@@ -1,7 +1,7 @@
 epsilon = 0.20
-alpha = 0.99
+alpha = 0.75
 gamma = 0.25
-M = 1000
+M = 25
 
 x = y = x_old = y_old = 3
 
