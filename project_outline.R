@@ -1,5 +1,5 @@
-epsilon = 0.40
-alpha = 0.75
+epsilon = 0.20
+alpha = 0.95
 gamma = 0.25
 M = 1000
 
@@ -156,4 +156,5 @@ assess_performance <- function(Q_table){
     which.max( Q_table[1, 1, ] ) == 5
   )
 }
-print(paste("Correct Conclusions:", assess_performance(Q)))
+
+assess_performance(Q)
