@@ -24,11 +24,19 @@ print(mat_plot)
 
 # initial ideas for rewards system
 start_point <- c(5, 5)
+fuzzy = TRUE
 for (i in 1:nrow(df_mat)) {
   for (j in 1:ncol(df_mat)) {
+    # calcualte euclidean distance for each cell
     if (df_mat[i, j] == 0) {
       dist <- sqrt((i - start_point[1])^2 + (j - start_point[2])^2)
-      df_mat[i, j] <- -(dist^(1.2)) 
+      # normal pull with mean proporional to negative distance
+      if(fuzzy){
+        df_mat[i, j] <- rnorm(1, mean = -(dist^(1.2)), sd = 1)
+      } # or static pull
+      else{
+        df_mat[i, j] <- -(dist^(1.2)) 
+      }
     }
   }
 }
