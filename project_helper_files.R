@@ -3,7 +3,7 @@ getwd()
 
 library(ggplot2)
 library(reshape2)
-df = read.csv("data/floor_plan_matrix1.csv", header = FALSE)
+df = read.csv("data/floor_plan_matrix3.csv", header = FALSE)
 colnames(df) <- NULL
 df_mat = as.matrix(df)
 
@@ -23,8 +23,8 @@ print(mat_plot)
 
 
 # initial ideas for rewards system
-start_point <- c(5, 5)
-fuzzy = TRUE
+start_point <- c(10,5)
+fuzzy = FALSE
 for (i in 1:nrow(df_mat)) {
   for (j in 1:ncol(df_mat)) {
     # calcualte euclidean distance for each cell
@@ -35,7 +35,7 @@ for (i in 1:nrow(df_mat)) {
         df_mat[i, j] <- rnorm(1, mean = -(dist^(1.2)), sd = 1)
       } # or static pull
       else{
-        df_mat[i, j] <- -(dist^(1.2)) 
+        df_mat[i, j] <- -(dist^(1.5)) 
       }
     }
   }
