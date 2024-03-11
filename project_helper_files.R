@@ -1,5 +1,8 @@
 # test python translate fp matrix reading
 getwd()
+# state space sizes
+c(22*45, 52*52, 20*20)
+
 
 library(ggplot2)
 library(reshape2)
