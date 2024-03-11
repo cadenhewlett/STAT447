@@ -1,3 +1,12 @@
+# test python translate fp matrix reading
+getwd()
+df = read.csv("data/floor_plan_matrix1.csv", header = FALSE)
+colnames(df) <- NULL
+df_mat = as.matrix(df)
+head(df_mat)
+
+
+
 # creates a heatmap plot of the q table
 plot_Q_table <- function(Q){
   VERBOSE = c("UP", "DOWN", "RIGHT", "LEFT", "STAY")

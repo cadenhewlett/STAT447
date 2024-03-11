@@ -5,8 +5,8 @@ import matplotlib.pyplot as plt
 import cv2
 
 # get image path
-image_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\fp_num_1_processed.png"
-plan_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\fp_num_1.png"
+image_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_1_processed.png"
+plan_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_1.png"
 # load floor plan 
 pre_processed_image = cv2.imread(plan_path, cv2.IMREAD_GRAYSCALE)
 # load image
@@ -78,11 +78,14 @@ ax[1,0].title.set_text('Floor Plan with Grid Overlay')
 ax[1,0].axis('off')  
 
 # with annotation
-ax[1, 1].imshow(annotated_image, aspect='auto')
+ax[1, 1].imshow(annotated_image)
 ax[1, 1].set_title('Floor Plan Matrix with Annotations')
 ax[1, 1].axis('off')
 
 plt.subplots_adjust(wspace=0.05, hspace=0.005)
 plt.show()
 
+# save the matrix 
+destination = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\data\\floor_plan_matrix1.csv"
 
+np.savetxt(destination, matrix, delimiter=',', fmt='%d')
