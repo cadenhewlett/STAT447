@@ -1,4 +1,7 @@
 library(distr)
+# https://tokic.com/www/tokicm/publikationen/papers/AdaptiveEpsilonGreedyExploration.pdf
+# watkins - learning from delayed rewards
+#https://inria.hal.science/hal-00840479/document
 ## Simple Example of Bayesian Reinforcement ##
 set.seed(14)
 par(mfrow = c(1, 2))
@@ -68,10 +71,14 @@ print(paste("Observed Reward:", round( R[x, y] ,3)))
 
 if( R[x, y] < distr::Min( Omega[y_old, a_t][[1]] ) ){
   print("Lower Reward than Prior Min! Updating Min...")
+  a_stored <-  distr::Min( Omega[y_old, a_t][[1]] )
   distr::Min( Omega[y_old, a_t][[1]] ) <- R[x, y]
+  distr::Max( Omega[y_old, a_t][[1]] ) <- a_stored
 } else if( R[x, y] > distr::Max( Omega[y_old, a_t][[1]] ) ){
   print("Higher Reward than Prior Max! Updating Max...")
+  b_stored <- distr::Max( Omega[y_old, a_t][[1]] )
   distr::Max( Omega[y_old, a_t][[1]] ) <- R[x, y]
+  distr::Min( Omega[y_old, a_t][[1]] ) <- b_stored
 }
 
 print(paste("Pre-Action Distribution: unif(",
@@ -98,4 +105,5 @@ choice_example = distr::DiscreteDistribution(
 )
 btzm_example/sum(btzm_example)
 # much less likely to choose to Stay
-hist( r(choice_example)(1000) )
+post_vals = r(choice_example)(5000)
+hist( post_vals )
