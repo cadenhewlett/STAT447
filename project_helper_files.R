@@ -23,29 +23,18 @@ print(mat_plot)
 
 
 # initial ideas for rewards system
-
-
-# Assuming 'df_mat' is your matrix and start_point is c(start_x, start_y)
-start_point <- c(5, 5)  # Example start point, adjust as needed
-
-# Step 2 & 3: Calculate Euclidean distance and adjust values for 0 cells
+start_point <- c(5, 5)
 for (i in 1:nrow(df_mat)) {
   for (j in 1:ncol(df_mat)) {
     if (df_mat[i, j] == 0) {
       dist <- sqrt((i - start_point[1])^2 + (j - start_point[2])^2)
-      df_mat[i, j] <- -(dist^(1.2)) # Use negative distance to indicate it decreases away from start
+      df_mat[i, j] <- -(dist^(1.2)) 
     }
   }
 }
-
-# Step 4: Replace 1 cells with random negative numbers
-df_mat[df_mat == 1] <- runif(sum(df_mat == 1), min=-100, max=-99)  # Adjust range as needed
-
-# Prepare data for ggplot
+df_mat[df_mat == 1] <- runif(sum(df_mat == 1), min=-100, max=-99)  
 df_mat_long <- melt(as.matrix(df_mat))
 names(df_mat_long) <- c("X", "Y", "value")
-
-# Step 5: Use ggplot to plot a heatmap
 pgrid = ggplot(df_mat_long, aes(Y, rev(X), fill=value)) +
   geom_tile() + ggtitle("Euclidean Reward with Penalized Walls") +
   scale_fill_gradient2(low="blue", high="red", mid="white", midpoint=0) +
