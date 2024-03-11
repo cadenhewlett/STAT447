@@ -2,8 +2,6 @@
 getwd()
 # state space sizes
 c(22*45, 52*52, 20*20)
-
-
 library(ggplot2)
 library(reshape2)
 df = read.csv("data/floor_plan_matrix3.csv", header = FALSE)
@@ -38,7 +36,7 @@ for (i in 1:nrow(df_mat)) {
         df_mat[i, j] <- rnorm(1, mean = -(dist^(1.2)), sd = 1)
       } # or static pull
       else{
-        df_mat[i, j] <- -(dist^(1.5)) 
+        df_mat[i, j] <- -(dist^(1.65)) 
       }
     }
   }
