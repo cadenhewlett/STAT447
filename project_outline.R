@@ -12,6 +12,27 @@ library(tidyr)
 library(abind)
 ## Define the obstacle course
 
+# creates a heatmap plot of the q table
+plot_Q_table <- function(Q){
+  VERBOSE = c("UP", "DOWN", "RIGHT", "LEFT", "STAY")
+  rawdf <- expand.grid(X = 1:dim(Q)[1], Y = 1:dim(Q)[2], Z = 1:dim(Q)[3])
+  values <- as.vector(Q)
+  df <- cbind(rawdf, Value = values)
+  
+  my_labeller <- as_labeller(function(z_index) VERBOSE[as.numeric(z_index)])
+  
+  p = ggplot(df, aes(x = X, y = Y, fill = Value)) +
+    geom_tile() + 
+    scale_fill_gradient(low = "white", high = "red") +
+    facet_wrap(~ Z, ncol = 2, labeller = my_labeller) +
+    theme_minimal() +
+    labs(title = "Panel of Heatmaps for Each Action Index",
+         x = "Row Dimension",
+         y = "Column Dimension",
+         fill = "Value")
+  print(p)
+}
+
 # course = matrix(
 #   c(0, 1, 1,
 #     0, 1, 1,
