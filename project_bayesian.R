@@ -89,9 +89,17 @@ print(paste("Pre-Action Distribution: unif(",
 example_iteration = sapply(Omega[2, ], function(R_i){  r(R_i)(1) })
 example_iteration
 ## Notice that the simulated rewards are different now ^
-
+tau = 0.5
+# the lower tau is in (0,1), the stricter the agent is about its update
+# the higher tau is in [1, inf), the more loose the agent is about its update
+# : SO, we could recursively simulate from all **accessible** cells
+# : And edit a state-wise constant weight for each of them
+# : The concept of accessibility will quickly become complicated
+# : but isn't impossible. essentially it's a function also of all other
+# : s E S, where S subset Omega are the |A| states accessible from s_t 
+# 
 ## letting temp = 1 for ease of operations
-btzm_example = exp( example_iteration )
+btzm_example = exp( example_iteration / tau) 
 
 
 ## now the probabilities have been re-weighted
@@ -103,7 +111,8 @@ choice_example = distr::DiscreteDistribution(
   supp = 1:length(A),
   prob = btzm_example/sum(btzm_example)
 )
-btzm_example/sum(btzm_example)
+
 # much less likely to choose to Stay
 post_vals = r(choice_example)(5000)
 hist( post_vals )
+btzm_example/sum(btzm_example)

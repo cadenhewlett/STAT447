@@ -5,21 +5,24 @@ import matplotlib.pyplot as plt
 import cv2
 
 # get image path
-image_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_1_processed.png"
-plan_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_1.png"
+image_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_2_processed.png"
+plan_path = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\images\\fp_num_2.png"
 # load floor plan 
 pre_processed_image = cv2.imread(plan_path, cv2.IMREAD_GRAYSCALE)
 # load image
 original_image = cv2.imread(image_path, cv2.IMREAD_GRAYSCALE)
 #  resize width and height if needed
-width, height = 1080, 350  
+width, height = original_image.shape[:2] 
+height = int(np.ceil(height + 1/8 * height))
+
 # no resizing currently
-image_resized = original_image # cv2.resize(image, (width, height)) 
+image_resized = original_image # cv2.resize(original_image, (width, height)) 
+
 # use thresholding to simplify the image
 useless, image_thresh = cv2.threshold(original_image, 127, 255, cv2.THRESH_BINARY)
 
 # define the grid size (m x n)
-m, n = 22, 45  
+m, n = 52, 52  
 
 # get the size of each cell in the grid
 cell_height = height // m
@@ -86,6 +89,6 @@ plt.subplots_adjust(wspace=0.05, hspace=0.005)
 plt.show()
 
 # save the matrix 
-destination = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\data\\floor_plan_matrix1.csv"
+destination = "C:\\Users\\caden\\OneDrive\\Desktop\\STAT_447\\STAT447_GH\\data\\floor_plan_matrix2.csv"
 
 np.savetxt(destination, matrix, delimiter=',', fmt='%d')
