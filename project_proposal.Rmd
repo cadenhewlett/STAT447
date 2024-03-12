@@ -1,0 +1,48 @@
+---
+title: "Project Proposal"
+subtitle: "STAT 447C"
+author: "Caden Hewlett"
+editor:
+  mode: source
+header-includes:
+   - \usepackage{bbm}
+   - \usepackage{upgreek}
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(knitr)
+library(rstan)
+library(reticulate)
+```
+
+## Overview: Basic Requirements
+
+
+**Team**: The team will contain me (and nobody else.)
+
+
+**Project Themes: From the List**
+
+The project will be investigating the "Bayesian vs Frequentist" paradigm, specifically with the context of Reinforcement Learning.
+
+
+This comparison will be conducted by writing a posterior inference-based method from scratch. The proposal includes a "Toy Example" of this process for the data type in question. Effectively, this also tackles Bayesian inference method over a non-standard data type. 
+
+
+So, in short, the project themes being addressed are "Bayesian vs Frequentist," "Bayesian inference method over a non-standard data type" with the implementation being an idea I had inspired by some similar works in the field. The "baseline" to which it will be compared is a standard frequentist reinforcement learning method. I have already implemented this in `R` as a weekend project to be better-prepared. In addition I have developed some Python scripts for parsing the data type in question into a utilizable structure. 
+
+**Repository**
+
+
+There is a working link to a public repo containing commits from all team members.
+
+
+[Click here for the link to my entire 447 Repository.](https://github.com/cadenhewlett/STAT447)
