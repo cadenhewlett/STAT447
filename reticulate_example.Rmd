@@ -1,0 +1,39 @@
+---
+title: "Reticulate Example"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(knitr)
+library(rstan)
+library(reticulate)
+```
+
+Example of using Python and `reticulate`, as well as `py2tex` to convert the output to natural latex.
+```{python, results = FALSE}
+from sympy import symbols, simplify
+from pytexit import py2tex
+
+# Define symbols
+a = symbols('a')
+
+# Original equation's rearrangement
+left_side_coefficient = 1 - (1/(6*a))
+right_side = (3 - 2*a) / (6*a)
+
+# Simplify the equation for p(1)
+rho_1 = simplify(right_side / left_side_coefficient)
+# sympy.latex(eval(rho_1))
+pytex_obj = py2tex(str(rho_1))
+```
+Then, in the `R` cell, by setting `results = 'asis'`, we render the equation directly. 
+```{r, results='asis'}
+cat(py$pytex_obj)
+```
