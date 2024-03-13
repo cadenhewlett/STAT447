@@ -2,8 +2,6 @@
 title: "Project Proposal"
 subtitle: "STAT 447C"
 author: "Caden Hewlett"
-editor:
-  mode: source
 header-includes:
    - \usepackage{bbm}
    - \usepackage{upgreek}
@@ -27,7 +25,7 @@ library(reticulate)
 ## Overview: Basic Requirements
 
 [@img1]
-[@img2]
+[]
 
 **Team**: The team will contain me (and nobody else.)
 
@@ -51,6 +49,13 @@ There is a working link to a public repo containing commits from all team member
 
 [Click here for the link to my entire 447 Repository.](https://github.com/cadenhewlett/STAT447)
 
+
+## Overview: Project
+
+The idea behind this project is to experiment with an implementation of Bayesian Q-Learning as explored in [@paper1], and contrast its performance in environments of varying complexity against a frequentist counterpart. Specifically, we will contrast the Bayesian method to the "classical" example presented in [@paper2], with a Boltzmann exploration policy with temperature as a hyper-parameter to the model, see [@paper3]. These will be the main documents examined in the literature review and utilized throughout the paper, though more may be added as necessary.
+
+
+In the project, I plan to discuss the statistical mechanics behind Q-Learning in the literature review. However, there will be more focus on the Bayesian implementation (which will be new to me) throughout the remainder of the literature review and implementation.
 
 
 ## Bibliography
