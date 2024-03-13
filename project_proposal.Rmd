@@ -9,6 +9,7 @@ header-includes:
    - \usepackage{upgreek}
 date: "`r Sys.Date()`"
 output: pdf_document
+bibliography: bibliography.bib
 ---
 
 ```{r setup, include=FALSE}
@@ -25,6 +26,8 @@ library(reticulate)
 
 ## Overview: Basic Requirements
 
+[@img1]
+[@img2]
 
 **Team**: The team will contain me (and nobody else.)
 
@@ -45,4 +48,16 @@ So, in short, the project themes being addressed are "Bayesian vs Frequentist," 
 There is a working link to a public repo containing commits from all team members.
 
 
+
 [Click here for the link to my entire 447 Repository.](https://github.com/cadenhewlett/STAT447)
+
+
+
+## Bibliography
+\vspace{1mm}
+
+
+
+
+
+
