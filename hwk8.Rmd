@@ -1,0 +1,27 @@
+---
+title: "STAT 447 Assignment 8"
+subtitle: "Bayesian Workflow"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+editor:
+  mode: source
+header-includes:
+   - \usepackage{bbm}
+   - \usepackage{upgreek}
+output: pdf_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(knitr)
+library(rstan)
+library(reticulate)
+```
+
+# Question 1: Calibration Analysis via Cross-Validation
+
+One way to approximate the outcome of an experiment is via cross-validation. In particular, this exercise will teach you how to use leave-one-out cross-validation to assess the calibration of the model for the Hubble dataset. Let’s begin by loading and formatting the data
