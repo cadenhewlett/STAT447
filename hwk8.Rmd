@@ -180,3 +180,32 @@ $$
 Where in our case, $(1 - \alpha) = 0.80$.
 
 Our observed proportion of intervals $\text{C}(y_{\lnot n})$ containing the true $y_n$ value was $0.875$. Since $0.875 \approx 0.80$, we don't currently have significant evidence to suggest the model is not well-specified. Using the language of hypothesis testing, we would fail to reject "$H_0$: The model is well-specified."
+
+# Question 2: Prior Predictive Checks
+
+In this exercise we will investigate the effect of having fixed independent priors on the coefficients $\{\beta_i\}_{i = 1}^{n_{\text{pred}}}$ as $n_{\text{pred}}$ grows.
+
+
+## Part 1
+
+To properly design this function, we will introduce some nomenclature. Let $\mathbf{X} = \mathbf{X}_{n_{\text{obs}} \times n_{\text{pred}}}$ be defined as follows:
+$$
+\mathbf{X}=\begin{bmatrix}x_{1, 1} & x_{1,2} & \dots & x_{1, n_{\text{pred}}} \\
+x_{2, 1} & x_{2,2} & \dots & x_{2, n_{\text{pred}}} \\
+                        \vdots  & \vdots & \ddots & \vdots  \\ 
+x_{n_{\text{obs}}, 1 }&  x_{n_{\text{obs}}, 2 } &\dots& x_{n_{\text{obs}}, n_{\text{pred}}}
+\end{bmatrix}_{n_{\text{obs}} \times n_{\text{pred}}} 
+$$
+Then, the vector of random normal pulls is denoted $\vec\beta$, where:
+$$
+\vec\beta = \Big\{ \beta_i \mid \beta_i \sim N(0,1), \text{ for } i \in [1, n_{\text{pred}}]\Big\}
+$$
+
+$$
+\vec{\mathbf{y}}\mid \vec{\beta} \,\sim\text{bern}\Big( \text{logistic}\big(\mathbf{X}^{\top} \vec{\beta} \,\big) \Big)
+$$
+
+Then, letting $\vec{\mathbf{1}}$ be the vector of $1$s, we let the mean of $\vec{y}$ be
+$$
+\overline{\mathbf{y}} := n_{\text{obs}}^{-1}(\vec{\mathbf{1}} \cdot \vec{\mathbf{y}}) = \frac{1}{n_{\text{obs}}}\sum_{\{y \,: \,y \in \vec{\mathbf{y}}\}} y
+$$
