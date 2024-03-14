@@ -63,5 +63,7 @@ for (k in 1:K) {
 ## doing this for each model in the step
 ## or spike-and-slab as we did previously, for selecting which predictors are
 ## actually relevant.
+
+## animorph into a sideways crocodile
 c(plogis(-Inf), plogis(Inf))
 ## Bayesian version of lasso maybe?
