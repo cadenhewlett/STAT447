@@ -307,3 +307,16 @@ for (k in 1:K) {
        main=paste("Histogram for n =", n_pred[k]), xlab="Average Outcome", ylab="Frequency")
 }
 ```
+
+## Part 3
+
+
+#### Do you observe any change in the distributions obtained in step 2? 
+
+Yes, we see that as $n_{\text{pred}}$ increases, the plot of average outcomes becomes increasingly concave. In this sense, there is higher frequency for the $[0.00, 0.05]$ and $[0.95, 1.00]$ as $n_{\text{pred}} \uparrow$. In running repeated tests for different $n_{\text{pred}}$, I found that the concavity becomes evident for $n_{\text{pred}}\geq 4$ 
+
+
+Do you think this is desirable in a model? 
+
+
+If yes, why? If not, how would you fix this?

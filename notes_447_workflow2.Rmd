@@ -1,0 +1,354 @@
+---
+title: 'Bayesian Workflow: Lecture 2'
+subtitle: "STAT 447"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(knitr)
+library(rstan)
+library(reticulate)
+library(bayesplot)
+require(dplyr, quietly = TRUE)
+require(rstan, quietly = TRUE)
+require(knitr, quietly = TRUE)
+```
+
+
+# MCMC Diagnostics.
+
+The notion of "mixing," as in "how quickly do we forget the initial distribution?" We have seen MCMC is consistent; however the speed of convergence can vary considerably due to the dependence between the successive draws.
+
+
+Recall if the state space of chian $X^{(m)}$, Birkhoff's Ergodic Theorem applies:
+
+$$
+\dfrac{1}{M}\sum_{m = 1}^M g(X^{(m)}) \overset{\infty}{\rightarrow} \mathbb{E}_{\pi}\big[ g(X) \big]
+$$
+
+## Fast Mixing
+
+In this situation, the chain is almost *iid* just a **constant time** slower. The technical name is "geometric ergodicity," which is a property of Markov Chains. Fast mixing happens when the dependence between time step $i$ and $i+m$ decays exponentially in $m$. Recall, a Markov Chain is ergodic if it is aperiodic and irreducible.
+
+
+## Slow/Torpid Mixing
+
+The MCMC is still consistent, but you may have to wait a long time for the answer! In this case, we need changes. 
+
+
+## How to detect slow-mixing chains
+
+Use several "over-dispersed" chains. *Over-Dispersed*: use at least as much noise as the prior (roughly.) Then, check for differences between the independent chains via rank plots, trace plots, etc.
+
+
+## Worked Example
+
+Fast-mixing: a beta-binomial problem.
+
+```{stan  output.var = "easy"}
+
+data {
+  int<lower=0> n_trials;
+  int<lower=0> n_successes;
+}
+parameters {
+  real<lower=0, upper=1> p;
+}
+
+model {
+  p ~ uniform(0, 1);
+  n_successes ~ binomial(n_trials, p);
+}
+
+```
+
+Slow-mixing: binomial likelihood, but with "too many parameters." As you can see $p_1$ and $p_2$ are inextricably linked and cannot be easily separated or distinguished from one another. 
+
+```{stan  output.var = "unidentifiable"}
+
+data {
+  int<lower=0> n_trials;
+  int<lower=0> n_successes;
+}
+parameters {
+  real<lower=0, upper=1> p1;
+  real<lower=0, upper=1> p2;
+}
+
+model {
+  p1 ~ uniform(0, 1);
+  p2 ~ uniform(0, 1);
+  n_successes ~ binomial(n_trials, p1*p2);
+}
+
+```
+
+Then, the MCMC process is here.
+```{r, message=FALSE, warning=FALSE, results = FALSE}
+M = 1000
+fit_easy = sampling(
+  easy,
+  seed = 1,
+  chains = 2,
+  refresh = 0,
+  data = list(n_trials=M, n_successes=M/2),       
+  iter = 1000                   
+)
+
+fit_hard = sampling(
+  unidentifiable,
+  seed = 1,
+  chains = 2,
+  refresh = 0,
+  data = list(n_trials=M, n_successes=M/2),       
+  iter = 1000                   
+)
+```
+
+Then, we can run diagnostics!
+
+## Trace Plots
+
+```{r}
+mcmc_trace(fit_easy, pars = c("p")) + theme_bw()
+```
+
+```{r}
+mcmc_trace(fit_hard, pars = c("p1")) + theme_bw()
+```
+
+## Rank Histograms
+
+In a rank histogram, there will be an obvious dispersion of ranks between the parameters. In the fast mixing case, all histograms will be roughly equivalent, but in a slow case, there will be a noteable difference between them. 
+
+```{r}
+mcmc_rank_hist(fit_easy, pars = c("p")) + theme_bw()
+```
+
+
+```{r}
+mcmc_rank_hist(fit_hard, pars = c("p1")) + theme_bw()
+```
+
+
+# Effective Sample Size
+
+Now, we consider Markov Chain Standard Error, Effetive Sample Size and teh CLT for Markov Chains (in the fast mixing case.) Once we've concluded the chain is mixing well, the quesiton is: how many digits aare reliable when reporting an MCMC approximation?
+
+
+There are two types of errors Bayesian analysis based on Monte Carlo.
+
+
+**Statistical Error**: inherent uncertainty due to, for example, the fact we have finite data, we make assumptions, we have unidentifiability, etc. 
+
+
+**Computation Error**: additional error due to the fact that we use an approximation of the posterior instead of the exact posterior. 
+
+
+We discuss Computational Error below. It's actually done via **normal approximation**! 
+
+
+Ok, but why are we okay with this? When building a \underline{credible interval} (a Bayesian method of *statistical error*), we avoided Central Limit Theorems. In short, in MCMC iterations it is really easy to increase the number of iterations $M$ compared to the number of data points $n$. So, there's no cost really with using Frequentist reasoning.
+
+
+(Also, as an extra, some approaches use the Laplace approximation instead of MCMC, which is "CLT-like" processes motivated by the Bernstein-von Mises theorem.)
+
+
+# Executive Version
+
+How many digits are reliable?
+
+Suppose you are approximating a posterior mean in Stan. We now show how to determine how many digits are reliable:
+
+
+1. Print the `fit` object
+    
+    
+2. Roughly twice ($Z_{0.975} \approx 1.96$) the column `se_mean` provides a $95\%$ confidence interval.
+
+
+```{stan output.var = "doomsday"}
+
+data { 
+  real y; 
+}
+
+parameters { 
+  real<lower=0, upper=5> x;
+}
+
+model {
+  x ~ uniform(0, 5); 
+  y ~ uniform(0, x); 
+}
+
+```
+
+Then, the MCMC Sampling procedure:
+
+```{r, message=FALSE, warning=FALSE, results = FALSE}
+fit = sampling(
+  doomsday,         
+  data = list(y = 0.06), 
+  chains = 1,
+  seed = 1,
+  refresh = 0, 
+  iter = 20000
+)
+```
+
+With the `fit` given by...
+```{r}
+information = extract(fit)
+fit
+```
+
+
+## Results and Computational Error Interval
+
+We observed `se_mean = 0.03` and `mean = 1.16`. The true value was $1.117$
+
+The $95\%$ confidence interval is then... 
+
+$$
+\text{CI}_{\text{err}}(\alpha) = \bar{x}_M \pm Z_{1-\alpha/2}\;\text{se}(\bar{x}_M)
+$$
+Where...
+$$
+\bar{X} = M^{-1}\sum_{m = 1}^M X^{(m)}
+$$
+In our case, this is
+$$
+\text{CI}_{\text{err}}(0.95) = [1.10, 1.22]. \text{ Note, } 1.117 \in \text{CI}_{\text{err}}(0.95).
+$$
+We expect the interval to contain the truth in approximately $95\%$ of seeds.
+
+# Mathematical Underpinnings
+
+We answer two important questions.
+
+
+Firstly, how can we compute Monte Carlo Standard Errors? (MCSE) We saw these already as `se_mean`, but like how are they found?
+
+
+What underlying theory justifies that computation? 
+
+
+Along the way, we define the notion of Effective Sample Size.
+
+
+## Background
+
+Recall the entral limit theorem for *iid* rvs.
+
+Let $V_1, V_2 \dots V_n$ be *iid* with finite variance. Then,
+$$
+\sqrt{n}(\bar{V} - \mathbb{E}(V)) \rightarrow N\Big(0, \sqrt{\text{var}(V)} \;\Big)
+$$
+Where $\mathbb{E}(V) = \mu$.
+
+
+From the CLT, recall the standard frequentist argument gives:
+$$
+\mathbb{P}\Big( \mu \in \big [ \bar{V} \pm Z_{\alpha/2} \text{se}(V)\big] \Big) = 1-\alpha
+$$
+
+
+## For Markov Chains
+
+We need this to generalize for Markov Chains!
+
+**Markov Chain**
+
+
+Let $X^{(1)}, X^{(2)}, \dots X^{(N)}$ be random variables in a Markov Chain, such that they satisfy Markov's Property: $\mathbb{P}(X^{(n+1)} = x \mid X^{(n)}, X^{(n-1)} \dots X^{(1)}) = \mathbb{P}(X^{(n+1)} = x \mid X^{(n)})$.
+
+
+Let $\pi(x) = \gamma(x) / Z$. Let $\mu = \int x \pi(x) \text{d}x$. 
+
+### Theorem
+
+Assuming $\sigma^2 = \int (x - \mu)^2 \pi(x) \text{d}x < \infty$, in our context that the posterior variance is finite, under fast mixing assumptions we know that:
+
+$$
+\sqrt{n} (\bar{X} - \mu) \rightarrow N(0, \sigma_a)
+$$
+
+Where the constant $\sigma^2_a \in \mathbb{R}^{+} \setminus \{0\}$ is known as the asymptotic variance. This also requires the \underline{reversibility} of Markov Chains, too. 
+
+
+## Effective Sample Size
+
+
+The ESS is an answer to the following: How many *iid* samples $n_e$ would be equivalent (same variance) to the $M$ samples obtained from MCMC? By default, Stan is run for $2,000$ iterations, but this is not equivalent to *iid* sampling. For example, if $n_e = 1,000$, then you're roughly two times slower than MCMC.
+
+
+Note, $\mathbb{V}(aX + b) =  a^2 \mathbb{V}(X)$. So, using...
+
+$$
+\begin{aligned}
+\sqrt{n_e}( \bar{X}_{\text{iid}} - \mu) \rightarrow N(0, \sigma) \\
+\sqrt{M}( \bar{X}_{\text{MCMC}} - \mu) \rightarrow N(0, \sigma_a) 
+\end{aligned}
+$$
+
+So...
+$$
+\begin{aligned}
+\text{var}\Big(\sqrt{n_e}( \bar{X}_{\text{iid}} - \mu)\Big) \approx \sigma^2 \\
+\text{var}\Big(\sqrt{M}( \bar{X}_{\text{MCMC}} - \mu) \Big)\approx \sigma_a^2
+\end{aligned}
+$$
+
+Implying that:
+
+$$
+\begin{aligned}
+{n_e}\text{var}( \bar{X}_{\text{iid}}) \approx \sigma^2  \\
+M \text{var} ( \bar{X}_{\text{MCMC}})\approx \sigma^2_a 
+\end{aligned}
+$$
+Then, if we have $n_e$ defined such that $\text{var}( \bar{X}_{\text{iid}}) = \text{var}( \bar{X}_{\text{MCMC}})$, then we have a closd form for the effective sample size!
+$$
+\text{Effective Sample Size} = n_e = \dfrac{M\sigma^2}{\sigma^2_a}
+$$
+
+Sometimes, the effective sample size is greater than the actual sample size!
+
+Such an example is known as "super-efficient" Markov Chains.
+
+## What is the Asymptotic Variance?
+
+We can estimate $\sigma^2_a$ in many different ways. 
+
+
+We start here with the simplest possible setting. Let $C$ be the number of chains and $S$ be the number of MCMC samples. We then have $\{E_1, E_2, \dots E_C\}$ from the estimators. We also then have the voerall estimator.
+$$
+E = (C)^{-1} \sum_{c = 1}^C E_c
+$$
+Also, we know that $\forall c \in [1,C]$
+$$
+\forall c \in [1,C] \, S \cdot\text{var}[E_c] \approx \sigma^2_a
+$$
+Finally, by *iid*,
+$$
+\text{var}[E_c] \approx \frac{1}{C} \sum_{c = 1}^C (E_c - E)^2
+$$
+
+Thus, we can denote the estimator for $\sigma^2_a$ as...
+$$
+\begin{aligned}
+\sigma^2_a \approx \dfrac{S}{C} \cdot \sum_{c = 1}^C (E_c - E)^2
+\end{aligned}
+$$
+
+
+The "one long chain" is a  common approach is to view a trace of length $M$ as $C$ subsequent batches of length $S$ for $M = C \cdot S$. Then, $C = S = \sqrt{M}$. This is known as the **batch mean** estimator. 

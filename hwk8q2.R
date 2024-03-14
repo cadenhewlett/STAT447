@@ -55,7 +55,8 @@ for (k in 1:K) {
 ## no - if we want to infer on new data, i.e. use posterior as prior, 
 ## cromwell's rule is sad now. 
 ## it also tells me our fits are tending towards homogeneity. 
-## the average is getting closer and closer to zero or one respectively. 
+## the average is getting closer and closer to zero or one respectively.
+## opinioned prior
 ## this means the sums X^T B are getting closer and closer to +/- infinity
 ## it seems to me like this is an example of over-fitting
 ## this could be fixed by doing Cross-Validation (LOO-CV is used in machine learning
