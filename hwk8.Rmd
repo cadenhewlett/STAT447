@@ -311,12 +311,40 @@ for (k in 1:K) {
 ## Part 3
 
 
-#### Do you observe any change in the distributions obtained in step 2? 
+*Do you observe any change in the distributions obtained in step 2?*
+
 
 Yes, we see that as $n_{\text{pred}}$ increases, the plot of average outcomes becomes increasingly concave. In this sense, there is higher frequency for the $[0.00, 0.05]$ and $[0.95, 1.00]$ as $n_{\text{pred}} \uparrow$. In running repeated tests for different $n_{\text{pred}}$, I found that the concavity becomes evident for $n_{\text{pred}}\geq 4$ 
 
 
-Do you think this is desirable in a model? 
+
+*Do you think this is desirable in a model?*
 
 
-If yes, why? If not, how would you fix this?
+No. The prior is becoming increasingly opinionated as $n_{\text{pred}}$ increases. Potentially, as $n_{\text{pred}} \rightarrow \infty$, we could start to see densities of zero on values in the prior. Under Cromwell's Rule, this is undesirable. I would hypothesize that this increasing preference of the prior is due to the "bloat" in predictors,  and hence over-fitting.
+
+
+
+*If yes, why? If not, how would you fix this?*
+
+
+There are many fixes to this issue, such as using LOO-CV with the leave-one-out methods discussed in this section. Alternatively, we could take a "spike-and-slab" approach as we have done with previous models, selecting only those predictors which are relevant.
+
+
+# Q.3: Hierarchical Models Revisited
+
+In this original question, we had $\mu_p \sim \text{betaMP}(0.1, 10)$ among other distributions.
+
+
+Noting that $\mu = 0.1$ and $s = 10$ in this case, we can remodel this in "standard" beta parameters as follows:
+
+$$
+\alpha = \mu s = 0.1(10) = 1, \text{ and } \beta = (1 - \mu)s = (0.9)(10) = 9
+$$
+
+So, now, $\mu_p \sim \text{beta}(1, 9)$.
+
+Similarly, we also have
+$$
+(p \mid \{ \mu_p, \lambda_p\}) \sim \text{betaMP}(\mu_p, \lambda_p) \equiv \text{beta}\big(\mu_p \lambda_p, (1 - \mu_p)\lambda_p \big)
+$$
