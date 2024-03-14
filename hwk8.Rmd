@@ -144,7 +144,7 @@ ci_limits = matrix(all_loo, nrow = nrow(df), ncol = 2, byrow = T)
 
 Then the plot is below:
 
-```{r}
+```{r criplot}
 merged_df = df %>%
   bind_cols(data.frame(CI_L = ci_limits[, 1], CI_R = ci_limits[, 2])) %>%
   mutate(Inside_CI = (velocity >= CI_L & velocity <= CI_R))
@@ -181,6 +181,7 @@ Where in our case, $(1 - \alpha) = 0.80$.
 
 Our observed proportion of intervals $\text{C}(y_{\lnot n})$ containing the true $y_n$ value was $0.875$. Since $0.875 \approx 0.80$, we don't currently have significant evidence to suggest the model is not well-specified. Using the language of hypothesis testing, we would fail to reject "$H_0$: The model is well-specified."
 
+\pagebreak
 # Question 2: Prior Predictive Checks
 
 In this exercise we will investigate the effect of having fixed independent priors on the coefficients $\{\beta_i\}_{i = 1}^{n_{\text{pred}}}$ as $n_{\text{pred}}$ grows.
@@ -188,7 +189,7 @@ In this exercise we will investigate the effect of having fixed independent prio
 
 ## Part 1
 
-To properly design this function, we will introduce some nomenclature. Let $\mathbf{X} = \mathbf{X}_{n_{\text{obs}} \times n_{\text{pred}}}$ be defined as follows:
+To properly design this function, we will introduce some nomenclature. Let $\mathbf{X}$ be defined as follows:
 $$
 \mathbf{X}=\begin{bmatrix}x_{1, 1} & x_{1,2} & \dots & x_{1, n_{\text{pred}}} \\
 x_{2, 1} & x_{2,2} & \dots & x_{2, n_{\text{pred}}} \\
@@ -198,14 +199,111 @@ x_{n_{\text{obs}}, 1 }&  x_{n_{\text{obs}}, 2 } &\dots& x_{n_{\text{obs}}, n_{\t
 $$
 Then, the vector of random normal pulls is denoted $\vec\beta$, where:
 $$
-\vec\beta = \Big\{ \beta_i \mid \beta_i \sim N(0,1), \text{ for } i \in [1, n_{\text{pred}}]\Big\}
+\vec\beta = \Big\{ \beta_i \mid \beta_i \overset{\text{iid}}{\sim} N(0,1), \text{ for } i \in [1, n_{\text{pred}}]\Big\}
 $$
-
+Finally, the likelihood is given by:
 $$
-\vec{\mathbf{y}}\mid \vec{\beta} \,\sim\text{bern}\Big( \text{logistic}\big(\mathbf{X}^{\top} \vec{\beta} \,\big) \Big)
+\vec{\mathbf{y}}\mid \vec{\beta} \,\sim\text{bern}\Big( \text{logistic}\big(\mathbf{X} \vec{\beta} \,\big) \Big)
 $$
 
 Then, letting $\vec{\mathbf{1}}$ be the vector of $1$s, we let the mean of $\vec{y}$ be
 $$
 \overline{\mathbf{y}} := n_{\text{obs}}^{-1}(\vec{\mathbf{1}} \cdot \vec{\mathbf{y}}) = \frac{1}{n_{\text{obs}}}\sum_{\{y \,: \,y \in \vec{\mathbf{y}}\}} y
 $$
+
+Now that we've clarified the model, let's proceed with the design of the `logistic_regression` function. 
+
+
+Given $\mathbf{X}$, the function will sample $\vec\beta$ first before computing $\text{logistic}\big(\mathbf{X} \vec{\beta}$ and then conducting $n_{\text{obs}}$ Bernoulli trials to create $\vec{\mathbf{y}}$ and then computing the mean of $\vec{\mathbf{y}}$. (\underline{NOTE}: we know there are $n_{\text{obs}}$ trials due to the fact that $\mathbf{X}_{n_{\text{obs}} \times n_{\text{pred}}} \times \vec{\beta}_{n_{\text{pred}} \times 1} = \vec{\mathbf{y}}_{1 \times n_{\text{obs}}}$.)
+
+
+
+We will denote this function as follows:
+$$\text{Logistic Regression} : f: \mathbb{R}^{n_{\text{obs}} \times n_{\text{pred}}} \rightarrow \mathbb{R}, \text{ where }f\,(\mathbf{X}) = \overline{\mathbf{y}}$$
+We attempt to inherit the terminology and process described above.
+```{r logistic_regression}
+logistic_regression <- function(X){
+  # get the matrix sizes
+  n_pred = ncol(X)
+  n_obs = nrow(X)
+  
+  # simulate beta values
+  beta = rnorm(n_pred)
+  
+  # compute the p parameter of the bernoulli distribution
+  p = plogis(X%*%beta) # 1 / (1 + exp(-X%*%beta))
+  
+  # then the y values
+  y = rbinom(n_obs, size = 1, prob = p)
+  
+  # then take the mean
+  ybar = mean(y)
+  
+  # and return it
+  return(ybar)
+}
+```
+
+
+
+## Part 2
+
+Now, we let $n_{\text{obs}} =  100$ and consider $n_\text{pred}\in\{2,4,15\}$. 
+
+We will create a set of data matrices $\mathcal{X}$ defined by the following, letting $x_{i, j}$ be the $(i,j)$ cell of $\mathbf{X}$
+
+$$
+\begin{aligned}
+\mathcal{X} &= \Big\{ \mathbf{X}_{100 \times n}, \text{ where } x_{i,j} \overset{\text{iid}}{\sim} \text{bern}(0.9), \text{ for } i \in [1, 100], j \in [1,n] \text{ and } n \in \{2,4,15\}\Big\} \\ 
+\end{aligned} \tag{1}
+$$
+
+Then, for $M = 100,000$, we complete the simulation process, letting $\mathbf{X}_{k} \subset \mathcal{X}$ be the matrix in $\mathcal{X}$ with $k$ columns. We can think of the resulting process creating a $M \times K$ matrix, where $K = |\mathcal{X}|$ denoted as follows:
+
+$$
+\overline{\mathbf{Y}}_{M,{K}}=
+\begin{bmatrix}\bar{\mathbf{y}}_{1,1} & \bar{\mathbf{y}}_{1,2} & \dots & \bar{\mathbf{y}}_{1,K} \\
+\bar{\mathbf{y}}_{2,1} & \bar{\mathbf{y}}_{2,2} & \dots & \bar{\mathbf{y}}_{2,K} \\
+                        \vdots  & \vdots & \ddots & \vdots  \\ 
+\bar{\mathbf{y}}_{M,1} & \bar{\mathbf{y}}_{M,2} & \dots & \bar{\mathbf{y}}_{M,K}
+\end{bmatrix}_{M \times K} \tag{2}
+$$
+$$
+\text{Where } \bar{\mathbf{y}}_{m,k} = f ( \mathbf{X}_{k} ) \text{ for } \mathbf{X}_{k} \in \mathcal{X}, k \in [1, K], \text{ and } m \in [1, M]  \tag{3}
+$$
+Then we plot a histogram for each column of $\overline{\mathbf{Y}}_{M,{K}}$. In our example there are only three columns, but the language here is designed to be extended upon if desired. The tags on the above equations have been added to direct the reader through the code. 
+
+The entire simulation study is conducted below, with the $\overline{\mathbf{Y}}_{M,{K}}$ matrix previewed at the end. 
+```{r full_simulation_study}
+set.seed(1928)
+# declare parameters
+M = 100000
+p = 0.9
+m = 100
+n_pred = c(2, 4, 15)
+K = length(n_pred)
+# rename the logistic_regression to match the terminology provided 
+f <- logistic_regression
+remove(logistic_regression)
+
+# create the set of matrices described earlier: (1)
+X <- sapply(n_pred, function(n){
+  matrix(data = rbinom(n*m, size = 1, prob = p),
+         nrow = m, ncol = n)
+})
+
+# then, create Y: k in [1, K], m in [1, M] : (2)
+Y = matrix(rep(1:K, each = M), nrow = M, ncol = K, byrow = F)
+# finally, populate this matrix: (3)
+Ybar = apply(Y,  MARGIN = c(1,2), function(k){ f(X[[k]]) })
+head(Ybar)
+```
+
+Then, we can make the plots as follows (note, I added $n = 1$):
+```{r simulation_study_plots}
+par(mfrow=c(1, K))
+for (k in 1:K) {
+  hist(Ybar[, k],  breaks=20, ylim=c(0,17000), 
+       main=paste("Histogram for n =", n_pred[k]), xlab="Average Outcome", ylab="Frequency")
+}
+```
