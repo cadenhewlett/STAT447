@@ -14,6 +14,9 @@ library(latex2exp)
 library(knitr)
 library(rstan)
 library(reticulate)
+require(dplyr, quietly = TRUE)
+require(rstan, quietly = TRUE)
+require(knitr, quietly = TRUE)
 ```
 
 Example of using Python and `reticulate`, as well as `py2tex` to convert the output to natural latex.
