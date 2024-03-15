@@ -69,6 +69,5 @@ merged_df %>%
     subtitle = paste((sum(merged_df$Inside_CI)/N_obs)*100, 
                      "% of Intervals Contain the True Value", sep = "")
   )
-
-
+?geom_errorbar
 

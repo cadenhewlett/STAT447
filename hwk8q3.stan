@@ -49,3 +49,9 @@ model {
     (is_vaccinated[i] == 1 ? 1.0 - efficiencies[trial[i]] : 1.0)));
   }
 }
+
+// indicator of if Moderna is better than Pfizer, as done previously
+generated quantities {
+  // pfizer = 3, moderna = 2
+  real is_moderna_better = efficiencies[2] > efficiencies[3] ? 1 : 0;
+}
