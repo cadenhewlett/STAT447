@@ -1,0 +1,48 @@
+---
+title: "Nonparametric Bayes"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+# Dirichlet Process Mixtures of Generalized Linear Models: Summary
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Into: What is a Dirichlet Process
+ 
+...
+
+
+## Model Examples
+
+### Gaussian 
+
+This model has been proposed by West et al. (1994), Escobar and West (1995) and Muller et al. (1996.) As a more introductory input, we explain each component in detail.
+
+
+We have continuous covariates and responses in $\mathbb{R}$. It is modeled locally with a Normal distribution for the explanatory variables and a linear regression model for the response. 
+
+
+The explanatory variables have mean $\mu_{i,j}$ for the $j$-th dimension of the $i$-th observation (e.g. the 3rd term of the 2nd observation.)  Similarly, we have $\sigma^2_{i,j}$ for this same logic.  There are $d$ total dimensions and $n$ total observations .
+
+
+We have the GLM parameters as linear predictors $\{\beta_{i,j}\}_{j=0}^d$ with response variance $\sigma^2_{i, y}$.
+
+
+We define $\vec{\mathbf{\theta}}_{y, i}$ for the regression parameters as follows:
+
+$$
+\vec{\mathbf{\theta}}_{y, i} = \Big\{ (\vec{\beta}_{i,j}, \sigma_{i,y}) \text{ where } \vec\beta_{i, j}  = \{\beta_{i, 0}, \beta_{i, 1} \dots \beta_{i,d} \}\Big\} \equiv \big( \{\beta_{i,j}\}_{j=0}^d, \sigma_{i, y} \big) \equiv \big( \beta_{i, 0:d}, \sigma_{i, y} \big)
+$$
+
+Then, for the covariates, we have $\vec{\mathbf{\theta}}_{x, i}$, where $k$ is used over $j$ to indicate indexing beginning at $1$.
+$$
+\vec{\mathbf{\theta}}_{x, i} = \Big\{ (\vec\mu_{i,k}, \vec\sigma_{i,k}) \text{ where } \vec\mu_{i,k} = \{\mu_{i,1}, \mu_{i,2}, \dots \mu_{i,d}  \} \text{ and } \vec\sigma_{i,k} = \{\sigma_{i,1}, \sigma_{i,2}, \dots \sigma_{i,d}  \} \Big\} \equiv \big[ (\mu_{i,j}, \sigma_{i,j})\big]_{j = 1}^d \equiv \big(\mu_{i, 1:d}, \sigma_{i, 1:d}\big)
+$$
+
+<!-- $$ -->
+<!-- \vec{\mathbf{\theta}}_{x, i} = \Big\{ (\vec\mu_{i,k}, \vec\sigma_{i,k}) \mid \Big[\big(\mu_{i,1}, \sigma_{i,1}\big),\big(\mu_{i,2}, \sigma_{i,2}\big), \dots, \big(\mu_{i,d}, \sigma_{i,d}\big) \Big] \Big\} -->
+<!-- $$ -->
