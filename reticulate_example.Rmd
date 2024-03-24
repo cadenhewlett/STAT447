@@ -40,3 +40,30 @@ Then, in the `R` cell, by setting `results = 'asis'`, we render the equation dir
 ```{r, results='asis'}
 cat(py$pytex_obj)
 ```
+
+
+```{python}
+from sympy import symbols, solve, lambdify, diff
+
+b0, b1, b2, x = symbols('b_0 b_1 b_2 x')
+
+model_eq = b0 + b1*x + b2*x**2
+
+roots = solve(model_eq, x)
+
+root_funcs = [lambdify((b0, b1, b2), root) for root in roots]
+
+## x-value where y = 0
+b0_val, b1_val, b2_val = (1, 0.0102, -4.321e-5)
+root_values = [root_func(b0_val, b1_val, b2_val) for root_func in root_funcs]
+print([root for root in root_values if root > 0])
+
+
+## x-value where d/dx (y) = 0
+y_prime = diff(model_eq, x)
+## set to zero
+extrema = solve(y_prime, x)
+## transform to function
+zeroes = lambdify((b1, b2), extrema)
+print(zeroes(b1_val, b2_val))
+```
