@@ -67,3 +67,26 @@ extrema = solve(y_prime, x)
 zeroes = lambdify((b1, b2), extrema)
 print(zeroes(b1_val, b2_val))
 ```
+
+$$
+\begin{aligned}
+f(x, h_i, y_i) &=  f(x)f(h_i \mid x)f(y_i \mid h_i) &\text{Chain Rule}\\
+L\Big(f\big(x, \{h_i\}_{i=1}^n, \{y_i\}_{i=1}^n\big)\Big) &= \prod_{i = 1}^n \bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg) &\text{Definition of Likelihood} \\
+\gamma(x) &= \sum_{y_{n-1} = 0}^{\infty} \sum_{y_{n} = 0}^{\infty}  \bigg(\prod_{i = 1}^n \bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg)\bigg) &\text{R.B. First Step} \\
+\gamma(x) &= \prod_{i = 1}^{n-2} \bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg) \sum_{h_{n-1} = 0}^{\infty} \sum_{h_{n} = 0}^{\infty} \bigg(\prod_{i \in \{n-1, \;n \}} \bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg)\bigg)  &\text{Separate Uncensored} \\
+\gamma(x) &= \prod_{i = 1}^{n-2} \bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg)  \bigg(\prod_{i =(n-1)}^n \sum_{h_i = 0}^{\infty}\bigg( f(x)f(h_i \mid x)f(y_i \mid h_i)\bigg)\bigg)  &\text{Move the Sum} \\
+\gamma(x) &= f(x)\prod_{i = 1}^{n-2} \bigg( f(h_i \mid x)\big(h_i(1-\mathbb{1}[h_i \geq 8])\big)\bigg)  \bigg(\prod_{i =(n-1)}^n \sum_{h_i = 0}^{\infty}\bigg( f(h_i \mid x)\big(L\cdot\mathbb{1}[h_i \geq 8])\bigg)\bigg)  &\text{Plug in Indicator} \\
+\gamma(x) &= \underbrace{f(x)}_{\text{Prior}}\underbrace{\prod_{i = 1}^{n-2} \bigg( f(h_i \mid x)\bigg)}_{\text{Likelihood as Usual}}  \underbrace{\bigg(\prod_{i =(n-1)}^n \sum_{h_i = L}^{\infty}\Big( f(h_i \mid x) \bigg)}_{\text{Likelihood for } \geq \,L}  & \star \;\text{Messed up notation at some point.} \\
+\gamma(x) &= p_{\text{exp}}(x ; \lambda)\prod_{i = 1}^{n-2} p_{\text{pois}}(h_i ; x)\prod_{n-1}^{n}\Big( \mathbb{P}\big(\text{pois}(x) \geq L\,\big) \Big)&\;\text{Starting to simplify} \\
+\gamma(x) &= p_{\text{exp}}(x ; \lambda)\prod_{i = 1}^{n-2} p_{\text{pois}}(h_i ; x)\prod_{n-1}^{n}\big(1 - F_{\text{pois}}(L;x)\big)&\;\text{Done?} \\
+\gamma(x) &= p_{\text{exp}}(x ; 1/100)\prod_{i =1}^{18} p_{\text{pois}}(h_i ; x)\prod_{i = 19}^{20}\big(1 - F_{\text{pois}}(8;x)\big)&\;\text{+ Problem Context} 
+\end{aligned}
+$$
+Or, more formally, $$\lim_{M \rightarrow \infty}\bigg( \mathbb{P}\Big( \dfrac{\sqrt{M}(\bar{X}_{\text{m}} - \mu)}{\sigma_a} \leq z\Big)\bigg) = \Phi(z)$$
+
+So then from this, a $$95\%$$ C.I. can be constructed: 
+$$\begin{aligned}
+\text{CI}(0.95) &:= \bigg(Z_{0.025} \leq \dfrac{\sqrt{M}(\bar{X}_{\text{m}} - \mu)}{\sigma_a} \leq Z_{0.975}\bigg) \\
+\text{CI}(0.95) &:= \bigg(Z_{0.025}\Big(\dfrac{\sigma_a}{\sqrt{M}} \Big) \leq (\bar{X}_{\text{m}} - \mu) \leq Z_{0.975}\Big(\dfrac{\sigma_a}{\sqrt{M}} \Big)\bigg) \\
+\text{CI}(0.95) &:= \bigg(\bar{X}_{\text{m}} + Z_{0.025}\Big(\dfrac{\sigma_a}{\sqrt{M}}\Big) \leq   \mu \leq \bar{X}_{\text{m}} + Z_{0.975}\Big(\dfrac{\sigma_a}{\sqrt{M}} \Big)\bigg)
+\end{aligned}$$
