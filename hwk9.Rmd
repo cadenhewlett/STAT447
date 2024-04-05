@@ -107,24 +107,34 @@ We begin by discussing $K_{1}$. This kernel will only modify the $\vec{\lambda}$
 Notably, rather than having a dimension of $2$, we have each rate operate separately on their own means to be updated over time. The objective is to have more independent exploration for pre-and-post change point rates. Notably, our proposal vector is $\big\{\vec{\lambda^{\star}}, C\big\}$, highlighting that in this kernel we do not select new values for the change point.
 $$
 \begin{aligned}
-q\Big(\big\{\vec{\lambda^{\star}}, C\big\} \mid \big\{\vec{\lambda}, C\big\} \Big) &= \Big\{\frac{1}{\sqrt{2\pi}} \exp\Big( -\frac{1}{2}(\lambda_i^{\star} - \lambda_i)^2\Big) : i \in \{1,2\}\Big\} \\
-\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)  &= \text{min}\Big\{1, r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)\Big\}, \text{ where }  r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) = \dfrac{\gamma(\lambda^{\star}, C)}{\gamma(\lambda, C)} \\
-K_{1}\big(\vec{\lambda^{\star}} \mid \vec{\lambda}\,\big) &= q\big(\,\big\{\vec{\lambda^{\star}}, C\big\} \mid \big\{\vec{\lambda}, C\big\} \big)\cdot\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) \\
+q_1\big(\{\vec{\lambda^{\star}}, C\} \mid \{\vec{\lambda}, C\} \big) &= \Big\{\frac{1}{\sqrt{2\pi}} \exp\Big( -\frac{1}{2}(\lambda_i^{\star} - \lambda_i)^2\Big) : i \in \{1,2\}\Big\} \\
+\alpha_1\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)  &= \text{min}\Big\{1, r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)\Big\}, \text{ where }  r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) = \dfrac{\gamma(\lambda^{\star}, C)}{\gamma(\lambda, C)} \\
+K_{1}\big(\{\vec{\lambda^{\star}}, C\} \mid \{\vec{\lambda}, C\} \big) &= q_1\big(\{\vec{\lambda^{\star}}, C\} \mid \{\vec{\lambda}, C\} \big)\cdot\alpha_1\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) \\
 \end{aligned}
 $$
 In a simplified version, we can write the equation below to simplify $K_1$ :
 $$
 K_{1}\big(\vec{\lambda^{\star}} \mid \vec{\lambda}\,\big) = q\big(\,\vec{\lambda^{\star}}\mid \vec{\lambda}\, \big)\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}\big) 
 $$
+Further, we note that the standard normal proposal will allow the algorithm to explore all candidate $\vec{\lambda}$ pairs in $(\mathbb{R}^{+})^2$. Let's talk briefly about why by highlighting an arbitrary proposed $\lambda_i^{\star} \in \vec{\lambda^{\star}}$ in terms of Poisson probability mass $\gamma(\vec{\lambda^{\star}}, C)$ for well-defined $C \in [1, N] \subseteq \mathbb{N}$.
+
+
+Firstly, we note that Poisson rate parameters $\lambda$ are strictly positive, while the standard normal surrounding $\lambda_i$ can propose $\lambda^{\star}_i \in \mathbb{R}$. Notably, however, a property of the Poisson probability density (specifically for the `log_joint` function) is that:
+$$
+p_{\text{pois}}(k;\lambda) = \mathbb{P}\big(\text{pois}(\lambda) = k \big) = \begin{cases} \dfrac{\lambda^k e^{-\lambda}}{k!} , & k\geq 0, \,\lambda \geq0 \\
+0, &\text{otherwise}\end{cases}
+$$
+Notably, in the case that \underline{either} $\lambda_1^{\star}$ or $\lambda_2^{\star}$ are negative, the function will return zero. In this case the Metropolis-Hastings ratio will return zero, and the proposed $\vec{\lambda^{\star}}$ will be rejected. Hence, we know that in $K_1$ that not only will solely valid $\vec{\lambda^{}}$ be explored, but further assuming that $C$ is well-defined all candidate lambda pairs have nonzero probability mass; hence, all possible $\vec{\lambda^{\star}} \in (\mathbb{R}^{+})^2$ can be explored from any given  $\vec{\lambda^{}}$  - thus this component of the kernel is irreducible. In the next section, we will verify the invariance of the overall kernel. 
+
 
 Now, we consider $K_{C}$. Ideally, we would like to define a symmetric proposal $q_C$; however, we cannot use a Normal Distribution as before so we must find a symmetric discrete distribution. As per the recommendation, this distribution should have variance greater than $3$ to avoid slow mixing.
 
 
 The simplest possible proposal in this situation would be the discrete $\text{unif}\big( \{a = 1, b =N\} \big)$ distribution, i.e.:
 $$
-q_C(x' \mid x ) =  \dfrac{1}{b-a+1} = \dfrac{1}{N-1+1} = \dfrac{1}{N}
+q\Big(\big\{\vec{\lambda}, C^{\star}\big\} \mid \big\{\vec{\lambda}, C\big\} \Big) =  \dfrac{1}{b-a+1} = \dfrac{1}{N-1+1} = \dfrac{1}{N}
 $$
-Where, in this case, $N = 74$. This choice ensures that every possible change point in the support of $C$ can be proposed with nonzero probability.
+Where, in this case, $N = 74$. This choice ensures that every possible change point $C^{\star}$ can be proposed with nonzero probability given any current $C$, preserving irreducibility.
 
 We can verify by computing the variance of this distribution (to check it will mix nicely):
 $$
@@ -134,24 +144,41 @@ Which is certainly a large enough variance to have a breadth of proposal options
 
 
 
-Then, as before, we define the acceptance probability  $\alpha_C(x' \mid x)$ as:
-$$
-\alpha_C(x' \mid x) = \text{min}\big\{1, r(x', x)\big\} = \text{min}\bigg\{1, \frac{\gamma(x')}{\gamma(x)}\,\bigg\}
-$$
-We also know that this element of the kernel is irreducible, assuming $\pi(x), \pi(x') > 0$. We know that this is the case because for any arbitrary $x'$, there is a finite number of steps $m$ with nonzero probability required to reach the destination state. In other words, $\mathbb{P}(X^{(m)} = x' | X^{(0)} = x) > 0$. We know that this is the case because the $m$-step transition kernel $K_m =\mathbb{P}(X^{(m)} = x' | X^{(0)} = x) > 0$ is nonzero for all valid $x, x'$ under the restrictions defined earlier.
-
-Let's outline this fact using an arbitrary $K_m(x \mid x')$:
+Then, we define the kernel $K_2$ in a similar fashion to before.
 $$
 \begin{aligned}
-K_m(x \mid x') &= \mathbb{P}(X^{(m+1)} = x' | X^{(m)} = x) \\
-K_m(x \mid x') &=  q_C(x' \mid x ) \times \alpha_C(x' \mid x) \\
-K_m(x \mid x') &=  \frac{1}{N} \times \text{min}\bigg\{1, \frac{\gamma(x')}{\gamma(x)}\,\bigg\} \\
-K_m(x \mid x') &=  \frac{1}{N} \times \text{min}\bigg\{1, \frac{p_{\text{pois}}(x' ; \lambda)}{p_{\text{pois}}(x ; \lambda)}\,\bigg\} \\
+q_2\big(\{\vec{\lambda}, C^{\star}\} \mid \{\vec{\lambda}, C\} \big)  &= \frac{1}{N} \\
+\alpha_2\big(\vec{\lambda}, C, C^{\star} \big)  &= \text{min}\Big\{1, r\big(\vec{\lambda}, C, C^{\star}\big)\Big\}, \text{ where }   r\big(\vec{\lambda}, C, C^{\star}\big)= \dfrac{\gamma(\lambda, C^{\star})}{\gamma(\lambda, C)} \\
+K_{2}\big(\{\vec{\lambda}, C^{\star}\} \mid \{\vec{\lambda}, C\} \big) &= q_2\big(\{\vec{\lambda}, C^{\star}\} \mid \{\vec{\lambda}, C\} \big) \cdot\alpha_2\big(\vec{\lambda}, C, C^{\star} \big) \\
 \end{aligned}
 $$
-Where the rate parameter $\lambda$ is simplified from $\mathbbm{1}[\,d < C\,] \lambda_1 + \mathbbm{1}[\,d \geq C\,]\lambda_2 \equiv$ Let's take a moment to verify the term in the MH Ratio. Ideally, $r(x, x')$ should be well-defined and nonzero $\forall (x, x')$ that could be proposed from $q_C(x' \mid x)$. We assume that $x$ is already well-proposed (i.e. $x^{(0)}$ isn't bad). Directly, we know by definition of the Poisson PMF that $\forall x \in \mathbb{Z}^{+}, p_X(x) > 0$. Hence, the ratio is well defined.
 
-Since the ratio is well defined, we know by the above that it will always be the case that $K_m(x \mid x') > 0$, hence all steps are accessible from one another. Thus, $K_C$ does not "break" the irreducibility clause in the MCMC algorithm. 
+Finally, with each kernel defined above we can define the unified kernel $K$ as follows. This is what we will be implementing in Part 3.
+
+We use the definitions of $K_1$ and $K_2$ detailed above.
+$$
+\begin{aligned}
+&\text{Let }\rho \sim \text{bern}(1/2) \\
+&K\big(\{\vec{\lambda^{\star}}, C^{\star}\} \mid \{\vec{\lambda}, C\}\big)= \mathbbm{1}[\rho = 1]K_{1}\big(\{\vec{\lambda^{\star}}, C\} \mid \{\vec{\lambda}, C\} \big) + \big(1-\mathbbm{1}[\rho = 1]\big)K_{2}\big(\{\vec{\lambda}, C^{\star}\} \mid \{\vec{\lambda}, C\} \big)
+\end{aligned}
+$$
+It should be noted that the likelihoods discussed as part of $K_1$ and $K_2$ will be replaced by the log-joint in the software implementation, which slightly changes the structure of the acceptance criteria. In the next part, we discuss how this slight modification still preserves $\uppi$-invariance.
+
+
+<!-- We also know that this element of the kernel is irreducible, assuming $\pi(x), \pi(x') > 0$. We know that this is the case because for any arbitrary $x'$, there is a finite number of steps $m$ with nonzero probability required to reach the destination state. In other words, $\mathbb{P}(X^{(m)} = x' | X^{(0)} = x) > 0$. We know that this is the case because the $m$-step transition kernel $K_m =\mathbb{P}(X^{(m)} = x' | X^{(0)} = x) > 0$ is nonzero for all valid $x, x'$ under the restrictions defined earlier. -->
+
+<!-- Let's outline this fact using an arbitrary $K_m(x \mid x')$: -->
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- K_m(x \mid x') &= \mathbb{P}(X^{(m+1)} = x' | X^{(m)} = x) \\ -->
+<!-- K_m(x \mid x') &=  q_C(x' \mid x ) \times \alpha_C(x' \mid x) \\ -->
+<!-- K_m(x \mid x') &=  \frac{1}{N} \times \text{min}\bigg\{1, \frac{\gamma(x')}{\gamma(x)}\,\bigg\} \\ -->
+<!-- K_m(x \mid x') &=  \frac{1}{N} \times \text{min}\bigg\{1, \frac{p_{\text{pois}}(x' ; \lambda)}{p_{\text{pois}}(x ; \lambda)}\,\bigg\} \\ -->
+<!-- \end{aligned} -->
+<!-- $$ -->
+<!-- Where the rate parameter $\lambda$ is simplified from $\mathbbm{1}[\,d < C\,] \lambda_1 + \mathbbm{1}[\,d \geq C\,]\lambda_2 \equiv$ Let's take a moment to verify the term in the MH Ratio. Ideally, $r(x, x')$ should be well-defined and nonzero $\forall (x, x')$ that could be proposed from $q_C(x' \mid x)$. We assume that $x$ is already well-proposed (i.e. $x^{(0)}$ isn't bad). Directly, we know by definition of the Poisson PMF that $\forall x \in \mathbb{Z}^{+}, p_X(x) > 0$. Hence, the ratio is well defined. -->
+
+<!-- Since the ratio is well defined, we know by the above that it will always be the case that $K_m(x \mid x') > 0$, hence all steps are accessible from one another. Thus, $K_C$ does not "break" the irreducibility clause in the MCMC algorithm.  -->
 
 
 
