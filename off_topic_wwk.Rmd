@@ -1,0 +1,57 @@
+---
+title: "Off-Topic: Webwork"
+author: "STAT 300"
+date: "`r Sys.Date()`"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+## Part B
+If a linear model is fitted to the data above by least squares, the estimate of the slope parameter is $\hat\beta_1 =-12.503$ and the estimate of the intercept is $\hat\beta_0 = 73.336$. The standard error of the estimate of the slope coefficient was found to be $\text{se}(\hat\beta) = 2.032$. Provide a 95% confidence interval for the underlying slope parameter, giving your bounds to 3 decimal places.
+
+We know that:
+$$
+\text{CI}(\alpha) = \hat\beta_1  \pm t_{n-2; \alpha/2}\text{se}(\hat\beta_1 )
+$$
+
+```{r}
+b1 = -12.503
+seb1 = 2.032
+n = 99
+moe = seb1*qt(0.975, df = n-2)
+round(c(b1 - moe, b1 + moe), 3)
+```
+
+Then, the hypothesis test for $H_0: \beta_1 = 0$ against the nonzero alternative would have test statistic:
+$$
+\text{t}_{\text{obs}} = \dfrac{\hat\beta_1}{\text{se}(\hat\beta_1)} \sim t_{n-2}
+$$
+```{r}
+round(b1/seb1, 3)
+```
+# Question 2
+The ratio of the lengths of the second and the fourth fingers, denoted 2D:4D, is an indicator of the level of prenatal testosterone. It is known that higher prenatal testosterone levels are associated with a lower 2D:4D value. Since testosterone levels are known to be related to behavioural traits, it has been conjectured that certain types of aggressive and dominant behaviours may be associated with lower 2D:4D values. van der Meij et al. (2012) conducted a study that investigated the possible relationship between 2D:4D and so-called "sociable" and "aggressive" dominance. For the study, 84 male students completed two questionnaires, measuring sociable and aggressive dominance respectively, on which high scores related to increased aggression. After some adjustments, a score between 1 and 6 was recorded for each subject on each questionnaire. The participants' hands were scanned and measurements taken, on which a 2D:4D measure could be recorded per subject by averaging the ratio for each hand. The authors concluded that there is a significant correlation between 2D:4D and aggressive dominance, but not with social dominance.
+
+The work of van der Meij et al. (2012) is critiqued by Voracek (2013), who casts doubt both on the statistical methodology and the reliability of the questionnaire design. Intrigued, you conduct a small-scale study to investigate the possible relationship between social dominance and 2D:4D. You recruit twelve of your male friends and request they complete the aggressive dominance survey. You also obtain their 2D:4D values, averaging over both hands for each participant. Suppose the data you obtain are as follows:
+
+The data are as follows:
+$$\begin{array}{c | c c c c c c c c c c c c}
+\text{2D:4D} & 0.94 & 0.97 & 0.93 & 1.01 & 0.97 & 0.94 & 0.97 & 0.98 & 0.98 & 0.95 & 1.01 & 0.97 \\ \hline
+\text{Aggressive dominance} & 2.73 & 2.00 & 3.46 & 2.75 & 2.88 & 3.36 & 3.22 & 3.10 & 3.23 & 3.26 & 2.80 & 2.09
+\end{array}$$
+
+```{r}
+d2d4 = c(0.94, 0.97, 0.93, 1.01, 0.97, 0.94 , 0.97 , 0.98 , 0.98 , 0.95, 1.01 , 0.97) #covariate
+agdm = c(2.73 , 2.00 , 3.46 , 2.75 , 2.88 , 3.36 , 3.22 , 3.10 , 3.23 , 3.26 , 2.80 , 2.09) #response
+
+plot(d2d4, agdm)
+abline(lm(agdm~d2d4), col = 'red')
+```
+```{r}
+summary(lm(agdm~d2d4))
+```
