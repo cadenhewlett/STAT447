@@ -53,9 +53,11 @@ $$
 \lambda_{1} &\sim \exp(1/100) \\
 \lambda_{2} &\sim \exp(1/100) \\
 C &\sim \text{unif}\big(\{1, 2, \dots , N\}\big) \\
-Y_d \mid \{C,\lambda_1, \lambda_2\} &\sim \text{pois} \big( \mathbbm{1}[\,d < C\,] \lambda_1 + \mathbbm{1}[\,d \geq C\,]\lambda_2\big)
+Y_d \mid C,\{\lambda_1, \lambda_2\} &\sim \text{pois} \big( \mathbbm{1}[\,d < C\,] \lambda_1 + \mathbbm{1}[\,d \geq C\,]\lambda_2\big)
 \end{aligned} 
 $$
+We will also refer to the $\{\lambda_1, \lambda_2\}$ pair as $\vec{\lambda}$.
+
 
 We provide an implementation of the joint distribution of this model below.
 
@@ -83,16 +85,37 @@ log_joint = function(rates, change_point, y) {
 
 # Question 1: A Custom MCMC Sampler
 
+**NOTE** We will briefly justify the reasoning for irreducibility of each kernel (and thus the combination of kernels) in Part 1 and leave invariance for the next section. Further, when we define these kernels, we will be doing so in terms of likelihoods $\gamma$. However, for more precision with respect to the true implementation, we will prove $\uppi$-invariance with respect to the log joint model defined above.
+
+
 ## Part 1: Algorithm
-Define mathematically an irreducible and invariant MCMC algorithm to sample from the change point model’s posterior.
 
 
-We will begin by defining two separate kernels $K_{\lambda}$ and $K_{C}$ for the rate parameters $\{\lambda_1,\lambda_2\}$ and the change-point parameter $C$, respectively. We then unify these kernels by defining a kernel mixture for a selection probability $\rho$.
+We will begin by defining two separate kernels $K_{1}$ and $K_{2}$ for the rate parameters $\{\lambda_1,\lambda_2\}$ and the change-point parameter $C$, respectively. We then unify these kernels by defining a kernel mixture for a selection probability $\rho$.
 
 
-```{r}
-# TODO  
-```
+Let $C^{\star}$ and $C$ be the proposed and current cutoff times, respectively. Similarly, we let $\vec{\lambda}^{\star}$ and $\vec{\lambda}$ be the proposed and current rates, respectively. We use $\vec{\lambda}=\{\lambda_1, \lambda_2\}$ and $\vec{\lambda}^{\star} =\{\lambda_1^{\star}, \lambda_2^{\star}\}$ interchangeably. Further, in each case, we define the proposal function using the following notation:
+$$
+q\Big(\big\{\vec{\lambda^{\star}}, C^{\star}\big\} \mid \big\{\vec{\lambda}, C\big\} \Big) \equiv q\Big(\big\{\lambda_1^{\star}, \lambda_2^{\star}, C^{\star}\big\} \mid \big\{\lambda_1, \lambda_2, C\big\} \Big)
+$$
+While slightly obtuse, this is intended to reflect the fact that the `rates` input is a vector, and the likelihood defined in the original model relies upon all three parameters. Further, this style allows us to maintain the same general form for $q$ regardless of the kernel, which we can use to expedite the proof in Question 2.
+
+
+We begin by discussing $K_{1}$. This kernel will only modify the $\vec{\lambda}$ parameter. Since each Poisson rate parameter is a real number, we will use a standard normal proposal.
+<!-- q(\lambda_1^{\star} \mid \lambda_1) = \frac{1}{\sqrt{2\pi}} \exp\Big( -\frac{1}{2}(\lambda_1^{\star} - \lambda_1)^2\Big) \\ -->
+
+Notably, rather than having a dimension of $2$, we have each rate operate separately on their own means to be updated over time. The objective is to have more independent exploration for pre-and-post change point rates. Notably, our proposal vector is $\big\{\vec{\lambda^{\star}}, C\big\}$, highlighting that in this kernel we do not select new values for the change point.
+$$
+\begin{aligned}
+q\Big(\big\{\vec{\lambda^{\star}}, C\big\} \mid \big\{\vec{\lambda}, C\big\} \Big) &= \Big\{\frac{1}{\sqrt{2\pi}} \exp\Big( -\frac{1}{2}(\lambda_i^{\star} - \lambda_i)^2\Big) : i \in \{1,2\}\Big\} \\
+\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)  &= \text{min}\Big\{1, r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big)\Big\}, \text{ where }  r\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) = \dfrac{\gamma(\lambda^{\star}, C)}{\gamma(\lambda, C)} \\
+K_{1}\big(\vec{\lambda^{\star}} \mid \vec{\lambda}\,\big) &= q\big(\,\big\{\vec{\lambda^{\star}}, C\big\} \mid \big\{\vec{\lambda}, C\big\} \big)\cdot\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}, C \big) \\
+\end{aligned}
+$$
+In a simplified version, we can write the equation below to simplify $K_1$ :
+$$
+K_{1}\big(\vec{\lambda^{\star}} \mid \vec{\lambda}\,\big) = q\big(\,\vec{\lambda^{\star}}\mid \vec{\lambda}\, \big)\alpha\big(\vec{\lambda^{\star}}, \vec{\lambda}\big) 
+$$
 
 Now, we consider $K_{C}$. Ideally, we would like to define a symmetric proposal $q_C$; however, we cannot use a Normal Distribution as before so we must find a symmetric discrete distribution. As per the recommendation, this distribution should have variance greater than $3$ to avoid slow mixing.
 
@@ -144,11 +167,7 @@ Since detailed balance implies global balance, it is sufficient to show that the
 
 ## Part 3: Implementation
 
-Similar to in the slides, we define the kernel function as follows:
-```{r}
-# true change point at around 25
-simulated_yvals = c(round(runif(24, 10, 15)), round(runif(60, 30, 50)))
-```
+
 Implement the MCMC algorithm you describe mathematically in `R`. 
 ```{r q1p3}
 N = nrow(df)
@@ -217,9 +236,19 @@ mcmc = function(rates, CP, y, n_iterations, debug = FALSE) {
     )
   )
 }
-## ADDITIONAL TESTING 
-# test = mcmc(c(0.1, 0.2), 34, simulated_yvals, 200, debug = FALSE)
-# plot(test$change_point_trace[test$change_point_trace > 0], type = 'l',
-#      ylim = c(1, 74))
-# abline(h = 25, col = 'red')
+```
+
+```{r}
+## TESTING 
+set.seed(447)
+# true change point at around 25
+simulated_yvals = c(round(runif(24, 10, 15)), round(runif(60, 30, 50)))
+# run MCMC
+test = mcmc(c(0.1, 0.2), 34, simulated_yvals, 550, debug = FALSE)
+# plot
+plot(main = "Simulated Data Trace Plot",
+     test$change_point_trace[test$change_point_trace > 0], 
+     type = 'l', ylab = "Proposal",
+     ylim = c(1, 74))
+abline(h = 25, col = rgb(1, 0, 0, 0.5), lwd = 1)
 ```
