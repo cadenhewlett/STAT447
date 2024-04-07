@@ -2,6 +2,10 @@
 title: "Reticulate Example"
 author: "Caden Hewlett"
 date: "`r Sys.Date()`"
+header-includes:
+   - \usepackage{bbm}
+   - \usepackage{upgreek}
+   - \usepackage{booktabs}
 output: pdf_document
 ---
 

@@ -1,0 +1,384 @@
+---
+title: "Lecture 3: Modelling Techniques"
+author: "Caden Hewlett"
+date: "`r Sys.Date()`"
+bookdown::pdf_document2:
+    latex_engine: xelatex
+header-includes:
+   - \usepackage{bbm}
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(extraDistr)
+library(ggplot2)
+library(pracma)
+library(distr)
+library(latex2exp)
+library(knitr)
+library(rstan)
+library(reticulate)
+require(dplyr, quietly = TRUE)
+require(rstan, quietly = TRUE)
+require(knitr, quietly = TRUE)
+```
+
+
+# Modelling Techniques: "Bayesian Lego"
+
+The success of Bayesian method **and** Lego Blocks can be traced to the same basic reasons: 
+
+  * A set of basic builidng blocks
+  * The ability to combine them freely
+  
+This week, we introduce....
+
+  * more examples of basic building blocks (i.e., distributions)
+  * creating your own building bloocks (custom distribution)
+  
+### More Bayesian Bricks
+
+More distributions to complement our previous distributions!
+
+Motivation, realzation and parameterizations(s) of each of these, including reparamaterization.
+
+
+What we need to memorize is the *support* of the distributions, i.e. the data type of the observation. 
+
+This is because in Bayesian techniques, we start with observations and find a distribution that "matches its data stype"
+
+Recall...
+$$
+\text{supp}(X) = \{x : p_X(x) > 0 \}
+$$
+
+In the case of hierarchical models, we may have to consider multiple distributions and such.
+
+
+## Counts
+
+### Poisson Distribution
+
+Support: $\{0, 1, 2, 3, \dots \}$. The common choice is the **poisson distribution**.
+
+Discrete events occuring at rate lambda. Parameter $\lambda >0$ is the mean and defines rate of observations. Motivated by law of rare events. 
+$$
+X \sim \text{pois}(\lambda >0) \implies \text{supp}(X) = \{0, 1, 2, 3, \dots \} \equiv \mathbb{Z}^{+}
+$$
+In Stan, the standard paramaterization is `poisson(lambda)`. In applications, after EDA it's rare to see variance is the same as mean so Poisson isn't used much in practice. 
+
+
+### Negative Binomial Distribution
+
+This is more useful in practice than the poisson, it's mean $\mu$ and concentration $\phi$. In this case, concentration. A high concentration $\lim_{\phi \rightarrow \infty}$ it becomes poisson again. $\text{var}(X) = \mu + \mu^2 / \phi$, where both $\mu, \phi > 0$
+
+$$
+X \sim \text{nbinom}(\mu > 0, \phi > 0) \implies \text{supp}(X) = \{0, 1, 2, 3, \dots \} \equiv \mathbb{Z}^{+}
+$$
+
+## Positive Real Numbers
+
+Support: $\{x \in \mathbb{R} : x > 0\}$.
+
+### Gamma 
+
+Product of exponentials. It takes two parameters $\alpha > 0$ and $\beta > 0$.
+
+
+Let $Y \sim \text{gamma}(\alpha, \beta)$. Mean of this distribution is $\alpha / \beta$.
+
+$$
+Y \sim \text{gamma}(\alpha > 0, \beta > 0) \implies \text{supp}(Y) = \{y \in \mathbb{R} : y > 0\} \equiv \mathbb{R}^{+}
+$$
+*NOTE* using `transformed parameters { real mean_param = shape/rate; }` and finding the mean of `mean_param` to predict the mean is referred to as "Rao-Blackwellization." This is because $\mathbb{E}(Y) = \alpha / \beta$. The Rao-Blackwell mean converges to the Monte Carlo mean. 
+
+
+
+Further, we cannot use just the posterior ratios of $\alpha$ and $\beta$ to predict the mean!
+
+Law of total expetation
+$$
+\begin{aligned}
+\mathbb{E}(Y_{n + 1} \mid \vec{Y}) &= \mathbb{E}[\alpha / \beta \mid \vec{Y}] \neq \mathbb{E}(\alpha \mid \vec{Y}) / \mathbb{E}(\beta \mid \vec{Y}) 
+\end{aligned}
+$$
+
+
+
+## Categories
+
+Let the support be $\mathbb{S} = \{0, 1, 2, 3, \dots K\} \subseteq \mathbb{Z}^{+}$ for some number of categories $K$.
+
+**Simplex**
+$$
+K\text{-Simplex } := \Big\{ (p_1, p_2, \dots p_k) : p_k > 0, \sum_{k \in K} p_k = 1\Big\}
+$$
+Hence, if you need a prior over the parameters of a categorical, you need a distribution over the simplex!
+
+
+The common choice: **Dirichlet Distribution**.
+If you sample over the Dirichlet, you get $K$ numbers that all sum to 1. 
+$$
+D =\text{Dir}(\alpha_1, \dots \alpha_K) = \text{Dir}\big(\{\alpha_i > 0\}_{i = 1}^K \big) \implies \text{supp}(D) = K\text{-Simplex }
+$$
+
+## Vectors
+
+When the support is $\mathbb{R}^k$ for $k > 1$. The common choice is the multivariate normal.
+
+It takes mean vector $\mu \in \mathbb{R}^K$ and a positive definite and symmetric matrix $\Sigma$. This property of positive definite is denoted $\Sigma \succ 0.$ The degree of freedom is $\text{diag}(\Sigma)$ plus the lower triangle
+
+$$
+\mathbf{X} \sim\mathcal{N} \big(\mu \in \mathbb{R}^K,  \Sigma_{K \times K} \succ 0 \big) \implies \text{supp}(\mathbf{X}) = \mathbb{R}^K
+$$
+## Reparamaterizations.
+
+Suppose you need a distribtuion with support $[0,1]$. 
+
+
+We have seen above that one option is to use a beta prior.
+
+*However* we could also use $X \sim N(0,1)$, and use a transformation to map it to $[0,1]$ such as $Y = \text{logistic}(X)$. This approach is known as "re-paramaterization."
+
+# Custom Bricks
+
+What do you do when you need a distribution that is not defined in the Stan built-in library? 
+
+Even though Stan has a long list of built-in distributions, you will eventuall run into a situation where you need a distribution not listed. 
+
+
+## Example 
+
+We will show how to implement the "Kumaraswamy distribution" in Stan. It's obscure, so it's not built in. 
+
+$$
+X \sim \text{Kumaraswamy}(a, b) \implies f_X(x) = abx^{n-1}(1 - x^a)^{b-1}
+$$
+In the `model` block, instead of using `~` notation, we use `target [logarithm (base e) of the log density]`.
+
+In other words:
+$$
+\text{Stan Version of } X: \log(f_X(x)) = \log(abx^{n-1}(1 - x^a)^{b-1})
+$$
+
+In Stan...
+
+```{stan, output.var = "nothing"}
+data {
+  real<lower=0> a;
+  real<lower=0> b;  
+}
+
+parameters {
+  real<lower=0, upper=1> x;
+}
+
+model {
+  target += log(a) + log(b) + (a-1) * log(x) + (b-1) * log1p(-x^a);
+                                                    // ^ log1p(z) = log(1+z)
+}
+```
+
+## Why the Logarithm? (Log-Scale Computation)
+
+**Key Fact**: Stan, like most numerical methods, uses *double-precision floating point* approximation of real numbers. 
+
+Suppose you have $500$ observations, each have a likelihood of $1/10$, what is the joint likelihood?
+
+
+```{r}
+#options(digits=22)
+likelihood = 1.0
+for (i in 1:500){
+  likelihood = likelihood * (1/10)
+}
+# sprintf("%.8000f",likelihood)
+sprintf("%.10f",likelihood)
+```
+
+This isn't actually zero! We have $(1/10)^{500} < 10^{-300}$, which is the smallest positive number. This issue is called **underflow**.
+
+The fix: use log
+```{r}
+#options(digits=22)
+loglikelihood = log(1.0)
+for (i in 1:500){
+  loglikelihood = loglikelihood + log(1/10)
+}
+# sprintf("%.8000f",likelihood)
+sprintf("%.10f",loglikelihood)
+```
+So this is why the log-scale is important.
+
+
+## Encapsulation into a Function!
+
+We can also define the custom distribution as a function, just like in any other language.
+
+The suffix `_lpdf` tells Stan that this is the log pdf.
+```{stan, output.var = "empty"}
+functions {
+  real Kumaraswamy_lpdf(real x, real a, real b) {
+    return log(a) + log(b) + (a-1) * log(x) + (b-1) * log1p(-x^a);
+  }
+}
+
+data {
+  real<lower=0> a;
+  real<lower=0> b;  
+}
+
+parameters {
+  real<lower=0, upper=1> x; 
+}
+
+model {
+  x ~ Kumaraswamy(a, b);
+}
+```
+
+
+Now, we combine bricks together. 
+
+# Censoring
+
+Here, we aim to recognize censoring and modelling censoring. 
+
+Ignoring the **data collection process** can cost many lives. 
+
+An example is Chernobyl. Initially, the reactor crew chief, A. Akimov, assumed the core reactor was intact. The data used here was inspired by a true story of Chernobyl.
+
+### Measuring Radiation Levels
+
+A dosimeter is a device measuring ionizing radiation. Measure roentgens per second, Suppose that if radiation is greater than 1.5R/s, we think the reactor is breached. If it is smaller than 1.5, we don't think it's breached. We have 10 workers, each with a dosimeter. The average over the 10 readings is just $1.012227$. 
+
+Are we actually good?
+
+The true measurements are...
+```{r}
+ # [1] 1.1000000 1.1000000 0.8159577 0.7828535 1.1000000 1.1000000 1.1000000
+ # [8] 1.1000000 1.1000000 0.8234575
+```
+
+This is concerning because there are many repeated values. This could be due to the dosimeters having a detection limit. This is not expected from a continuous distribution. In this case, they went to inspect the reactor and the consequences were deadly. 
+
+
+Let's see the true DGP.
+
+```{r}
+set.seed(1)
+
+# detection limit: value higher than that stay at the limit
+limit = 1.1 
+
+n_measurements = 10
+
+true_mean = 5.6
+
+# data, if we were able to observe perfectly
+y = rexp(n_measurements, 1.0/true_mean)
+
+# number of measurements higher than the detection limit
+n_above_limit = sum(y >= limit)
+n_below_limit = sum(y < limit)
+
+# subset of the measurements that are below the limit:
+data_below_limit = y[y < limit]
+
+# measurements: those higher than the limit stay at the limit
+measurements = ifelse(y < limit, y, limit)
+```
+
+## Bayesian Censoring
+
+What we have encountered in the Chernobyl example is known as **censoring.**  Now we model the censoring process.
+
+### Mathematical Version
+
+Let $L$ denote a detection limit. 
+
+
+Let $X$ denote the unknown parameter (here, the true mean we wish to recover.)
+
+
+Let $i$ denoted the observation index (i.e. $i \in \{1, 2, \dots 10\}$)
+
+
+Let $H_i$ be the measurement before censoring. $H$ means "hidden."
+
+
+Let $C_i$ be the binary indicator. $C_i = \mathbbm{1}(H_i \geq L)$
+
+
+Let $Y_i$ be $C_i L + (1 - C_i)L$.
+
+
+Then, the full model is...
+$$
+\begin{aligned}
+X &\sim {\mathrm{Exp}}(1/100) \\
+H_i &\sim {\mathrm{Exp}}(X) \\
+C_i &= \mathbbm{1}[H_i \ge L], \\
+Y_i &= C_i L + (1 - C_i) H_i.
+\end{aligned}
+$$
+
+Then we can model the Hidden Parameters. 
+
+
+In Stan...
+
+```{stan, output.var = "censoring"}
+data {
+  int<lower=0> n_above_limit;
+  int<lower=0> n_below_limit;
+  real<lower=0> limit;
+  vector<upper=limit>[n_below_limit] data_below_limit;
+  
+}
+
+parameters {
+  real<lower=0> rate; 
+  vector<lower=limit>[n_above_limit] data_above_limit;
+}
+
+model {
+  // prior
+  rate ~ exponential(1.0/100);
+  
+  // likelihood
+  data_above_limit ~ exponential(rate);
+  data_below_limit ~ exponential(rate); 
+}
+
+generated quantities {
+  real mean = 1.0/rate;
+}
+```
+
+Then our MCMC process is...
+
+```{r, message=FALSE, warning=FALSE, results = FALSE}
+fit = sampling(
+  censoring,
+  seed = 1,
+  chains = 1,
+  data = list(
+            limit = limit,
+            n_above_limit = n_above_limit, 
+            n_below_limit = n_below_limit,
+            data_below_limit = data_below_limit
+          ),       
+  iter = 100000                   
+)
+```
+
+Then we can take the fraction of samples greater than the limit, telling us that there's a high chance of reactor breach. 
+
+
+```{r}
+suppressPackageStartupMessages(require(bayesplot))
+suppressPackageStartupMessages(require(ggplot2))
+mcmc_areas_ridges(fit, pars = c("mean"),     v+
+  scale_x_continuous(limits = c(0, 10)) 
+```
