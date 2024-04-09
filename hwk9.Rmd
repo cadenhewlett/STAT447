@@ -23,11 +23,29 @@ library(reticulate)
 require(dplyr, quietly = TRUE)
 require(rstan, quietly = TRUE)
 require(knitr, quietly = TRUE)
+
+quiet_load <- function(package) {
+  tryCatch({
+    suppressMessages(suppressWarnings(
+      require(package, character.only = TRUE)))
+  }, error = function(e) {
+    if (grepl("there is no package called", e$message)) {
+      tryCatch({
+        install.packages(package)
+        require(package, character.only = TRUE)
+      }, error = function(e) {
+         message(sprintf("Failed to install '%s'.", package))
+      })
+    } else {
+      message(sprintf("Failed to install '%s'.", package))
+    }
+  })
+}
 ```
 
 ## Data Import
 
-We import the primary data set inspired by Davidson-Pilon, (2013) below:
+The data we analyze records, for each of 74 days, the number of text messages sent and received by Davidson-Pilon. 
 ```{r import}
 # main data vector
 sms_data = c(
@@ -81,6 +99,7 @@ log_joint = function(rates, change_point, y) {
   
   return(log_prior + log_likelihood)
 }
+# log_joint(c(3.789566, 51.226584), 10, c(51, 54, 64, 49, 61))
 ```
 
 # Question 1: A Custom MCMC Sampler
@@ -186,10 +205,41 @@ It should be noted that the likelihoods discussed as part of $K_1$ and $K_2$ wil
 
 Prove that the MCMC algorithm you defined in part 1 is $\uppi$-invariant.
 
-Since detailed balance implies global balance, it is sufficient to show that the DBEs hold to show invariance. We know that if each $K_i$ in the kernel mixture is $\uppi$-invariant that their mixture is $\uppi$-invariant. Hence, we will separately prove $\uppi$-invariance for $K_{\lambda}$ and $K_C$ hold under detailed balance to show that $K$ is invariant.
+Since detailed balance implies global balance, it is sufficient to show that the DBEs hold to show invariance. We know that if each $K_i$ in the kernel mixture is $\uppi$-invariant that their mixture is $\uppi$-invariant. Hence, we will separately prove $\uppi$-invariance for $K_{1}$ and $K_2$ hold under detailed balance to show that $K$ is invariant.
 
 
 
+Conveniently, since $K_{1}$ and $K_2$ share likelihood functions and both have symmetric proposals, the proof of one kernel is equivalent to the proof of the other. In other words, although $\{\vec{\lambda^{\star}}, C^{\star}\}$ will have different components changing depending on the kernel, if we prove invariance with respect to $\{\vec{\lambda^{\star}}, C^{\star}\}$, this implies invariance of $\{\vec{\lambda^{}}, C^{\star}\}$ and $\{\vec{\lambda^{\star}}, C^{}\}$, which can be considered sub-cases where one of two elements is constant.
+
+
+With this in mind, we let $x^{\star} = \{\vec{\lambda^{\star}}, C^{\star}\}$ be the proposal, $x = \{\vec{\lambda}, C\}$ and $K_i$ be the $i$-th kernel for $i \in \{1, 2\}$.
+
+
+As mentioned earlier, we wish to show that detailed balance holds. 
+In other words, we wish to prove that:
+$$
+\pi(x)K_i(x^{\star}\mid x) = \pi(x^{\star})K_i(x \mid x^{\star})
+$$
+We will show that the above equality holds by beginning with the left-hand side and simplifying to arrive at the right-hand side.
+$$
+\begin{aligned}
+\pi(x)K_i(x^{\star}\mid x) &= \pi(x)\cdot q_i(x^{\star}\mid x) \cdot \,\alpha_i(x^{\star}, x) \\
+\pi(x)K_i(x^{\star}\mid x) &= \pi(x)\cdot q_i(x^{\star}\mid x) \cdot \,\text{min}\{1, r(x^{\star}, x)\}  \\
+\pi(x)K_i(x^{\star}\mid x) &= \pi(x)\cdot q_i(x^{\star}\mid x) \cdot \,\text{min}\Big\{1, \dfrac{\gamma(x^{\star})}{\gamma(x)} \Big\}  \\
+\pi(x)K_i(x^{\star}\mid x) &= \pi(x)\cdot q_i(x^{\star}\mid x) \cdot \,\text{min}\Big\{1, \dfrac{Z\cdot\pi(x^{\star})}{Z \cdot \pi(x)} \Big\}, \text{ by definition of } \gamma \\
+\pi(x)K_i(x^{\star}\mid x) &= \pi(x)\cdot q_i(x^{\star}\mid x) \cdot \,\text{min}\Big\{1, \dfrac{\pi(x^{\star})}{ \pi(x)} \Big\} \\
+\pi(x)K_i(x^{\star}\mid x) &=  q_i(x^{\star}\mid x) \cdot \pi(x) \cdot \,\text{min}\Big\{1, \dfrac{\pi(x^{\star})}{ \pi(x)} \Big\}, \text{ by commutativity} \\
+\pi(x)K_i(x^{\star}\mid x) &=  \underset{\downarrow}{q_i(x^{\star}\mid x)} \cdot \,\text{min}\Big\{\pi(x), \pi(x^{\star})\Big\}, \text{ since } a\cdot\text{min}\{x, y\} = \text{min}\{ax,ay\} \\
+\pi(x)K_i(x^{\star}\mid x) &=  \overbrace{q_i(x \mid x^{\star})} \cdot \,\text{min}\Big\{\pi(x), \pi(x^{\star})\Big\}, \text{ by symmetric proposal } \\
+\pi(x)K_i(x^{\star}\mid x) &=  q_i(x \mid x^{\star}) \cdot \bigg(\frac{\pi(x^{\star})}{\pi(x^{\star})} \bigg) \cdot\,\text{min}\Big\{\pi(x), \pi(x^{\star})\Big\} \\
+\pi(x)K_i(x^{\star}\mid x) &=  q_i(x \mid x^{\star}) \cdot \pi(x^{\star})\bigg(\frac{1}{\pi(x^{\star})} \bigg) \cdot\,\text{min}\Big\{\pi(x), \pi(x^{\star})\Big\} \\
+\pi(x)K_i(x^{\star}\mid x) &=  q_i(x \mid x^{\star}) \cdot \pi(x^{\star}) \cdot\,\text{min}\Big\{\frac{\pi(x)}{\pi(x^{\star})}, \frac{\pi(x^{\star})}{\pi(x^{\star})}\Big\} \\
+\pi(x)K_i(x^{\star}\mid x) &=    \pi(x^{\star})  \cdot q_i(x \mid x^{\star})\cdot\,\text{min}\Big\{\frac{\pi(x)}{\pi(x^{\star})}, \,1\Big\}, \text{ rearranging terms} \\
+\pi(x)K_i(x^{\star}\mid x) &=    \pi(x^{\star})  \cdot q_i(x \mid x^{\star})\cdot\,\text{min}\Big\{1, \frac{\pi(x)}{\pi(x^{\star})}\Big\}, \text{ since } \text{min}\{x, y\} = \text{min}\{y, x\} \\
+\pi(x)K_i(x^{\star}\mid x) &=    \pi(x^{\star})K_i(x\mid x^{\star}), \text{ as required } \hspace{0.25cm} \square
+\end{aligned}
+$$
+Therefore, detailed balance holds for $K_i, i \in \{1, 2\}$. This implies that global balance holds for each $K_i$, which in turn implies that each $K_i$ is $\uppi$-invariant. Since each $K_i$ in the unified kernel $K$ is $\uppi$-invariant, the overall kernel is also $\uppi$-invariant as required.
 
 
 ## Part 3: Implementation
@@ -218,17 +268,18 @@ mcmc = function(rates, CP, y, n_iterations, debug = FALSE) {
       prop = rdunif(1, 1, N)
       if (debug) {print(paste("Proposed", prop, "..."))}
       # MH ratio
-      ratio = (log_joint(current[[1]], prop, y) - 
+      ratio = (log_joint(current[[1]], prop, y) -
                log_joint(current[[1]], current[[2]], y))
+      # catch the indeterminate case 
+      ratio = ifelse( is.na(ratio), -Inf , ratio)
+      if (debug) {print(paste("Ratio", ratio)) }
       # Bernoulli Trial
       if (log(runif(1)) < ratio) {
         # accept
         current[[2]] = prop
-        if (debug) {print("Accepted!")}
       } else {
         # reject (redundant but nice)
         current[[2]] = current[[2]]
-        if (debug) {print("Rejected!")}
       }
     }
     # Kernel for Lambdas
@@ -240,21 +291,24 @@ mcmc = function(rates, CP, y, n_iterations, debug = FALSE) {
       prop = c(ell_1, ell_2)
       if (debug) {print(paste("Proposed", unlist(round(prop,2)), "..."))}
       # MH Ratio
-      ratio = (log_joint(prop, current[[2]], y) - 
+      ratio = (log_joint(prop, current[[2]], y) -
                log_joint(current[[1]], current[[2]], y))
+      # catch the indeterminate case 
+      ratio = ifelse( is.na(ratio), -Inf , ratio)
+      
+      if (debug) {print(paste("Ratio", ratio)) }
+      
       if (log(runif(1)) < ratio) {
         # accept
         current[[1]] = prop 
-        if (debug) {print("Accepted!")}
       }else {
         # reject (redundant but nice)
         current[[1]] = current[[1]]
-        if (debug) {print("Rejected!")}
       }
-    # update trace
-     change_point_trace[i] = current[[2]]
-     if(debug) {Sys.sleep(3)}
+      # update trace
+     if(debug) {Sys.sleep(1)}
     }
+    change_point_trace[i] = current[[2]]
   }
   return(
     list(
@@ -265,17 +319,290 @@ mcmc = function(rates, CP, y, n_iterations, debug = FALSE) {
 }
 ```
 
+<!-- ```{r} -->
+<!-- ## TESTING -->
+<!-- # set.seed(447) -->
+<!-- # true change point at around 25 -->
+<!-- simulated_yvals = c(round(runif(24, 10, 15)), round(runif(0, 30, 50))) -->
+<!-- # run MCMC -->
+<!-- test = mcmc(c(0.1, 0.2), 34, simulated_yvals, 10000, debug = F) -->
+<!-- # plot -->
+<!-- plot(main = "Simulated Data Trace Plot", -->
+<!--      test$change_point_trace[test$change_point_trace > 0], -->
+<!--      type = 'l', ylab = "Proposal", -->
+<!--      ylim = c(1, 74)) -->
+<!-- abline(h = 25, col = rgb(1, 0, 0, 0.5), lwd = 1) -->
+
+<!-- ``` -->
+
+
+# Question 2: MCMC Correctness Testing
+
+We now subject our MCMC implementation to an “exact invariance test” to validate its correctness.
+
+
+## Part 1
+
+We'll start by completing the function below to perform forward simulation on the same Bayesian model as in Q1. The input argument `synthetic_data_size` specifies the size of the dataset to generate.
+
+
+We recall the model outlined in the previous question. We number each component distribution to provide clear documentation of the forward-sampler.
+$$
+\begin{aligned}
+\lambda_{1} &\sim \exp(1/100) &(1)\\
+\lambda_{2} &\sim \exp(1/100) &(2)\\
+C &\sim \text{unif}\big(\{1, 2, \dots , 74\}\big)&(3) \\
+Y_d \mid C,\{\lambda_1, \lambda_2\} &\sim \text{pois} \big( \mathbbm{1}[\,d < C\,] \lambda_1 + \mathbbm{1}[\,d \geq C\,]\lambda_2\big)&(4)
+\end{aligned} 
+$$
+We define the `forward` function given this model below. 
+
 ```{r}
-## TESTING 
-set.seed(447)
-# true change point at around 25
-simulated_yvals = c(round(runif(24, 10, 15)), round(runif(60, 30, 50)))
-# run MCMC
-test = mcmc(c(0.1, 0.2), 34, simulated_yvals, 550, debug = FALSE)
-# plot
-plot(main = "Simulated Data Trace Plot",
-     test$change_point_trace[test$change_point_trace > 0], 
-     type = 'l', ylab = "Proposal",
-     ylim = c(1, 74))
-abline(h = 25, col = rgb(1, 0, 0, 0.5), lwd = 1)
+forward = function(synthetic_data_size) {
+  # exponential realization for lambda_1
+  lambda_1 = rexp(1, 1/100) # (1)
+  # exponential realization for lambda_2
+  lambda_2 = rexp(1, 1/100) # (2)
+  # discrete uniform for C
+  change_point = rdunif(1, 1, 74) # (3)
+  # define vector for data
+  data = sapply(1:synthetic_data_size, 
+    # simulate from index
+    function(d){
+      # likelihood for Y_d
+      rpois(1, ifelse(d < change_point, lambda_1, lambda_2)) # (4)
+    })
+  # return a list of all components
+  return(list(
+    rates = c(lambda_1, lambda_2), 
+    change_point = change_point,
+    data = data
+  ))
+}
+# forward(100)
 ```
+
+Now, we import the provided `forward_posterior` function:
+```{r}
+forward_posterior = function(synthetic_data_size, n_mcmc_iters) {
+  # sample from the forward simulator
+  initial = forward(synthetic_data_size)
+  # in the case we are using mcmc
+  if (n_mcmc_iters > 0) {
+    # run the mcmc algorithm on this forward-sampled initial point
+    samples = mcmc(initial$rates, initial$change_point, 
+                   initial$data, n_mcmc_iters)
+    # return pre-change point rate after mcmc
+    return( samples$last_iteration_rates[[1]] )
+  } 
+  # otherwise simply return simulated lambda 
+  else {
+    return(initial$rates[[1]])
+  }
+}
+```
+
+Finally, we run the Kolmogorov-Smirnov test for the chosen iteration counts:
+
+```{r}
+set.seed(1928)
+# NOTE: we use synthetic datasets with only 5 observations to speed things up
+forward_only = replicate(1000, forward_posterior(5, 0))
+with_mcmc = replicate(1000,    forward_posterior(5, 200))
+# run test
+ks.test(forward_only, with_mcmc)
+```
+We see that the observed $p$-value of the Kolmogorov-Smirnov test is approximately $0.9356$. Under the assumption $H_0$, the probability of observing discrepancies as large or larger than those observed between the empirical CDFs of `forward_only` and `with_mcmc` is approximately $93.56\%$. This high $p$-value is a good sign that the code is functioning as intended.
+
+
+## Part 3
+If you identified a bug using this method, show the part of the code that had a bug (before and after fixing), as well as the $p$-value (before and after). If no bugs where found, temporarily create one and report the same thing. Don’t forget to fix all bugs before moving to the next question.
+
+
+
+While I did in fact identify a bug using this method, it didn't have a actually prevented the algorithm from running correctly. 
+
+
+Specifically, the reported error was "`Error in if (log(runif(1)) < ratio) { :  missing value where TRUE/FALSE needed`" which was occurring when the starting $C$ value was beyond the index of any of the observations. I added a line returning `-Inf` in the case that both elements of the ratio were not well-defined.
+
+
+To show the utility of the Kolmogorov-Smirnov, I manually injected a bug into the code. Specifically, I set `log = FALSE` for the likelihood value in the `log_joint` function. In this case, the test yielded a $p$-value of `0.03328`. 
+
+# Question 3 : Data Analysis
+
+```{r, include=FALSE}
+N = nrow(df)
+# we build such that dim = 1 
+mcmc = function(rates, CP, y, n_iterations, debug = FALSE) {
+  change_point_trace = rep(-1, n_iterations)
+  # initial point
+  current_CP = CP
+  current_RT = rates
+  current = list(rates, CP)
+  # iteration station
+  for (i in 1:n_iterations) {
+    if (debug) {print(unlist(rep("#", times = 10)))}
+    if (debug) {print(paste("Iteration:", i))}
+    # bernoulli trial
+    kernel_choice = ifelse(runif(1) < 0.5, 1, 2)
+    if (debug) {print(paste("Chose Kernel", kernel_choice, "..."))}
+    # Kernel for Change Point
+    if (kernel_choice == 1){
+      # Discrete Uniform Proposal
+      prop = rdunif(1, 1, N)
+      if (debug) {print(paste("Proposed", prop, "..."))}
+      # MH ratio
+      ratio = (log_joint(current[[1]], prop, y) -
+               log_joint(current[[1]], current[[2]], y))
+
+      if (debug) {print(paste("Ratio", ratio)) }
+      # Bernoulli Trial
+      if (log(runif(1)) < ratio) {
+        # accept
+        current[[2]] = prop
+      } else {
+        # reject (redundant but nice)
+        current[[2]] = current[[2]]
+      }
+    }
+    # Kernel for Lambdas
+    else {
+      # normal at current point
+      ell_1 = rnorm(1, mean = current[[1]][1])
+      ell_2 = rnorm(1, mean = current[[1]][2])
+      # then the proposal is the vector
+      prop = c(ell_1, ell_2)
+      if (debug) {print(paste("Proposed", unlist(round(prop,2)), "..."))}
+      # MH Ratio
+      ratio = (log_joint(prop, current[[2]], y) -
+               log_joint(current[[1]], current[[2]], y))
+      
+      if (debug) {print(paste("Ratio", ratio)) }
+      
+      if (log(runif(1)) < ratio) {
+        # accept
+        current[[1]] = prop 
+      }else {
+        # reject (redundant but nice)
+        current[[1]] = current[[1]]
+      }
+     if(debug) {Sys.sleep(1)}
+    }
+    # update trace
+    change_point_trace[i] = current[[2]]
+  }
+  return(
+    list(
+      change_point_trace = change_point_trace, 
+      last_iteration_rates = current[[1]]
+    )
+  )
+}
+```
+Perform 10k iteration of MCMC on the text message data.
+
+First, we select candidate starting points $\vec{\lambda}^{(0)}$ and $C^{(0)}$. I picked $C^{(0)} = 37$ (halfway point) and $\vec{\lambda^{(0)}} = \{1, 1\}$
+```{r}
+M = 10000
+rates_0 = c(1, 1)
+C_0 = 37
+```
+```{r}
+set.seed(007) # The name's Chain... Markov Chain.
+samples = mcmc(rates_0, C_0, y = sms_data, n_iterations = M)
+```
+
+## Part 1
+
+Create two trace plots for the change point parameter, one for the full trace, one for the subset of samples in the second half. Comment on the mixing behaviour.
+```{r}
+# first half
+dDF1 <- data.frame(Index = 1:5000, 
+                   ChangePointTrace = samples$change_point_trace[1:5000], 
+                   Segment = 'First Half of Iterations')
+# second half
+dDF2 <- data.frame(Index = 0:5000, 
+                   ChangePointTrace = samples$change_point_trace[5000:10000], 
+                   Segment = 'Second Half of Iterations')
+
+# prep for plotting
+dDF <- bind_rows(dDF1, dDF2)
+# create plot
+p <-
+  ggplot(dDF, aes(x = Index, y = ChangePointTrace, color = Segment)) +
+  geom_line() +
+  facet_wrap( ~ Segment, ncol = 2) +
+  theme_bw() +
+  scale_colour_manual(values = c(
+    'First Half of Iterations' = "#f4a261",
+    'Second Half of Iterations' = "#2a9d8f"
+  )) +
+  labs(x = "Iteration", y = "Change Point Trace",
+       title = "Change Point Trace Segments, M = 10,000") +
+  theme(
+    panel.grid.minor = element_line(color = "grey80", linetype = 'dotted'),
+    legend.position = "none"
+  )
+# show plot
+print(p)
+```
+
+**Comments**: The chain seems to be mixing well, and mixing quickly at that! This is encouraging behaviour. We see a lot of variation and movement for approximately the first $500$ iterations, but as $M\uparrow$, the Change Point traces seem to converge rather well and surround some value in the mid-40s. Both the combination of the initial variation tailing off and the MCMC surrounding some fixed value are good signs that the chain is mixing well.
+
+
+## Part 2:
+
+We report the effective sample size for the full set of samples and each of the subsets. 
+
+```{r}
+quiet_load("mcmcse")
+
+kable(t(data.frame(ESS = round(c(
+  ess(dDF$ChangePointTrace),
+  ess(dDF1$ChangePointTrace),
+  ess(dDF2$ChangePointTrace)
+), 2))),
+col.names = c("Full Set", "First Half", "Second Half"),
+caption = "Effective Sample Sizes for MCMC"
+)
+```
+As the above table shows, the effective sample size is slightly larger than the second half of the samples than the overall set. I decided to include the ESS of the first half as well for comparison, and we can see the effective sample size is \underline{much} larger for the second half of the samples as well, which helps reinforce our previous conclusion of a well-mixing algorithm.
+
+
+## Part 3
+
+Produce a histogram from the second half of samples. 
+
+```{r}
+p2 <- ggplot(dDF2, aes(x = ChangePointTrace)) +
+  geom_histogram(
+    binwidth = 1,
+    fill = "#F15156",
+    linewidth = 0.5,
+    color = "#721121",
+    alpha = 0.25
+  ) +
+  geom_text(
+    stat = 'count',
+    aes(label = after_stat(count), y = after_stat(count)),
+    vjust = -0.5,
+    color = "#721121"
+  ) +
+  ylim(0, 3500) +
+  labs(title = "Histogram of Second Half of Change-Point Samples",
+       y = "Observed Counts",   x = "Change Point") +
+  theme_bw() +
+   theme(
+    panel.grid.minor = element_line(color = "grey80", linetype = 'dotted'))
+print(p2)
+```
+
+Briefly comment on the results in light of the note below.
+
+
+
+**Note**: this dataset comes with the additional information that *“the 45th day corresponds to Christmas, and I moved away to Toronto the next month, leaving a girlfriend behind”* (Davidson-Pilon, 2013).
+
+
+
+With this additional information, the large number of samples of $46$ begins to make sense. From this quote, it is likely that the author's life changed significantly in the time following Christmas, implying that the $46$th day likely corresponds to the change point.

@@ -55,3 +55,34 @@ abline(lm(agdm~d2d4), col = 'red')
 ```{r}
 summary(lm(agdm~d2d4))
 ```
+
+## Part C
+
+You are interested in whether any possible relationship between aggressive dominance and 2D:4D differs between the genders. To explore further, you collect data on ten of your female friends, tabulated below:
+
+
+$$\begin{array}{c | c c c c c c c c c c}
+\text{2D:4D} & 1.00 & 0.98 & 0.98 & 0.94 & 0.97 & 0.99 & 1.02 & 0.98 & 0.99 & 0.98 \\ \hline
+\text{Aggressive dominance} & 2.25 & 2.69 & 2.70 & 2.96 & 3.33 & 3.14 & 2.67 & 2.76 & 3.11 & 3.08
+\end{array}$$
+
+```{r}
+d2d4 = c(0.94, 0.97, 0.93, 1.01, 0.97, 0.94 , 0.97 , 0.98 , 0.98 , 0.95, 1.01 , 0.97) #covariate
+agdm = c(2.73 , 2.00 , 3.46 , 2.75 , 2.88 , 3.36 , 3.22 , 3.10 , 3.23 , 3.26 , 2.80 , 2.09) #response
+
+d2d4_F = c(1.00 , 0.98 , 0.98 , 0.94 , 0.97 , 0.99 , 1.02 , 0.98 , 0.99 , 0.98 )
+agdm_F = c(2.25 , 2.69 , 2.70 , 2.96 , 3.33 , 3.14 , 2.67 , 2.76 , 3.11 , 3.08)
+
+df = data.frame(
+  d2d4 = c(d2d4, d2d4_F),
+  agdm = c(agdm, agdm_F),
+  is_F = c(rep(0, times = 12), rep(1, times = 10))
+)
+
+fit = lm(agdm~(d2d4*is_F), data = df)
+vals = summary(fit)
+# 0.1226
+round(vals$r.squared, 3)
+round(vals$fstatistic, 3)
+vals
+```
