@@ -1,0 +1,34 @@
+---
+title: "Final Project"
+author: "STAT 447"
+date: "`r Sys.Date()`"
+output: pdf_document
+bibliography: bibliography.bib
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+
+**Introduction and Review**:
+
+
+Before we discuss Dirichlet Processes, some fundamental groundwork in probability measure theory will be established. We will briefly recap the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. We will take slightly more relaxed definitions than can be found in formal measure theory works such as [@billingsley2012probability]. 
+
+
+A $\sigma$-algebra $\mathcal{F}$ is a set satisfying the following three key properties:
+
+  1. The entire sample space $\mathcal{X}$ is in $\mathcal{F}$
+  2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as
+  3. hjkl
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+$$
+\forall i \in I, A_i \in \mathcal{F} \implies \bigcup_{i \in I}A_i
+$$
+[@teh2006dirichlet]
+
+## Sources
