@@ -15,6 +15,7 @@ bibliography: bibliography.bib
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# https://stats.stackexchange.com/questions/95120/simulate-dirichlet-process-in-r
 ```
 
 ## Introduction and Review:
@@ -45,7 +46,7 @@ For the sake of this work, we are more interested in *probability measures*, whi
   3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
 
 
-Before we continue to discuss Dirichlet Distributions and Processess, we note to the reader that the definitions above are quite general, and can be rather abstract for those unfamiliar with measure theory. To reinforce the properties discussed above, we present worked examples of proving a set to be a $\sigma$-algebra and verifying a probability measure $\upmu$ in the Appendix. 
+Before discussing Dirichlet Distributions and Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
 
 [@teh2006dirichlet]
 
@@ -70,7 +71,7 @@ Before we continue to discuss Dirichlet Distributions and Processess, we note to
 For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the literature review.
 
 
-Let $\mathbb{X} = \{a, b, c\}$. Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
+Let's consider the finitely countable and simple set $\mathbb{X} = \{a, b, c\}$. Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
 
 
 We will apply the properties discussed in the literature review section to prove that $\mathcal{F}$ is a $\sigma$-algebra.
