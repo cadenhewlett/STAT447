@@ -3,6 +3,13 @@ title: "Final Project"
 author: "STAT 447"
 date: "`r Sys.Date()`"
 output: pdf_document
+header-includes:
+   - \usepackage{bbm}
+   - \usepackage{upgreek}
+   - \usepackage{booktabs}
+   - \usepackage{bbm}
+   - \usepackage{mathrsfs}
+   - \usepackage{yfonts}
 bibliography: bibliography.bib
 ---
 
@@ -10,25 +17,27 @@ bibliography: bibliography.bib
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
-
-
-**Introduction and Review**:
+## Introduction and Review:
 
 
 Before we discuss Dirichlet Processes, some fundamental groundwork in probability measure theory will be established. We will briefly recap the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. We will take slightly more relaxed definitions than can be found in formal measure theory works such as [@billingsley2012probability]. 
 
 
-A $\sigma$-algebra $\mathcal{F}$ is a set satisfying the following three key properties:
+Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
 
-  1. The entire sample space $\mathcal{X}$ is in $\mathcal{F}$
-  2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as
-  3. hjkl
+\vspace{-5mm}
+  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$. 
+  2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
+  3. For any countable index set $I$ and collection of sets $\{A_i\}_{i \in I}$ such that $\forall i \in I, A_i \in \mathcal{F} \implies \bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
+More detail on properties 1-3 can be found in analysis works such as [@rudin1986real]. For the sake of this work,
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-$$
-\forall i \in I, A_i \in \mathcal{F} \implies \bigcup_{i \in I}A_i
-$$
+For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability $\mu$ measure $\upmu : \mathcal{F} \mapsto [0,1]$ is a pro
+
+
+
 [@teh2006dirichlet]
 
 ## Sources
+
+
+*Acknowledegements*: Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
