@@ -20,24 +20,69 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction and Review:
 
 
-Before we discuss Dirichlet Processes, some fundamental groundwork in probability measure theory will be established. We will briefly recap the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. We will take slightly more relaxed definitions than can be found in formal measure theory works such as [@billingsley2012probability]. 
+Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. In the following, we present slightly more generalized definitions than can be found in formal measure theory works such as [@billingsley2012probability]. 
 
 
 Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
 
 \vspace{-5mm}
-  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$. 
+  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$.
   2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
-  3. For any countable index set $I$ and collection of sets $\{A_i\}_{i \in I}$ such that $\forall i \in I, A_i \in \mathcal{F} \implies \bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
-More detail on properties 1-3 can be found in analysis works such as [@rudin1986real]. For the sake of this work,
-
-For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability $\mu$ measure $\upmu : \mathcal{F} \mapsto [0,1]$ is a pro
+  3. For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable index set, if $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
+It should be noted that by properties (1) and (2) that $\mathbb{X}^c =\emptyset \in \mathcal{F}$. This extended definition of (1) is referred to as "non-emptiness and universality." More detail on these properties can be found in foundational works such as [@rudin1986real]. 
 
 
+\vspace{-5mm}
+
+
+For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability $\mu$ measure $\upmu : \mathcal{F} \mapsto [0,1]$ satisfies the following familiar axioms of probability:
+
+
+\vspace{-5mm}
+  1. All mappings are non-negative: $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. THis is referred to as "non-negativity."
+  2. $\upmu(\mathbb{X}) = 1$, and $\upmu(\emptyset) = 0$. 
+  3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
 
 [@teh2006dirichlet]
 
-## Sources
+
+
+<!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
+<!-- https://projecteuclid.org/journals/annals-of-statistics/volume-1/issue-2/A-Bayesian-Analysis-of-Some-Nonparametric-Problems/10.1214/aos/1176342360.full -->
+<!-- https://en.wikipedia.org/wiki/Dirichlet_process -->
+<!-- https://en.wikipedia.org/wiki/Dirichlet_process#cite_note-2 -->
+<!-- https://en.wikipedia.org/wiki/Probability_measure -->
+<!-- https://en.wikipedia.org/wiki/Sigma-additive_set_function -->
+
+
+## Appendix
 
 
 *Acknowledegements*: Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
+
+
+### Example of a $\sigma$-Algebra 
+
+For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the literature review.
+
+
+Let $\mathbb{X} = \{a, b, c\}$. Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
+
+
+We will apply the properties discussed in the literature review section to prove that $\mathcal{F}$ is a $\sigma$-algebra.
+
+
+To verify Property 1 (universality and non-emptiness), we note that we can also write $\mathcal{F}$ as $\big\{\emptyset, \{a\}, \{b,c\}, \mathbb{X} \big\}$. From this definition, it is direct to see that $\mathbb{X} \in \mathcal{F}$ and $\emptyset \in \mathcal{F}$, verifying universality and non-emptiness.
+
+
+To verify Property 2 (closure under complementation), we note that $A^{c^{\,c}} = A$. Hence, if we show $A \in \mathcal{F} \implies A^c \in \mathcal{F}$ this is equivalent to showing that $A \in \mathcal{F} \iff A^c \in \mathcal{F}$. Since $\mathcal{F}$ is finitely countable, we can consider a case-wise basis for verification. Firstly, we have $A = \emptyset$. By definition, $A^c = \mathbb{X}$. We see that $\mathbb{X} \in \mathcal{F}$. As mentioned before, this implies that the case where $A = \mathbb{X}$ also holds. Now, we can proceed to verify the case where $A = \{a\}$. We note that $\{a\}^c = \{b, c\}$, and that $\{b, c\} \in \mathcal{F}$. Therefore, this case holds and thus so does the case where $A = \{b, c\}$ by biconditionality. Hence, we can conclude that $\mathcal{F}$ is closed under complementation.
+
+
+To verify Property  (closure under countable unions), we first consider the concrete case where $\{A_i\}_{i = 1}^2 = \big\{\{a\}, \{b,c\} \big\}$ where $A_1 = \{a\}$ and $A_2 = \{b, c\}$. We note that $A_1, A_2 \in \mathcal{F}$, so we would expect that $A_1 \cup A_2 \in \mathcal{F}.$ Directly, $A_1 \cup A_2 = \{a\} \cup \{b,c\} = \{a, b, c\} = \mathbb{X}$, and we see that $\mathbb{X} \in \mathcal{F}$. For the remaining cases, $\forall A \in \mathcal{F}, A \cup \emptyset = A$ by fundamental set properties, and directly $A \in \mathcal{F}$ by construction. Similarly, $\forall A \in \mathcal{F}, A \cup \mathbb{X} = \mathbb{X}$ and we know that $\mathbb{X} \in \mathcal{F}$. Hence, for all cases, $\mathcal{F}$ is closed under countable unions.
+
+
+From all of these properties, we can conclude that $\mathcal{F}$ is a $\sigma$-algebra, as required $\square$.
+
+
+
+## Sources
