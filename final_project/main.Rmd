@@ -20,28 +20,32 @@ knitr::opts_chunk$set(echo = TRUE)
 ## Introduction and Review:
 
 
-Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. In the following, we present slightly more generalized definitions than can be found in formal measure theory works such as [@billingsley2012probability]. 
+Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. The relevant literature for probability measure theory are [@billingsley2012probability] and [@rudin1986real]. In the following, we present generalized definitions, which are discussed in rigour in these foundational measure theory works. 
 
 
 Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
 
-\vspace{-5mm}
-  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$.
+\vspace{-1mm}
+
+  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. This is referred to in the literature as "non-emptiness and universality." 
   2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
   3. For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable index set, if $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
-It should be noted that by properties (1) and (2) that $\mathbb{X}^c =\emptyset \in \mathcal{F}$. This extended definition of (1) is referred to as "non-emptiness and universality." More detail on these properties can be found in foundational works such as [@rudin1986real]. 
 
 
-\vspace{-5mm}
+\vspace{-1mm}
 
 
-For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability $\mu$ measure $\upmu : \mathcal{F} \mapsto [0,1]$ satisfies the following familiar axioms of probability:
+For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability measure $\upmu : \mathcal{F} \mapsto [0,1]$ satisfies the following familiar axioms of probability:
 
 
-\vspace{-5mm}
-  1. All mappings are non-negative: $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. THis is referred to as "non-negativity."
+\vspace{-1mm}
+
+  1. All mappings are non-negative: $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. This is referred to as "non-negativity."
   2. $\upmu(\mathbb{X}) = 1$, and $\upmu(\emptyset) = 0$. 
   3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
+
+
+Before we continue to discuss Dirichlet Distributions and Processess, we note to the reader that the definitions above are quite general, and can be rather abstract for those unfamiliar with measure theory. To reinforce the properties discussed above, we present worked examples of proving a set to be a $\sigma$-algebra and verifying a probability measure $\upmu$ in the Appendix. 
 
 [@teh2006dirichlet]
 
@@ -78,11 +82,53 @@ To verify Property 1 (universality and non-emptiness), we note that we can also 
 To verify Property 2 (closure under complementation), we note that $A^{c^{\,c}} = A$. Hence, if we show $A \in \mathcal{F} \implies A^c \in \mathcal{F}$ this is equivalent to showing that $A \in \mathcal{F} \iff A^c \in \mathcal{F}$. Since $\mathcal{F}$ is finitely countable, we can consider a case-wise basis for verification. Firstly, we have $A = \emptyset$. By definition, $A^c = \mathbb{X}$. We see that $\mathbb{X} \in \mathcal{F}$. As mentioned before, this implies that the case where $A = \mathbb{X}$ also holds. Now, we can proceed to verify the case where $A = \{a\}$. We note that $\{a\}^c = \{b, c\}$, and that $\{b, c\} \in \mathcal{F}$. Therefore, this case holds and thus so does the case where $A = \{b, c\}$ by biconditionality. Hence, we can conclude that $\mathcal{F}$ is closed under complementation.
 
 
-To verify Property  (closure under countable unions), we first consider the concrete case where $\{A_i\}_{i = 1}^2 = \big\{\{a\}, \{b,c\} \big\}$ where $A_1 = \{a\}$ and $A_2 = \{b, c\}$. We note that $A_1, A_2 \in \mathcal{F}$, so we would expect that $A_1 \cup A_2 \in \mathcal{F}.$ Directly, $A_1 \cup A_2 = \{a\} \cup \{b,c\} = \{a, b, c\} = \mathbb{X}$, and we see that $\mathbb{X} \in \mathcal{F}$. For the remaining cases, $\forall A \in \mathcal{F}, A \cup \emptyset = A$ by fundamental set properties, and directly $A \in \mathcal{F}$ by construction. Similarly, $\forall A \in \mathcal{F}, A \cup \mathbb{X} = \mathbb{X}$ and we know that $\mathbb{X} \in \mathcal{F}$. Hence, for all cases, $\mathcal{F}$ is closed under countable unions.
+To verify Property 3 (closure under countable unions), we first consider the concrete case where $\{A_i\}_{i = 1}^2 = \big\{\{a\}, \{b,c\} \big\}$ where $A_1 = \{a\}$ and $A_2 = \{b, c\}$. We note that $A_1, A_2 \in \mathcal{F}$, so we would expect that $A_1 \cup A_2 \in \mathcal{F}.$ Directly, $A_1 \cup A_2 = \{a\} \cup \{b,c\} = \{a, b, c\} = \mathbb{X}$, and we see that $\mathbb{X} \in \mathcal{F}$. For the remaining cases, $\forall A \in \mathcal{F}, A \cup \emptyset = A$ by fundamental set properties, and directly $A \in \mathcal{F}$ by construction. Similarly, $\forall A \in \mathcal{F}, A \cup \mathbb{X} = \mathbb{X}$ and we know that $\mathbb{X} \in \mathcal{F}$. Hence, for all cases, $\mathcal{F}$ is closed under countable unions.
 
 
 From all of these properties, we can conclude that $\mathcal{F}$ is a $\sigma$-algebra, as required $\square$.
 
+
+### Example of a Probability Measure
+
+Using the $\sigma$-algebra $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\}$ we will define $\upmu: \mathcal{F} \mapsto [0, 1]$ and prove that $\upmu$ is a probability measure using the properties discussed in the literature review. 
+
+We will define a concrete example as follows, and show it is a probability measure on $\mathcal{F}$.
+$$
+\upmu(A) = \begin{cases}
+2/3, & |A| = 1 \\
+1/3, & |A| = 2 \\
+1, &  |A| = 3 \\
+0, & \text{otherwise} \end{cases}
+$$
+
+ Let's evaluate the properties discussed in the literature review to verify that $\upmu$ is in fact a probability measure.
+
+First, we evaluate Property 1 (non-negativity.)  In effect, we wish to verify that $\forall A \in \mathcal{F}, \upmu(A) \geq 0$. We can easily evaluate the universal in a case-wise basis. 
+
+\vspace{-1mm}
+  a. $\emptyset \in \mathcal{F}$ and $\upmu(\emptyset) = 0 \geq 0$.
+  b. $\{a\} \in \mathcal{F}$ and $\upmu(\{a\}) = 2/3 \geq 0$.
+  c. $\{b,c\} \in \mathcal{F}$ and $\upmu(\{b,c\}) = 1/3 \geq 0$.
+  d. $\mathbb{X} \in \mathcal{F}$ and $\upmu(\mathbb{X}) = 1 \geq 0$.
+
+
+
+Hence, $\forall A \in \mathcal{F},  \upmu(A) \geq 0$, verifying the non-negativity clause. Further, we see that $\forall A \in \mathcal{F}, 0 \leq \upmu(A) \leq 1$.
+
+
+In addition, we can utilize the evaluations above to verify Property 2. Directly, we see that  $\upmu(\emptyset) = 0$ and $\upmu(\mathbb{X}) = 1$, verifying Property 2  that a value of $1$ is assigned to the sample space $\mathbb{X}$.
+
+
+
+Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma$-algebra is finitely countable, we verify all pairwise disjoint intersections on a case-wise basis.
+
+
+  a. First, we consider the set of pairwise disjoint sets $\{\emptyset, A\}$ for $A \in \mathcal{F}$. We see that $\forall A \in \mathcal{F}, \emptyset \cap A = \emptyset$ and $\emptyset \cup A = A$. Using, $\upmu(\emptyset) = 0$, we observe that $\upmu\Big(\bigcup_{i} A_i \Big)  = \upmu(A) =  \upmu(A) + {\upmu(\emptyset)} = \sum_{i=1} \upmu(A_i)$, as required. 
+  b. Similarly, we consider $\mathbb{X} \in \mathcal{F}$, noting that $\forall A \in \mathcal{F}, \mathbb{X} \cap A = A$ is non-disjoint, so the case holds vacuously by falsity of the antecedent. A similar argument can be applied for $\{A, A\}, A \in \mathcal{F}$ which is evidently a non-disjoint pair. 
+  c. The other pairwise disjoint set in $\mathcal{F}$ is $\{A_i\}=\big\{\{a\}, \{b, c\}\big\}$, since $\{a\} \cap \{b, c\} = \emptyset$. Hence, this pair should be countably additive. We can see directly that $\bigcup_{i} A_i = \{a\} \cup \{b, c\} = \mathbb{X}$, Hence, $\upmu\Big(\bigcup_{i} A_i \Big) = \upmu(\mathbb{X}) = 1$, so we anticipate $\sum_i \upmu(A_i) = 1$. To verify, we see that  $\sum_i \upmu(A_i) = \upmu(\{a\}) + \upmu(\{b, c\})   = 2/3 + 1/3 = 1$, so countable additivity holds. 
+
+
+From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
 
 ## Sources
