@@ -6,10 +6,11 @@ df = read.csv("final_project/SelfRef_Maths_Exp1.csv")
 # randomization seed 
 set.seed(713)
 
-# we used a subset of 75 children who answered the question wrong
-# and in each case inspected the length of the question. 
+# we used a subset of 75 children who answered the simple algebra word question 
+# incorrectly and in each case inspected the length of the question. 
 # in interest of classification, we separated them into 4 categories dictating
-# the question length
+# the question length as short, average, long or very long
+
 wrong = df[df$ResponseCode == 0 & nchar(df$QuestionText)>0, ]
 i = sample(1:nrow(wrong), 75)
 subdf = wrong[i, ]
