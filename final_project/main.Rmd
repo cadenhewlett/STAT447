@@ -147,10 +147,17 @@ From all of these properties, we can conclude that $\upmu$ is a probability meas
 
 $$
 \begin{aligned}
+<<<<<<< HEAD
 \{\pi_k\}_{k=1}^K &\sim \text{GEM}(\alpha),  \text{ stick-breaking process} \\
 \{\uptheta_k\}_{k=1}^K &\sim \mathbb{G}_0, \text{ base measure}\\
 z_i&\sim \text{categorical}(\{1, 2, \dots, K\}, \{\pi_k\}), \text{ cluster assignment }  i \in [1, N]\\
 y_i \mid z_i, \{\uptheta_k\}_1^K  &\sim \text{F}(x_i \,;\,\uptheta_{z_i}),  \text{ likelihood given cluster}
+=======
+\text{Infinite Dirichlet} &\text{ Process Mixture Model} \\
+\{\pi_k\}_{k=1}^{\infty} &\sim \text{GEM}(\alpha)\\
+\{\langle \alpha_k, \beta_k \rangle\}_{k=1}^{\infty} &\sim \mathbb{G}_0 \\
+y_i \mid \{\pi_k\}, \{\langle \alpha_k, \beta_k \rangle\} &\sim \sum_{k = 1}^{\infty} \pi_k \text{beta}(y_i \mid \langle \alpha_k, \beta_k \rangle) \\
+>>>>>>> 256b0a3ab076c6fff5c87488135940b1b8007592
 \end{aligned}
 $$
 
