@@ -10,8 +10,7 @@ set.seed(713)
 # incorrectly and in each case inspected the length of the question. 
 # in interest of classification, we separated them into 4 categories dictating
 # the question length as short, average, long or very long
-
-wrong = df[df$ResponseCode == 0 & nchar(df$QuestionText)>0, ]
+wrong = df[df$ResponseCode == 0 & nchar(df$QuestionText) > 0, ]
 i = sample(1:nrow(wrong), 75)
 subdf = wrong[i, ]
 # get lengths of question
