@@ -23,7 +23,7 @@ frameF <- data.frame(x=xGrid,
                      y1 = wk[1] * dbeta(xGrid, phik_alpha[1], phik_beta[1]),
                      y2 = wk[2] * dbeta(xGrid, phik_alpha[2], phik_beta[2]))
 
-FIT <- FALSE
+FIT <- FALSE # assume fit = T
 its <- 1500
 
 if(FIT){
@@ -87,7 +87,7 @@ if(FIT){
  saveRDS(saveList, "dpPrior.RDS")
 } else {
   print("Fit from Cache")
-#  saveList <- readRDS("dpPrior.RDS")
+  saveList <- readRDS("dpPrior.RDS")
   saveList$muPostVals -> muPostVals
   saveList$nuPostVals -> nuPostVals
   saveList$postFuncEval -> postFuncEval

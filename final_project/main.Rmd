@@ -138,10 +138,10 @@ $$
 
 $$
 \begin{aligned}
-\mathcal{P} &\sim \text{DP}(\alpha \mathbb{G}_0) \\
-\uptheta_i \mid \mathcal{P} &\sim \mathcal{P} \\
-X_{i,j} \mid \uptheta_{i, x} &\sim f_x(x \mid  \uptheta_{i, x})   \\
-X_{i,j} \mid \uptheta_{i, y} &\sim f_y(y \mid  \uptheta_{i, x})  
+\text{Infinite Dirichlet} &\text{ Process Mixture Model} \\
+\{\pi_k\}_{k=1}^{\infty} &\sim \text{GEM}(\alpha)\\
+\{\langle \alpha_k, \beta_k \rangle\}_{k=1}^{\infty} &\sim \mathbb{G}_0 \\
+y_i \mid \{\pi_k\}, \{\langle \alpha_k, \beta_k \rangle\} &\sim \sum_{k = 1}^{\infty} \pi_k \text{beta}(y_i \mid \langle \alpha_k, \beta_k \rangle) \\
 \end{aligned}
 $$
 
