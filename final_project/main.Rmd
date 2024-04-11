@@ -148,6 +148,6 @@ $$
 
 So, we would...
 Define prior $\mathcal{P} \sim \text{DP}(\alpha \mathbb{G}_0)$
-The implemented code for the Gibbs Sampler is modified from [@smith2017gibbs] 
+The implemented code for the Gibbs Sampler is modified from the DPMM code by [@dpmm2023] 
 
 ## Sources
