@@ -3,20 +3,20 @@ library(ggplot2)
 library(latex2exp)
 library(RColorBrewer)
 library(scales)
-set.seed(1928) #
+set.seed(1928) #1928
 # base distributions, 
 G_0_nor <- function(n) { rnorm(n, 0, 4) }
 # G_0_dir <- function(n) { rdirichlet(n, c(1, 1, 1, 1)) } 
 # clusters 
 K <- 1000
 # generate stick breaking finite approximation
-b <- rbeta(n, 1, 8) 
+b <- rbeta(K, 1, 8) 
 # empty vector for pulls
 p <- numeric(K)
 # break 1
 p[1] <- b[1]
 # further breaks
-p[2:n] <- sapply(2:K, function(i) b[i] * prod(1 - b[1:(i-1)]))
+p[2:K] <- sapply(2:K, function(i) b[i] * prod(1 - b[1:(i-1)]))
 
 # create vector
 y <- G_0_nor(K) # cbind(G_0_nor(n),  G_0_dir(n)) 
@@ -38,8 +38,8 @@ palette_2 <- c("#d8f3dc", "#b7e4c7", "#a6ddb8", "#95d5b2", "#74c69d", "#52b788",
 palette_1 <- c("#d9ed92", "#b5e48c", "#99d98c", "#76c893", "#52b69a", 
                    "#34a0a4", "#168aad", "#1a759f", "#1e6091", "#184e77", 
                    "#15395d")
-
-plotDF = data.frame(  DirB = idea,  DirP = log(p))
+# + scale_fill_manual(values = rev(palette_4))
+plotDF = data.frame(  DirB = theta,  DirP = log(p))
 # plot heatmap of results
 p1 = ggplot(plotDF, aes(x = DirB, y = DirP)) +
   geom_density_2d_filled() +
@@ -49,7 +49,7 @@ p1 = ggplot(plotDF, aes(x = DirB, y = DirP)) +
     subtitle = TeX("Where $K = 1000$ and $G_0 \\sim N(0, \\sigma^2)$"),
     y = TeX("Log of Mixture Weights: $\\{\\pi_k\\}_{k = 1}^K$"),
     x = TeX("Cluster Parameters: $\\{\\theta_k\\}_{k = 1}^K$")
-  )  + theme_bw() + scale_fill_manual(values = rev(palette_4)) +  theme(
+  )  + theme_bw()  +  scale_fill_viridis_d(option = "plasma") + theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
