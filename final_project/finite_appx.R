@@ -5,25 +5,36 @@ library(RColorBrewer)
 library(scales)
 # seed for reproducibility
 set.seed(447) 
-# base distributions, 
-G_0 <- function(n) { rgamma(n, 1, 1) }
-# clusters 
-K <- 1000
+# number of clusters 
+K = 1000
+
+### DP Parameters ###
+# base distribution 
+G_0 = function(n) { rgamma(n, 1, 1) }
+alpha = 10 # 2.1 is other nice example
+
+
+#############################
+####### FINITE APPX. ########
+#############################
+
+
 # generate stick breaking finite approximation
-b <- rbeta(K, 1, 10) # 2.1 is other nice example
+b <- rbeta(K, 1, alpha) 
 # empty vector for pulls
 p <- numeric(length = K)
 # initial stick break
 p[1] <- b[1]
-# further breaks
+# further breaks following GEM(a) definition from methods
 p[2:K] <- sapply(2:K, function(i) b[i] * prod(1 - b[1:(i-1)]))
-# create vector
-y <- G_0(K) 
-# index sample according to stick-break probabilities
-sampled <- sample(1:K, prob = p, replace = TRUE)
-# this creates theta_i
-theta = y[sampled]
+# then, sample from base distribution by weight probabilities
+# this creates the finite approximation as discussed in the methods
+theta <- sample(G_0(K), prob = p, replace = TRUE)
 
+
+#############################
+##### FINITE D.P. PLOT ######
+#############################
 
 # then just plot stuff
 palette_1 <- c("#D9ED92", "#BDE68D", "#A6DE8C", "#8ED48E" ,

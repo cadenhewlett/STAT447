@@ -1,6 +1,6 @@
 ---
-title: "Application of Non-Parametric Gamma-Poisson Conjugate Dirichlet Process Mixture Models"
-subtitle: "STAT 447"
+title: "Dirichlet Process Mixture Models in a Gamma-Poisson Conjugate Non-Parametric System"
+subtitle: "STAT 447 Final Project"
 author: "Caden Hewlett"
 date: "`r Sys.Date()`"
 output: pdf_document
@@ -25,7 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # TODO
 ```
 
-## Literature Review
+## Literature Review : Measures
 
 
 Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. The relevant literature for probability measure theory are [@billingsley2012probability] and [@rudin1986real]. In the following, we present generalized definitions, which are discussed in rigour in these foundational measure theory works. 
@@ -53,10 +53,15 @@ For the sake of this work, we are more interested in *probability measures*, whi
   3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
 
 
-Before discussing Dirichlet Distributions and Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
+Before we move on to Dirichlet Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
+
+**A Distribution Over Measures**
 
 
-Dirichlet Process [@teh2006dirichlet]
+Now, we introduce the concept of the Dirichlet Process (DP), a distribution across probability measures. We adopt the description used in [@hannah2011dirichlet], where the DP is specified by its base measure $\mathbb{G}_0$ (commonly a distribution) and the concentration parameter, $\alpha$. A random sample from a Dirichlet Process is a probability measure over a $\sigma$-algebra from sample space $\mathbb{X}$, which is often assumed to be countable. The resulting probability measure follows the structure of the base measure $\mathbb{G}_0$ with a degree of deviation controlled by $\alpha$. A Dirichlet Process can also be thought of conceptually of as a Dirichlet Distribution whose support is an infinite-simplex, rather than a discretely-defined $k$-simplex. [@Ferguson1973]
+
+
+The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. [@Sethuraman1994]. The finite approximation of this property can be seen in Figure 1.  [@teh2006dirichlet]
 
 ## Methodology
 
@@ -99,7 +104,11 @@ Finite-Approximation via Stick-Breaking
 ## Appendix
 
 
-*Acknowledegements*: Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
+*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametric statistics
+
+
+
+Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
 
 
 ### Example of a $\sigma$-Algebra 
