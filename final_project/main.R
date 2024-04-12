@@ -4,9 +4,9 @@ library(latex2exp)
 library(RColorBrewer)
 library(scales)
 
-set.seed(1928) #1928
+set.seed(447) #1928
 # base distributions, 
-G_0 <- function(n) { rnorm(n, 0, 4) }
+G_0 <- function(n) { rgamma(n, 1, 1) }
 # G_0_dir <- function(n) { rdirichlet(n, c(1, 1, 1, 1)) } 
 # clusters 
 K <- 1000
@@ -43,11 +43,11 @@ p1 = ggplot(plotDF, aes(x = DirB, y = DirP)) +
   geom_density_2d_filled() +
   labs(
     title =
-      TeX("Finite Approximation of Dirichlet Process DP($\\alpha G_0$) Realization"),
-    subtitle = TeX("Where $K = 1000$, $G_0 \\sim N(0, \\sigma^2)$ and $\\alpha = 10$"),
+      TeX("Finite Approximation of Dirichlet Process : DP($\\alpha G_0$) Realization"),
+    subtitle = TeX("Where $K = 1000$, $G_0 \\sim$ gamma(1, 1) and $\\alpha = 10$"),
     y = TeX("Log of Mixture Weights: $\\{\\pi_k\\}_{k = 1}^K$"),
-    x = TeX("Cluster Parameters: $\\{\\theta_k\\}_{k = 1}^K$")
-  )  + theme_bw()  +  scale_fill_manual(values = rev(palette_2)) + theme(
+    x = TeX("Cluster Parameters: $\\{\\lambda_k\\}_{k = 1}^K$")
+  )  + theme_bw()  +  scale_fill_manual(values = rev(palette_1)) + theme(
     panel.grid.major = element_blank(),
     panel.grid.minor = element_blank(),
     panel.border = element_blank(),
@@ -64,3 +64,4 @@ p1 = ggplot(plotDF, aes(x = DirB, y = DirP)) +
 print(p1) #trbl
 
 ggsave("final_project/dirch_appx.png", plot = p1, width = 7, height = 5)
+#plot(plotDF$DirB, plotDF$DirP)

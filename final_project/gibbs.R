@@ -55,7 +55,8 @@ for (iter in 1:M) {
   }
   
   # Update weights p using the stick-breaking process
-  b <- rbeta(n, 1 + vapply(1:n, function(k) sum(cluster_assignments == k), numeric(1)), alpha + vapply(1:n, function(k) sum(cluster_assignments > k), numeric(1)))
+  b <- rbeta(n, 1 + vapply(1:n, function(k) sum(cluster_assignments == k), numeric(1)), 
+             alpha + vapply(1:n, function(k) sum(cluster_assignments > k), numeric(1)))
   p[1] <- b[1]
   p[2:n] <- sapply(2:n, function(i) b[i] * prod(1 - b[1:(i-1)]))
   
