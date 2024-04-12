@@ -54,12 +54,14 @@ Predictive.poisson <- function(mdobj, x){
 # dp <- Initialise(dp)
 # dp <- Fit(dp, 1000, progressBar = TRUE)
 df = read.csv("final_project/cleaned_crash_data.csv")
-y <- df$crash #c(rpois(70, 3), rpois(150, 10), rpois(80, 1)) #generate sample data
+y <- df$crash_count #c(rpois(70, 3), rpois(150, 10), rpois(80, 1)) #generate sample data
 plot(y)
 dp <- DirichletProcessCreate(y, poisMd)
 dp <- Initialise(dp)
 dp <- Fit(dp, 2000)
-pf <- PosteriorFrame(dp, 0:20, 1000)
+pf <- PosteriorFrame(dp, 0:100, 100)
+# ?PosteriorFrame
+length(df$crash_count)
 # trueFrame <- data.frame(x= 0:20,
 #                         y= 70/(150+70 )*dpois(0:20, 3) + 150/(150+70 )*dpois(0:20, 10))
 # (y)
