@@ -54,12 +54,13 @@ Predictive.poisson <- function(mdobj, x){
 # dp <- Initialise(dp)
 # dp <- Fit(dp, 1000, progressBar = TRUE)
 df = read.csv("final_project/cleaned_crash_data.csv")
-y <- df$crash_count #c(rpois(70, 3), rpois(150, 10), rpois(80, 1)) #generate sample data
-plot(y)
+# monthly crash count, in 100s of crashes 
+y = ( round((df$crash_count)/100) )
 dp <- DirichletProcessCreate(y, poisMd)
 dp <- Initialise(dp)
-dp <- Fit(dp, 2000)
-pf <- PosteriorFrame(dp, 0:100, 100)
+dp <- Fit(dp, 10000)
+cat("Generating Posterior Frame...")
+pf <- PosteriorFrame(dp, 1:50, 2000)
 # ?PosteriorFrame
 length(df$crash_count)
 # trueFrame <- data.frame(x= 0:20,
@@ -71,7 +72,8 @@ print(ggplot() +
                  colour=NA,
                  fill="red",
                  alpha=0.2) + #credible intervals
-   geom_line(data=pf, aes(x=x, y=Mean), colour="red") )#+ #mean
+   geom_line(data=pf, aes(x=x, y=Mean), colour="red") + theme_bw() )#+ #mean
+# rpois(1000, 7)
  #  geom_line(data=trueFrame, aes(x=x, y=y)) #true
 
 # test = ( data.frame(Weight=dp$weights, Theta=unlist(c(dp$clusterParameters))) )

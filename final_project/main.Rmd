@@ -132,22 +132,55 @@ Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma
 From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
 
-$$
-\mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle
-$$
+<!-- $$ -->
+<!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->
+<!-- $$ -->
+
+<!-- $$ -->
+<!-- \begin{aligned} -->
+<!-- \mathcal{P} &\sim \text{DP}(\alpha \mathbb{G}_0) \\ -->
+<!-- \uptheta_i \mid \mathcal{P} &\sim \mathcal{P} \\ -->
+<!-- X_{i,j} \mid \uptheta_{i, x} &\sim f_x(x \mid  \uptheta_{i, x})   \\ -->
+<!-- X_{i,j} \mid \uptheta_{i, y} &\sim f_y(y \mid  \uptheta_{i, x})   -->
+<!-- \end{aligned} -->
+<!-- $$ -->
 
 $$
 \begin{aligned}
+<<<<<<< HEAD
+\{\pi_k\}_{k=1}^K &\sim \text{GEM}(\alpha),  \text{ stick-breaking process} \\
+\{\uptheta_k\}_{k=1}^K &\sim \mathbb{G}_0, \text{ base measure}\\
+z_i&\sim \text{categorical}(\{1, 2, \dots, K\}, \{\pi_k\}), \text{ cluster assignment }  i \in [1, N]\\
+y_i \mid z_i, \{\uptheta_k\}_1^K  &\sim \text{F}(x_i \,;\,\uptheta_{z_i}),  \text{ likelihood given cluster}
+=======
 \text{Infinite Dirichlet} &\text{ Process Mixture Model} \\
 \{\pi_k\}_{k=1}^{\infty} &\sim \text{GEM}(\alpha)\\
 \{\langle \alpha_k, \beta_k \rangle\}_{k=1}^{\infty} &\sim \mathbb{G}_0 \\
 y_i \mid \{\pi_k\}, \{\langle \alpha_k, \beta_k \rangle\} &\sim \sum_{k = 1}^{\infty} \pi_k \text{beta}(y_i \mid \langle \alpha_k, \beta_k \rangle) \\
+>>>>>>> 256b0a3ab076c6fff5c87488135940b1b8007592
 \end{aligned}
 $$
 
+Where the MCMC implementation is facilitated by the `dirichletprocess` package, created by [@dirichletprocess2023].
 
-So, we would...
-Define prior $\mathcal{P} \sim \text{DP}(\alpha \mathbb{G}_0)$
-The implemented code for the Gibbs Sampler is modified from the DPMM code by [@dpmm2023] 
-
+Finite-approximated infinite mixture DPMM, similar 
+$$
+\begin{aligned}
+\{\pi_k\}_{k=1}^K &\sim \text{GEM}(\alpha),  \text{ stick-breaking process} \\
+\{\uptheta_k\}_{k=1}^K &\sim \mathbb{G}_0, \text{ base measure}\\
+z_i&\sim \text{categorical}(\{1, 2, \dots, K\}, \{\pi_k\}), \text{ cluster assignment }  i \in [1, N]\\
+y_i \mid z_i, \{\uptheta_k\}_1^K  &\sim \text{F}(x_i \,;\,\uptheta_{z_i}),  \text{ likelihood given cluster}
+\end{aligned}
+$$
+<!-- So, we would... -->
+<!-- Define prior $\mathcal{P} \sim \text{DP}(\alpha \mathbb{G}_0)$ -->
+<!-- The implemented code for the Gibbs Sampler is modified from the DPMM code by [@dpmm2023]  -->
+$$
+\begin{aligned}
+\{\pi_k\}_{k=1}^{\infty} &\sim \text{GEM}(\alpha),  \text{ stick-breaking process} \\
+\{\uptheta_k\}_{k=1}^{\infty} &\sim \mathbb{G}_0, \text{ base measure},\\
+F &= \prod_{i=1}^N\bigg(\sum_{k =1}^{\infty} \pi_k N(x_i \mid \uptheta_k) \bigg), \text{ likelihood from normal kernel}
+\end{aligned}
+$$
 ## Sources
+[@jonesDPMM]
