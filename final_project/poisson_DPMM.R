@@ -43,27 +43,34 @@ Predictive.poisson <- function(mdobj, x){
 }
 
 
+# What we effectively have is discrete yearly counts, with 
+# latent categorization (province and condition) that is masked to the reporter.
+# however, with a DP Infinite Mixture Model we 
+# can still compute a posteriori estimates of the rate parameter 
+# (despite the fact that the count distribution is multimodal)
 
 
-dp <- DirichletProcessCreate(yTest, poisMd)
-dp <- Initialise(dp)
-dp <- Fit(dp, 1000, progressBar = TRUE)
-
-y <- c(rpois(150, 3), rpois(150, 10)) #generate sample data
+# dp <- DirichletProcessCreate(yTest, poisMd)
+# dp <- Initialise(dp)
+# dp <- Fit(dp, 1000, progressBar = TRUE)
+df = read.csv("final_project/cleaned_crash_data.csv")
+y <- df$crash #c(rpois(70, 3), rpois(150, 10), rpois(80, 1)) #generate sample data
+plot(y)
 dp <- DirichletProcessCreate(y, poisMd)
 dp <- Initialise(dp)
-dp <- Fit(dp, 1000)
+dp <- Fit(dp, 2000)
 pf <- PosteriorFrame(dp, 0:20, 1000)
-trueFrame <- data.frame(x= 0:20,
-                        y= 0.5*dpois(0:20, 3) + 0.5*dpois(0:20, 10))
-ggplot() +
+# trueFrame <- data.frame(x= 0:20,
+#                         y= 70/(150+70 )*dpois(0:20, 3) + 150/(150+70 )*dpois(0:20, 10))
+# (y)
+print(ggplot() +
    geom_ribbon(data=pf,
                  aes(x=x, ymin=X5., ymax=X95.),
                  colour=NA,
                  fill="red",
                  alpha=0.2) + #credible intervals
-   geom_line(data=pf, aes(x=x, y=Mean), colour="red") + #mean
-   geom_line(data=trueFrame, aes(x=x, y=y)) #true
+   geom_line(data=pf, aes(x=x, y=Mean), colour="red") )#+ #mean
+ #  geom_line(data=trueFrame, aes(x=x, y=y)) #true
 
 # test = ( data.frame(Weight=dp$weights, Theta=unlist(c(dp$clusterParameters))) )
 # test$Theta[which.max(test$Weight)]
