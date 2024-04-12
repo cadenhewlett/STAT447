@@ -1,6 +1,7 @@
 ---
-title: "Final Project"
-author: "STAT 447"
+title: "Application of Non-Parametric Gamma-Poisson Conjugate Dirichlet Process Mixture Models"
+subtitle: "STAT 447"
+author: "Caden Hewlett"
 date: "`r Sys.Date()`"
 output: pdf_document
 header-includes:
@@ -18,10 +19,16 @@ knitr::opts_chunk$set(echo = TRUE)
 # https://stats.stackexchange.com/questions/95120/simulate-dirichlet-process-in-r
 ```
 
-## Introduction and Review:
+## Introduction
+
+```{r}
+# TODO
+```
+
+## Literature Review
 
 
-Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra, probability measures and Dirichlet Distributions. The relevant literature for probability measure theory are [@billingsley2012probability] and [@rudin1986real]. In the following, we present generalized definitions, which are discussed in rigour in these foundational measure theory works. 
+Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. The relevant literature for probability measure theory are [@billingsley2012probability] and [@rudin1986real]. In the following, we present generalized definitions, which are discussed in rigour in these foundational measure theory works. 
 
 
 Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
@@ -48,9 +55,38 @@ For the sake of this work, we are more interested in *probability measures*, whi
 
 Before discussing Dirichlet Distributions and Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
 
-[@teh2006dirichlet]
+
+Dirichlet Process [@teh2006dirichlet]
+
+## Methodology
+
+Finite-Approximation via Stick-Breaking
+```{r}
+# TODO: First, Discuss finite-approximation via GEM
+# TODO: Then discuss implementation via custom Mixing Distribution : https://en.wikipedia.org/wiki/Mixture_distribution
+# https://dm13450.github.io/2018/02/21/Custom-Distributions-Conjugate.html
+# TODO: noting that when deciding on a prior-likelihood model, the characterization
+# of the system for a well-functioning mixture distribution (to be used in the DPMM)
+# requires the following four characteristics, which we derive from the gamma-poisson conjugacy
+# it's important to recall that while this conjugate system allows us to well-define the parameters
+# for the mixing distribution as required for a Dirichlett Process sampler, the gamma distribution 
+# in the prior-likelihood pair is the base measure, not the prior. we can think of these as the 
+# parameters to the mixing process. (i.e. requires a Mixing Distribution Object `mdObject` which is 
+# implicitly defined by the following four features: (4 functions))
+```
+
+## Results : Data Analysis
+
+```{r}
+# TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve. 
+```
 
 
+## Conclusion and Further Work
+
+```{r}
+# TODO: Discuss Chicago Traffic Model and Implementation
+```
 
 <!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
 <!-- https://projecteuclid.org/journals/annals-of-statistics/volume-1/issue-2/A-Bayesian-Analysis-of-Some-Nonparametric-Problems/10.1214/aos/1176342360.full -->
@@ -147,17 +183,14 @@ From all of these properties, we can conclude that $\upmu$ is a probability meas
 
 $$
 \begin{aligned}
-<<<<<<< HEAD
 \{\pi_k\}_{k=1}^K &\sim \text{GEM}(\alpha),  \text{ stick-breaking process} \\
 \{\uptheta_k\}_{k=1}^K &\sim \mathbb{G}_0, \text{ base measure}\\
 z_i&\sim \text{categorical}(\{1, 2, \dots, K\}, \{\pi_k\}), \text{ cluster assignment }  i \in [1, N]\\
-y_i \mid z_i, \{\uptheta_k\}_1^K  &\sim \text{F}(x_i \,;\,\uptheta_{z_i}),  \text{ likelihood given cluster}
-=======
+y_i \mid z_i, \{\uptheta_k\}_1^K  &\sim \text{F}(x_i \,;\,\uptheta_{z_i}),  \text{ likelihood given cluster}\\
 \text{Infinite Dirichlet} &\text{ Process Mixture Model} \\
 \{\pi_k\}_{k=1}^{\infty} &\sim \text{GEM}(\alpha)\\
 \{\langle \alpha_k, \beta_k \rangle\}_{k=1}^{\infty} &\sim \mathbb{G}_0 \\
 y_i \mid \{\pi_k\}, \{\langle \alpha_k, \beta_k \rangle\} &\sim \sum_{k = 1}^{\infty} \pi_k \text{beta}(y_i \mid \langle \alpha_k, \beta_k \rangle) \\
->>>>>>> 256b0a3ab076c6fff5c87488135940b1b8007592
 \end{aligned}
 $$
 

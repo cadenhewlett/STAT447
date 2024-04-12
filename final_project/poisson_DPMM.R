@@ -2,7 +2,6 @@ library(dirichletprocess)
 library(ggplot2)
 # browseVignettes(package = "dirichletprocess")
 dp <- DirichletProcessGaussian(rnorm(10))
-dp$mixingDistribution
 
 # custom conjugate mixture model
 poisMd <- MixingDistribution(
@@ -42,50 +41,32 @@ Predictive.poisson <- function(mdobj, x){
   return(pred)
 }
 
-
-# What we effectively have is discrete yearly counts, with 
-# latent categorization (province and condition) that is masked to the reporter.
+# What we effectively have is discrete monthly counts, with 
+# latent categorization (severity) that is masked
 # however, with a DP Infinite Mixture Model we 
 # can still compute a posteriori estimates of the rate parameter 
 # (despite the fact that the count distribution is multimodal)
-
-
-# dp <- DirichletProcessCreate(yTest, poisMd)
-# dp <- Initialise(dp)
-# dp <- Fit(dp, 1000, progressBar = TRUE)
 df = read.csv("final_project/cleaned_crash_data.csv")
 # monthly crash count, in 100s of crashes 
 y = ( round((df$crash_count)/100) )
 dp <- DirichletProcessCreate(y, poisMd)
 dp <- Initialise(dp)
 dp <- Fit(dp, 10000)
+## Posterior Frame allows sampling from the posterior
 cat("Generating Posterior Frame...")
-pf <- PosteriorFrame(dp, 1:50, 2000)
-# ?PosteriorFrame
-length(df$crash_count)
-# trueFrame <- data.frame(x= 0:20,
-#                         y= 70/(150+70 )*dpois(0:20, 3) + 150/(150+70 )*dpois(0:20, 10))
-# (y)
-print(ggplot() +
-   geom_ribbon(data=pf,
-                 aes(x=x, ymin=X5., ymax=X95.),
-                 colour=NA,
-                 fill="red",
-                 alpha=0.2) + #credible intervals
-   geom_line(data=pf, aes(x=x, y=Mean), colour="red") + theme_bw() )#+ #mean
-# rpois(1000, 7)
- #  geom_line(data=trueFrame, aes(x=x, y=y)) #true
+pf <- PosteriorFrame(dp, 0:50, 10000)
 
-# test = ( data.frame(Weight=dp$weights, Theta=unlist(c(dp$clusterParameters))) )
-# test$Theta[which.max(test$Weight)]
-# tail(test$Weight)
-# xGrid <- seq(0, 1, by=0.01)
-# 
-# postEval <- replicate(100, PosteriorFunction(dp)(xGrid))
-# meanFrame <- data.frame(Mean=rowMeans(postEval), x=xGrid)
-# plot(meanFrame)
-# quantileFrame <- data.frame(x=xGrid, t(apply(postEval, 1, quantile, prob=c(0.03, 0.97))))
-# trueFrame <- data.frame(x=xGrid, y=(0.5*dpois(xGrid, 10)+0.5*dpois(xGrid, 0.1)))
-# 
-# ggplot()  + geom_ribbon(data=quantileFrame, aes(x=x, ymin=X3., ymax=X97.), alpha=0.4) + 
-#   geom_line(data=meanFrame, aes(x=x, y=Mean, colour="Posterior Mean")) + geom_line(data=trueFrame, aes(x=x, y=y, colour="True"))
+## note that the model correctly idenitfies three distinct rates
+data.frame(Weights=dp$weights, lambda=c(dp$clusterParameters[[1]]))
+
+## Save to avoid repeat simulation
+saveRDS(pf, file = "posterior_sampleframe.RDS")
+saveRDS(dp, file = "raw_dirichlett_process.RDS")
+## How to plot 
+# print(ggplot() +
+#    geom_ribbon(data=pf,
+#                  aes(x=x, ymin=X5., ymax=X95.),
+#                  colour=NA,
+#                  fill="red",
+#                  alpha=0.2) + #credible intervals
+#    geom_line(data=pf, aes(x=x, y=Mean), colour="red") + theme_bw() )#+ #mean
