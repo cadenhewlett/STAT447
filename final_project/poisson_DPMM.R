@@ -1,33 +1,34 @@
 library(dirichletprocess)
 library(ggplot2)
-# browseVignettes(package = "dirichletprocess")
-dp <- DirichletProcessGaussian(rnorm(10))
+# set seed for reproducibility
+set.seed(447)
 
-# custom conjugate mixture model
+# define the framework conjugate mixture model
 poisMd <- MixingDistribution(
   distribution = "poisson",
   priorParameters = c(1, 1),
    conjugate = "conjugate"
 )
 
-# Poisson Likelihood
+# Part 1: Poisson Likelihood
 Likelihood.poisson <- function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
 }
-# Gamma Prior
+# Part 2: Gamma Prior : Base Measure
 PriorDraw.poisson <- function(mdobj, n){
   draws <- rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
   theta <- list(array(draws, dim=c(1,1,n)))
   return(theta)
 }
-# A draw from the posterior by conjugacy
+# Part 3: Posterior Draw (defined by conjugacy)
 PosteriorDraw.poisson <- function(mdobj, x, n=1){
   priorParameters <- mdobj$priorParameters
   theta <- rgamma(n, priorParameters[1] + sum(x),
                      priorParameters[2] + nrow(x))
   return(list(array(theta, dim=c(1,1,n))))
 }
-# Predictive Distribution by maginalization
+
+# Part 4: Predictive Distribution by Marginalization
 Predictive.poisson <- function(mdobj, x){
   priorParameters <- mdobj$priorParameters
   pred <- numeric(length(x))
@@ -41,32 +42,28 @@ Predictive.poisson <- function(mdobj, x){
   return(pred)
 }
 
-# What we effectively have is discrete monthly counts, with 
-# latent categorization (severity) that is masked
-# however, with a DP Infinite Mixture Model we 
-# can still compute a posteriori estimates of the rate parameter 
-# (despite the fact that the count distribution is multimodal)
+# read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
+
 # monthly crash count, in 100s of crashes 
 y = ( round((df$crash_count)/100) )
+
+# create DP Poisson Mixture from MD defined earlier
 dp <- DirichletProcessCreate(y, poisMd)
+# initialize and fit DPMM via MCMC
 dp <- Initialise(dp)
 dp <- Fit(dp, 10000)
-## Posterior Frame allows sampling from the posterior
+# compute, posterior frame: sampling from the posterior
 cat("Generating Posterior Frame...")
 pf <- PosteriorFrame(dp, 0:50, 10000)
 
+# posterior weights and lambdas (will be formatted into a table)
 ## note that the model correctly idenitfies three distinct rates
 data.frame(Weights=dp$weights, lambda=c(dp$clusterParameters[[1]]))
 
-## Save to avoid repeat simulation
+# save to avoid repeat simulation
 saveRDS(pf, file = "posterior_sampleframe.RDS")
 saveRDS(dp, file = "raw_dirichlett_process.RDS")
-## How to plot 
-# print(ggplot() +
-#    geom_ribbon(data=pf,
-#                  aes(x=x, ymin=X5., ymax=X95.),
-#                  colour=NA,
-#                  fill="red",
-#                  alpha=0.2) + #credible intervals
-#    geom_line(data=pf, aes(x=x, y=Mean), colour="red") + theme_bw() )#+ #mean
+
+
+
