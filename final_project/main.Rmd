@@ -1,5 +1,5 @@
 ---
-title: "Dirichlet Process Poisson Mixture Models in a Conjugate Framework"
+title: "Leveraging Conjugacy in Dirichlet Process Poisson Mixture Models"
 subtitle: "STAT 447 Final Project"
 author: "Caden Hewlett"
 date: "`r Sys.Date()`"
@@ -25,7 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
 # TODO
 ```
 
-We will begin with a brief literature review, in which probability measures are discussed and Dirichlet Processes are introduced from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and inspect the plot as well as some summary statistics. In the Methodology section, we outline the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, including the table of posterior means of the rate parameters and the plot of the posterior distribution. We then provide a brief interpretation of these results. 
+We will begin with a brief literature review, discussing probability measures and Dirichlet Processes from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot, and provide some summary statistics. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, including the table of weighted posterior rates and the posterior distribution plot. We then briefly interpret these results in the context of the problem domain and discuss shortcomings and future work.
 
 
 \vspace{-5mm}
@@ -58,9 +58,9 @@ Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F}
 For the sake of this work, we are more interested in *probability measures*, which are built on $\sigma$-algebra. A probability measure $\upmu : \mathcal{F} \mapsto [0,1]$ satisfies the following familiar axioms of probability:
 
 
-\vspace{-1mm}
+\vspace{-4mm}
 
-  1. All mappings are non-negative: $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. This is referred to as "non-negativity."
+  1. $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. This is referred to as "non-negativity."
   2. $\upmu(\mathbb{X}) = 1$, and $\upmu(\emptyset) = 0$. 
   3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
 
@@ -81,6 +81,8 @@ The $\alpha$ parameter indicates less confidence in the base measure, yielding g
 
 
 Aggregation code framework modified from [@stackoverflow2023customfunc]
+
+Using [@chicago_police_department__cpd__2024]
 ```{r}
 # TODO: discuss data itself
 #       discuss aggregation and latent categorization (and events where this could take place irl)
@@ -117,17 +119,19 @@ In this section, we outline the stick-breaking process used by the algorithm and
 ## Results 
 
 ```{r}
-# Total Runtime of Script:  753.68 seconds
+# Total Runtime of Script:   691.36 seconds
 # TODO: generation from the Gibbs sampling procedure detailed in [@Neal2000]
 # TODO: report posterior distrubtion (of mean of lambda with CrI error bars) from posterior frame
 # TODO: report posterior weights and lambda values (much more useful, actually shows high
 # weight on three separate lambdas )
+# the original source data has three distinct clusters which is why the non-paramteric mixture model 
+# worked better, and the varying rates between those clusters is well captured by 
+# the plot of the posterior which is encouraging ability to adapt to the structure of the data
 ```
 
 <!-- What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
 
 
-Using [@chicago_police_department__cpd__2024]
 ```{r}
 # TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve.
 
@@ -250,26 +254,25 @@ RUN = FALSE # TRUE if running sampler
 ###########################
 ### Mixing Distribution ###
 ###########################
-
 # define the framework conjugate mixture model
-poisMd <- MixingDistribution(
+poisMd = MixingDistribution(
   distribution = "poisson",
-  priorParameters = c(1, 1),
+  priorParameters = c(1, 2),
   conjugate = "conjugate"
 )
 
 # Part 1: Poisson Likelihood
-Likelihood.poisson <- function(mdobj, x, theta){
+Likelihood.poisson = function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
 }
 # Part 2: Gamma Prior : Base Measure
-PriorDraw.poisson <- function(mdobj, n){
+PriorDraw.poisson = function(mdobj, n){
   draws = rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
   theta = list(array(draws, dim=c(1,1,n)))
   return(theta)
 }
-# Part 3: Posterior Draw by Conjugacy
-PosteriorDraw.poisson <- function(mdobj, x, n=1){
+# Part 3: Posterior Draw (defined by conjugacy)
+PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
   theta = rgamma(n, priorParameters[1] + sum(x),
                      priorParameters[2] + nrow(x))
@@ -277,7 +280,7 @@ PosteriorDraw.poisson <- function(mdobj, x, n=1){
 }
 
 # Part 4: Predictive Distribution by Marginalization
-Predictive.poisson <- function(mdobj, x){
+Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
   pred = numeric(length(x))
   for(i in seq_along(x)){
@@ -311,8 +314,7 @@ if(RUN){
   # compute, posterior frame: sampling from the posterior
   cat("Generating Posterior Frame...")
   # include 95% and 99% Credible Intervals
-  postf = PosteriorFrame(dirp, 0:22, 1000, ci_size = c(0.1, 0.01))
-  
+  postf = PosteriorFrame(dirp, 0:22, 10000, ci_size = c(0.1, 0.01))
   # save to avoid repeat simulation
   saveRDS(postf, file = "final_project/posterior_sampleframe.RDS")
   saveRDS(dirp, file =  "final_project/posterior_results.RDS")

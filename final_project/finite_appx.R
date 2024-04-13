@@ -71,7 +71,3 @@ print(p1) #trbl
 
 ggsave("final_project/dirch_appx.png", plot = p1, width = 7, height = 5)
 #plot(plotDF$DirB, plotDF$DirP)
-# palette_2 <- c( "#0B7875","#036969", "#035F63", "#08585E",
-#                 "#0C515A", "#134753", "#183E4E", "#1D3649", 
-#                 "#222E44", "#272740", "#2E2343", "#372145",
-#                 "#411E48", "#4D194D")
