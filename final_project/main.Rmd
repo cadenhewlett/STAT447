@@ -61,11 +61,12 @@ Before we move on to Dirichlet Processes, we acknowledge that the above definiti
 Now, we introduce the concept of the Dirichlet Process (DP), a distribution across probability measures. We adopt the description used in [@hannah2011dirichlet], where the DP is specified by its base measure $\mathbb{G}_0$ (commonly a distribution) and the concentration parameter, $\alpha$. A random sample from a Dirichlet Process is a probability measure over a $\sigma$-algebra from sample space $\mathbb{X}$, which is often assumed to be countable. The resulting probability measure follows the structure of the base measure $\mathbb{G}_0$ with a degree of deviation controlled by $\alpha$. A Dirichlet Process can also be thought of conceptually of as a Dirichlet Distribution whose support is an infinite-simplex, rather than a discretely-defined $k$-simplex. [@Ferguson1973]
 
 
-The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. [@Sethuraman1994]. The finite approximation of this property can be seen in Figure 1.  [@teh2006dirichlet]
+The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. The finite approximation of this property can be seen in Figure 1.  
 
 ## Methodology
 
 Finite-Approximation via Stick-Breaking
+[@Sethuraman1994] and [@teh2006dirichlet]
 ```{r}
 # TODO: First, Discuss finite-approximation via GEM
 # TODO: Then discuss implementation via custom Mixing Distribution : https://en.wikipedia.org/wiki/Mixture_distribution
@@ -82,8 +83,21 @@ Finite-Approximation via Stick-Breaking
 
 ## Results : Data Analysis
 
+
+<!-- What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
+
+
+Using [@chicago_police_department__cpd__2024]
 ```{r}
-# TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve. 
+# TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve.
+
+# we've actually ended up creating latent categorization by 
+# crash severity, which is exactly what we are looking for 
+# we can think of this as "evaluated weekly crash reports"
+# assuming that more severe crashes will be processed later
+# or, more likely, the number of evaluated crash reports 
+# declines in groups over time as severity increases
+# since more severe reports take longer to evaluate
 ```
 
 
