@@ -1,5 +1,5 @@
 ---
-title: "Dirichlet Process Mixture Models in a Gamma-Poisson Conjugate Non-Parametric System"
+title: "Dirichlet Process Poisson Mixture Models in a Conjugate Framework"
 subtitle: "STAT 447 Final Project"
 author: "Caden Hewlett"
 date: "`r Sys.Date()`"
@@ -25,15 +25,27 @@ knitr::opts_chunk$set(echo = TRUE)
 # TODO
 ```
 
-## Literature Review : Measures
+We will begin with a brief literature review, in which probability measures are discussed and Dirichlet Processes are introduced from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and inspect the plot as well as some summary statistics. In the Methodology section, we outline the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, including the table of posterior means of the rate parameters and the plot of the posterior distribution. We then provide a brief interpretation of these results. 
 
 
-Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. The relevant literature for probability measure theory are [@billingsley2012probability] and [@rudin1986real]. In the following, we present generalized definitions, which are discussed in rigour in these foundational measure theory works. 
+\vspace{-5mm}
 
+
+## Literature Review 
+
+\vspace{-4mm}
+
+Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. In the following, we present generalized definitions which are discussed in rigor works such as [@billingsley2012probability] and [@rudin1986real].
+
+\vspace{-5mm}
+
+### Measure Theory
+
+\vspace{-3mm}
 
 Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
 
-\vspace{-1mm}
+\vspace{-3mm}
 
   1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. This is referred to in the literature as "non-emptiness and universality." 
   2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
@@ -55,17 +67,36 @@ For the sake of this work, we are more interested in *probability measures*, whi
 
 Before we move on to Dirichlet Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
 
-**A Distribution Over Measures**
 
+### Dirichlett Process: A Distribution Over Measures
+
+\vspace{-1.5mm}
 
 Now, we introduce the concept of the Dirichlet Process (DP), a distribution across probability measures. We adopt the description used in [@hannah2011dirichlet], where the DP is specified by its base measure $\mathbb{G}_0$ (commonly a distribution) and the concentration parameter, $\alpha$. A random sample from a Dirichlet Process is a probability measure over a $\sigma$-algebra from sample space $\mathbb{X}$, which is often assumed to be countable. The resulting probability measure follows the structure of the base measure $\mathbb{G}_0$ with a degree of deviation controlled by $\alpha$. A Dirichlet Process can also be thought of conceptually of as a Dirichlet Distribution whose support is an infinite-simplex, rather than a discretely-defined $k$-simplex. [@Ferguson1973]
 
 
-The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. The finite approximation of this property can be seen in Figure 1.  
+The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. The finite approximation of this property is explored in more detail in the Methods section.  
 
-## Methodology
+## Data Analysis
 
-Finite-Approximation via Stick-Breaking
+
+Aggregation code framework modified from [@stackoverflow2023customfunc]
+```{r}
+# TODO: discuss data itself
+#       discuss aggregation and latent categorization (and events where this could take place irl)
+#       discuss 2014 imputation process (by nearest neighbours)
+# What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model
+```
+
+
+## Methods
+
+
+We will use a finite-approximation of a Dirichlet Process centered about a gamma base measure using the stick-breaking methodology. In addition, we will utilize the gamma-poisson conjugacy to implicitly define the mixing distribution, which will be utilized be used as the `MixingDistribution` object in the MCMC DP sampler implemented in the `dirichletprocess` package [@dirichletprocess2023] to produce a posterior distribution. 
+
+
+In this section, we outline the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM.
+
 [@Sethuraman1994] and [@teh2006dirichlet]
 ```{r}
 # TODO: First, Discuss finite-approximation via GEM
@@ -79,10 +110,19 @@ Finite-Approximation via Stick-Breaking
 # in the prior-likelihood pair is the base measure, not the prior. we can think of these as the 
 # parameters to the mixing process. (i.e. requires a Mixing Distribution Object `mdObject` which is 
 # implicitly defined by the following four features: (4 functions))
+
+# TODO: when setup is done, declare model equations
 ```
 
-## Results : Data Analysis
+## Results 
 
+```{r}
+# Total Runtime of Script:  753.68 seconds
+# TODO: generation from the Gibbs sampling procedure detailed in [@Neal2000]
+# TODO: report posterior distrubtion (of mean of lambda with CrI error bars) from posterior frame
+# TODO: report posterior weights and lambda values (much more useful, actually shows high
+# weight on three separate lambdas )
+```
 
 <!-- What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
 
@@ -101,6 +141,8 @@ Using [@chicago_police_department__cpd__2024]
 ```
 
 
+
+
 ## Conclusion and Further Work
 
 ```{r}
@@ -115,22 +157,25 @@ Using [@chicago_police_department__cpd__2024]
 <!-- https://en.wikipedia.org/wiki/Sigma-additive_set_function -->
 
 
-## Appendix
+# Appendix
 
 
-*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametric statistics
+*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametric statistics!
 
 
 
 Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
 
 
-### Example of a $\sigma$-Algebra 
+## Example of a $\sigma$-Algebra 
 
 For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the literature review.
 
 
-Let's consider the finitely countable and simple set $\mathbb{X} = \{a, b, c\}$. Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
+Let's consider the finitely countable and simple set $\mathbb{X} = \{a, b, c\}$. 
+
+
+Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$, where we note $\{a, b, c\} = \mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
 
 
 We will apply the properties discussed in the literature review section to prove that $\mathcal{F}$ is a $\sigma$-algebra.
@@ -148,7 +193,7 @@ To verify Property 3 (closure under countable unions), we first consider the con
 From all of these properties, we can conclude that $\mathcal{F}$ is a $\sigma$-algebra, as required $\square$.
 
 
-### Example of a Probability Measure
+## Example of a Probability Measure
 
 Using the $\sigma$-algebra $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\}$ we will define $\upmu: \mathcal{F} \mapsto [0, 1]$ and prove that $\upmu$ is a probability measure using the properties discussed in the literature review. 
 
@@ -191,6 +236,91 @@ Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma
 From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
 
+## Results Code
+```{r, eval = FALSE}
+library(dirichletprocess)
+
+# set seed for reproducibility
+set.seed(447)
+# start the clock
+start_time = proc.time()
+M = 10000
+RUN = FALSE # TRUE if running sampler
+
+###########################
+### Mixing Distribution ###
+###########################
+
+# define the framework conjugate mixture model
+poisMd <- MixingDistribution(
+  distribution = "poisson",
+  priorParameters = c(1, 1),
+  conjugate = "conjugate"
+)
+
+# Part 1: Poisson Likelihood
+Likelihood.poisson <- function(mdobj, x, theta){
+  return(as.numeric(dpois(x, theta[[1]])))
+}
+# Part 2: Gamma Prior : Base Measure
+PriorDraw.poisson <- function(mdobj, n){
+  draws = rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
+  theta = list(array(draws, dim=c(1,1,n)))
+  return(theta)
+}
+# Part 3: Posterior Draw by Conjugacy
+PosteriorDraw.poisson <- function(mdobj, x, n=1){
+  priorParameters = mdobj$priorParameters
+  theta = rgamma(n, priorParameters[1] + sum(x),
+                     priorParameters[2] + nrow(x))
+  return(list(array(theta, dim=c(1,1,n))))
+}
+
+# Part 4: Predictive Distribution by Marginalization
+Predictive.poisson <- function(mdobj, x){
+  priorParameters = mdobj$priorParameters
+  pred = numeric(length(x))
+  for(i in seq_along(x)){
+    alphaPost = priorParameters[1] + x[i]
+    betaPost = priorParameters[2] + 1
+    pred[i] = (priorParameters[2] ^ priorParameters[1]) / gamma(priorParameters[1])
+    pred[i] = pred[i] * gamma(alphaPost) / (betaPost^alphaPost)
+    pred[i] = pred[i] * (1 / prod(factorial(x[i])))
+  }
+  return(pred)
+}
+
+
+###########################
+### D.P. Gibbs Sampling ###
+###########################
+
+# read in cleaned data frame
+df = read.csv("final_project/cleaned_crash_data.csv")
+# monthly crash count, in 100s of crashes 
+y = ( round((df$crash_count)/100) )
+
+# create DP Poisson Mixture Model from mix dist. defined earlier
+dirp = DirichletProcessCreate(y, poisMd)
+
+if(RUN){
+  # initialize and fit DPMM via Gibbs 
+  dirp = Initialise(dirp)
+  dirp = Fit(dirp, M) 
+  
+  # compute, posterior frame: sampling from the posterior
+  cat("Generating Posterior Frame...")
+  # include 95% and 99% Credible Intervals
+  postf = PosteriorFrame(dirp, 0:22, 1000, ci_size = c(0.1, 0.01))
+  
+  # save to avoid repeat simulation
+  saveRDS(postf, file = "final_project/posterior_sampleframe.RDS")
+  saveRDS(dirp, file =  "final_project/posterior_results.RDS")
+}
+# report runtime 
+total_time = proc.time() - start_time
+cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")
+```
 <!-- $$ -->
 <!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->
 <!-- $$ -->
@@ -238,5 +368,8 @@ $$
 F &= \prod_{i=1}^N\bigg(\sum_{k =1}^{\infty} \pi_k N(x_i \mid \uptheta_k) \bigg), \text{ likelihood from normal kernel}
 \end{aligned}
 $$
+
+
+
 ## Sources
 [@jonesDPMM]

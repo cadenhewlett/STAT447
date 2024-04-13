@@ -1,7 +1,15 @@
 library(dirichletprocess)
-library(ggplot2)
+
 # set seed for reproducibility
 set.seed(447)
+# start the clock
+start_time <- proc.time()
+M = 10000
+RUN = FALSE # TRUE if running sampler
+
+###########################
+### Mixing Distribution ###
+###########################
 
 # define the framework conjugate mixture model
 poisMd <- MixingDistribution(
@@ -42,28 +50,33 @@ Predictive.poisson <- function(mdobj, x){
   return(pred)
 }
 
+
+###########################
+### D.P. Gibbs Sampling ###
+###########################
+
 # read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
-
 # monthly crash count, in 100s of crashes 
 y = ( round((df$crash_count)/100) )
 
-# create DP Poisson Mixture from MD defined earlier
-dp <- DirichletProcessCreate(y, poisMd)
-# initialize and fit DPMM via MCMC
-dp <- Initialise(dp)
-dp <- Fit(dp, 10000)
-# compute, posterior frame: sampling from the posterior
-cat("Generating Posterior Frame...")
-pf <- PosteriorFrame(dp, 0:50, 10000)
+# create DP Poisson Mixture Model from mix dist. defined earlier
+dirp <- DirichletProcessCreate(y, poisMd)
 
-# posterior weights and lambdas (will be formatted into a table)
-## note that the model correctly idenitfies three distinct rates
-data.frame(Weights=dp$weights, lambda=c(dp$clusterParameters[[1]]))
-
-# save to avoid repeat simulation
-saveRDS(pf, file = "posterior_sampleframe.RDS")
-saveRDS(dp, file = "raw_dirichlett_process.RDS")
-
-
-
+if(RUN){
+  # initialize and fit DPMM via Gibbs 
+  dirp <- Initialise(dirp)
+  dirp <- Fit(dirp, M) 
+  
+  # compute, posterior frame: sampling from the posterior
+  cat("Generating Posterior Frame...")
+  # include 95% and 99% Credible Intervals
+  postf <- PosteriorFrame(dirp, 0:22, 1000, ci_size = c(0.1, 0.01))
+  
+  # save to avoid repeat simulation
+  saveRDS(postf, file = "final_project/posterior_sampleframe.RDS")
+  saveRDS(dirp, file =  "final_project/posterior_results.RDS")
+}
+# report runtime 
+total_time <- proc.time() - start_time
+cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")

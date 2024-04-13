@@ -13,3 +13,4 @@ print(ggplot() +
                  fill="red",
                  alpha=0.2) + #credible intervals
    geom_line(data=pf, aes(x=x, y=Mean), colour="red") + theme_bw() )#+ #mean
+library(dirichletprocess)
