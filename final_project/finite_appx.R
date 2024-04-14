@@ -70,4 +70,3 @@ p1 = ggplot(plotDF, aes(x = DirB, y = DirP)) +
 print(p1) #trbl
 
 ggsave("final_project/dirch_appx.png", plot = p1, width = 7, height = 5)
-#plot(plotDF$DirB, plotDF$DirP)

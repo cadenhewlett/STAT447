@@ -1,4 +1,3 @@
-set.seed(447)
 library(dplyr)
 library(lubridate)
 library(readxl)

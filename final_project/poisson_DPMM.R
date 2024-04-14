@@ -5,7 +5,7 @@ set.seed(447)
 # start the clock
 start_time = proc.time()
 M = 10000
-RUN = FALSE # TRUE if running sampler
+RUN = T # TRUE if running sampler
 
 ###########################
 ### Mixing Distribution ###
@@ -41,7 +41,7 @@ Predictive.poisson = function(mdobj, x){
   pred = numeric(length(x))
   for(i in seq_along(x)){
     alphaPost = priorParameters[1] + x[i]
-    betaPost = priorParameters[2] + 1
+    betaPost =  priorParameters[2] + 1
     pred[i] = (priorParameters[2] ^ priorParameters[1]) / gamma(priorParameters[1])
     pred[i] = pred[i] * gamma(alphaPost) / (betaPost^alphaPost)
     pred[i] = pred[i] * (1 / prod(factorial(x[i])))

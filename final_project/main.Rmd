@@ -11,6 +11,8 @@ header-includes:
    - \usepackage{bbm}
    - \usepackage{mathrsfs}
    - \usepackage{yfonts}
+   - \usepackage{wrapfig}
+
 bibliography: bibliography.bib
 ---
 
@@ -77,18 +79,31 @@ Now, we introduce the concept of the Dirichlet Process (DP), a distribution acro
 
 The $\alpha$ parameter indicates less confidence in the base measure, yielding greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters. The finite approximation of this property is explored in more detail in the Methods section.  
 
-## Data Analysis
 
 
-Aggregation code framework modified from [@stackoverflow2023customfunc]
+## Data Analysis and Processing
 
-Using [@chicago_police_department__cpd__2024]
-```{r}
-# TODO: discuss data itself
-#       discuss aggregation and latent categorization (and events where this could take place irl)
-#       discuss 2014 imputation process (by nearest neighbours)
-# What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model
-```
+
+Now, we will perform some exploratory data analysis and explain the data set used. The data is sourced from the Chicago Police Department [@chicago_police_department__cpd__2024] and contains $794,956$ vehicle accident reports from 2014 to 2023. A hexplot of the aggregated results is below.
+\begin{wrapfigure}{r}{0.64\textwidth}
+\vspace{-9mm}
+\begin{center}
+\includegraphics[width=0.64\textwidth]{data_raw.PNG}
+\end{center}
+\vspace{-6mm}
+\end{wrapfigure}
+We applied an aggregation code framework modified from [@stackoverflow2023customfunc] in order to coerce the data into weekly crash counts over the time frame. Certain weeks in both $2014$ and $2015$ had missing counts. In these cases, we performed nearest-neighbours imputation for the missing values. In addition, we grouped the counts by severity to craft an environment in which reports were logged by monetary crash damage, with low-severity accidents first in order.  Furthermore, in an attempt to avoid overflow in training loops we measured crashes in hundreds. As the hexplot shows, there are three distinct categorizations of crash counts, with the count dispersion decreasing across the groups. In addition, as the plot shows, the point density varies across these clusters. These characteristics of the aggregated data create a distinct multimodal plot, which makes these data a good candidate for Bayesian non-parametrics. The code for data processing and plotting are included in the appendix. 
+
+
+\newpage
+
+<!-- Using  -->
+<!-- ```{r} -->
+<!-- # TODO: discuss data itself -->
+<!-- #       discuss aggregation and latent categorization (and events where this could take place irl) -->
+<!-- #       discuss 2014 imputation process (by nearest neighbours) -->
+<!-- # What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
+<!-- ``` -->
 
 
 ## Methods
@@ -161,17 +176,17 @@ In this section, we outline the stick-breaking process used by the algorithm and
 <!-- https://en.wikipedia.org/wiki/Sigma-additive_set_function -->
 
 
-# Appendix
+# Appendix 
 
 
 *Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametric statistics!
 
-
+## Section 1: Proofs and Examples
 
 Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
 
 
-## Example of a $\sigma$-Algebra 
+### Example of a $\sigma$-Algebra 
 
 For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the literature review.
 
@@ -197,7 +212,7 @@ To verify Property 3 (closure under countable unions), we first consider the con
 From all of these properties, we can conclude that $\mathcal{F}$ is a $\sigma$-algebra, as required $\square$.
 
 
-## Example of a Probability Measure
+### Example of a Probability Measure
 
 Using the $\sigma$-algebra $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\}$ we will define $\upmu: \mathcal{F} \mapsto [0, 1]$ and prove that $\upmu$ is a probability measure using the properties discussed in the literature review. 
 
@@ -239,8 +254,79 @@ Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma
 
 From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
+### Proof of Gamma-Poisson Conjugacy : Posterior
 
-## Results Code
+
+We noted the posterior conjugate in the methods section, and left the full derivation of the conjugate pair for the appendix here. As mentioned in the methods section, the conjugate pair is helpful for Gibbs samplers where the nonparametric Dirichlet Process is centered about a gamma base measure.
+
+Let $\lambda \sim \text{gamma}(\alpha, \beta)$ be the prior on the Poisson rate parameter $\lambda$. Let $x_i \mid \lambda \sim \text{pois}(\lambda)$ for $i = 1, 2, \dots, n$.
+<!-- -->
+We derive the expression for the conjugate prior, beginning from the well-known expression for the posterior. 
+$$
+\begin{aligned}
+\text{Posterior} &\propto \text{Prior } \times \text{ Likelihood} \\
+\text{Posterior} &\propto p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, p_{\text{pois}}(x_i\, ; \lambda) \\
+\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, \Big( \dfrac{e^{-\lambda} \lambda^{x_i}}{x_i!} \Big) \\
+\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta)\times \prod_{i = 1}^n (e^{-\lambda})\cdot  \prod_{i = 1}^n (\lambda^{x_i}) \cdot  \prod ({x_i!})^{-1} \\
+\text{Posterior} &\propto  \Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha)} \lambda^{\alpha - 1}e^{-\beta \lambda} \Big) \times (e^{-n\lambda})\cdot  (\lambda^{\sum x_i}) \cdot  \prod_{i=1}^n ({x_i!})^{-1} \\
+\text{Posterior} &\propto  \underbrace{\Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha) \prod_{i=1}^nx_i!} \Big)}_{\text{constant wrt } \lambda}   \cdot (e^{-n\lambda}e^{-\beta \lambda})\cdot  (\lambda^{\sum x_i}\lambda^{\alpha - 1})   \\
+\text{Posterior} &\propto  (e^{-n\lambda -\beta \lambda}) \cdot  (\lambda^{\sum x_i +\alpha - 1})  \\
+\text{Posterior} &\propto  (e^{-\lambda (n+\beta)}) \cdot  (\lambda^{ \sum x_i +\alpha - 1})   \\
+\text{Posterior} &\propto   \text{gam}(\alpha + \sum_{i = 1}^n x_i, \beta + n) \\
+\end{aligned}
+$$
+The above gives the Posterior Distribution used in Part 3 of the DPMM Mixing Distribution definition, as required. 
+
+
+
+### Proof of Gamma-Poisson Conjugacy : Posterior Predictive
+
+
+As was discussed in the main work, the posterior predictive is also needed to use the sampler. Since we need the full expression (not a proportionality), we utilize line 5 from the previous proof for a single observation.
+
+For a single observation, we have the following from the gamma distribution using $x_n$ and $1$ rather than $n$ and the observation sum. 
+$$
+\begin{aligned}
+p(\lambda \mid x_n) &=  \Big( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) 
+\end{aligned}
+$$
+Then, we compute $P(x_{n+1})$ by marginalization to arrive at the predictive distribution.
+$$
+\begin{aligned}
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)p(\lambda \mid x_n) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)\bigg( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} \Big( \dfrac{e^{-\lambda} \lambda^{x_{n+1}}}{x_{n+1}!} \Big) \bigg(  \dfrac{(\beta +1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   e^{-\lambda} \lambda^{x_{n+1}}  \Big( \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \Big( \lambda^{\alpha + x_n + x_{n+1}- 1}e^{-(\beta + 2) \lambda} \Big) \text{d}\lambda
+\end{aligned}
+$$
+At this point, we recall the definition of the complete gamma function.
+$$
+\Gamma(z) = \int_0^{\infty}t^{z-1}e^{-t}\text{d}t, \text{ where } \; \mathfrak{R}(z) > 0
+$$
+Note by the strictly real-valued supports and parameters of both the Gamma and Poisson distributions that the $\mathfrak{R}(z) > 0$ clause holds trivially in this case. 
+
+For our expression, we will proceed with substitution to get it into this form.
+
+First, we let $t = (\beta + 2)\lambda$. To solve via substitution, we note that:
+$$
+\text{d}t = (\beta + 2)\text{d}\lambda, \;\text{ hence } \; \text{d}\lambda = \dfrac{\text{d}t}{(\beta + 2)}
+$$
+Let us substitute this value into our expression and simplify.
+$$
+\begin{aligned}
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \bigg( \dfrac{t}{(\beta + 2)}\bigg)^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \dfrac{\text{d}t}{(\beta + 2)} \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{x_n + x_{n+1}-1}(\beta + 2) } \int_{0}^{\infty}   t^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \text{d}t \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha + x_n + x_{n+1}-1}(\beta + 2)^1 } \Gamma( \alpha +x_n + x_{n+1} )\\
+p(x_{n+1} \mid x_n ) &=   \frac{(\beta+1)^{\alpha +x_n} \Gamma( \alpha +x_n + x_{n+1} )}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha +x_n + x_{n+1}} }  \;\;\; \square
+\end{aligned}
+$$
+The above gives the Posterior Predictive used in Part 4 of the DPMM Mixing Distribution definition, as required. 
+
+
+## Section 2: R Code
+
+### Results Code
 ```{r, eval = FALSE}
 library(dirichletprocess)
 
@@ -322,6 +408,90 @@ if(RUN){
 # report runtime 
 total_time = proc.time() - start_time
 cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")
+```
+### Data Processing Code
+```{r, eval=FALSE}
+library(dplyr)
+library(lubridate)
+library(readxl)
+library(tidyr)
+
+#######################
+### Data Processing ###
+#######################
+
+# NOTE: the aggregation is over a very large dataset, so runtime is slow
+
+cat("Reading Data... \n")
+# read Chicago Crash data from excel using `readxl`
+df <- read_excel("final_project/crash_dates_and_damages.xlsx")
+
+cat("Processing Dates...\n")
+df <- df %>%
+  # drop weirdly formatted excel dates
+  filter(!grepl("^\\d+\\.\\d+$", CRASH_DATE)) %>%  
+  # standrdize remaining dates to same timezone
+  mutate(CRASH_DATE = mdy_hms(CRASH_DATE, tz = "UTC", quiet = TRUE)) %>%  
+  # remove NAs
+  drop_na(CRASH_DATE) %>% 
+  # standardize formatting to MDY
+  mutate(CRASH_DATE = format(CRASH_DATE, "%m/%d/%Y"))  
+
+cat("Aggregating... \n")
+# here, we aggregate severity counts weekly  
+aggregated_data <- lapply(damage_levels, function(damage_level) {
+  # we filter through each damage level
+  df_filtered <- df %>% filter(DAMAGE == damage_level)
+  # and aggregate by week 
+  weekly_aggregation <- df_filtered %>%
+    mutate(Week = floor_date(as.Date(CRASH_DATE, format = "%m/%d/%Y"), "week")) %>%
+    group_by(Week) %>%
+    summarise(Crash_Count = n(), .groups = 'drop') %>%
+    arrange(Week)
+  # use NNI for poorly-captured 2014, 2015 data
+  cat("Imputing ", damage_level, "...\n")
+  # get 2016 weeks
+  weeks_2016 <- weekly_aggregation %>%
+    filter(year(Week) == 2016) %>%
+    pull(Week)
+  # get exact week if present, else nearest week by euclidean distance
+  weekly_aggregation <- weekly_aggregation %>%
+    rowwise() %>%
+    mutate(
+      Nearest_2016_Week = if(year(Week) %in% c(2014, 2015)) {
+        weeks_2016[which.min(abs(difftime(Week, weeks_2016, units = "weeks")))]
+      } else {
+        Week
+      }
+    ) %>%
+    left_join(weekly_aggregation %>% filter(year(Week) == 2016) %>%
+                select(Week, Crash_Count), by = c("Nearest_2016_Week" = "Week")) %>%
+    mutate(
+      # Use 2016's Crash_Count for nearest week and add to scaled 2014 count if present
+      Crash_Count_Adjusted = if_else(year(Week) == 2014, Crash_Count.y + Crash_Count.x / max(Crash_Count.x) * 2, Crash_Count.x)
+    ) %>%
+    select(Week, Crash_Count_Adjusted)
+  
+  return(weekly_aggregation)
+})
+
+# the data frame we use is then the aggregated weeks & counts
+outDF = data.frame(
+  crash_time = c(
+    aggregated_data[[1]]$Week,
+    aggregated_data[[2]]$Week,
+    aggregated_data[[3]]$Week
+  ),
+  crash_count =  c(
+    aggregated_data[[1]]$Crash_Count_Adjusted,
+    aggregated_data[[2]]$Crash_Count_Adjusted,
+    aggregated_data[[3]]$Crash_Count_Adjusted
+  )
+)
+
+# which we write to a csv
+cat("Writing to File... \n")
+write.csv(outDF, "final_project/cleaned_crash_data.csv", row.names = FALSE)
 ```
 <!-- $$ -->
 <!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->

@@ -1,12 +1,11 @@
 library(ggplot2)
 library(latex2exp)
 library(hexbin)
-col_scheme = c("#132a13","#31572c","#4f772d","#90a955","#ecf39e")
+library(scales)
 
 ##########################
 ##### Raw Data Plot ######
 ##########################
-
 
 # read in data
 data = read.csv("final_project/cleaned_crash_data.csv")
@@ -22,7 +21,7 @@ p0 = ggplot(data.frame(ind, y), aes(x = ind, y = y)) +
   labs(
     title = "Hex Plot of Weekly-Aggregated Car Accidents in Chicago by Logged Time",
     subtitle = "From 2014-2023, Missing Values Imputed by Nearest-Neighbours",
-    x = "Time Logged",
+    x = "Time Logged in System",
     y = "Car Crashes (100s of Crashes)"
   ) +  theme(
     panel.grid.minor = element_line(
@@ -78,13 +77,13 @@ p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
   geom_ribbon(
     data = pf,
     aes(x = xVal, ymin = Q05, ymax = Q995),
-    fill = "blue",
-    alpha = 0.1
+    fill = "#10a19d",
+    alpha = 0.15
   ) +
   geom_line(aes(colour = "DPMM Posterior")) + theme_bw() +
   geom_line(aes(x = 0:22, y = mle, colour = "Regression MLE")) +
   geom_ribbon(aes(x = xVal, ymin = lower, ymax = upper),
-              fill = "red",
+              fill = "#765b82",
               alpha = 0.1) +
   labs(
     title = TeX(
@@ -96,9 +95,10 @@ p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
     y = TeX("Posterior Value of   $\\lambda$"),
     x = TeX("Value of $x \\in [0, 22]$")
   ) + scale_color_manual(values = c(
-    "DPMM Posterior" = "blue",
-    "Regression MLE" = "red"
+    "DPMM Posterior" = "#10a19d",
+    "Regression MLE" = "#765b82"
   )) +
+  guides(color = guide_legend(override.aes = list(linewidth = 1))) +
   theme(
     panel.grid.minor = element_line(
       color = "grey90",
@@ -107,12 +107,14 @@ p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
     ),
     legend.title = element_blank(),
     legend.position = "top",
-    legend.margin = margin(0, 0, 0, 0),
-    legend.justification = "left"
+    legend.justification = "left",
+    legend.margin = margin(-3, 0, -3, 0)
   )
 
+print(p1)
 
-
+ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
+ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 # What we effectively have is discrete weekly counts (in 100s), with 
 # latent categorization (severity) that is masked
 # however, with a DP Infinite Mixture Model we 
