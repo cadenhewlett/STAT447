@@ -140,7 +140,38 @@ As mentioned in the literature review, $\alpha$ is the concentration of the fini
 
 ### Model Implementation
 
+Gamma-Poisson: 
 
+Posterior by conjugacy
+$$
+\lambda \mid \{y_i\}_{i = 1}^n \sim \text{gam}(\alpha + \sum_{i = 1}^n y_i, \beta + n) \tag{F3}
+$$
+Posterior Predictive
+$$
+p(y_{n+1} \mid y_n ) =   \frac{(\beta+1)^{\alpha +y_n} \Gamma( \alpha +y_n + y_{n+1} )}{ \Gamma(\alpha + y_n) y_{n+1}!(\beta + 2)^{\alpha +y_n + y_{n+1}} } \tag{F4}
+$$
+
+
+Theoretical infinite model:
+$$
+\begin{aligned}
+\{\pi_k\}_{k = 1}^{\infty} &\sim \text{GEM}(\alpha_0)\\
+\{\lambda_k\}_{k = 1}^{\infty} &\sim \mathbb{G}_0 \\
+y_i \mid \{\pi_k\}_{k = 1}^{\infty} , \{\lambda_k\}_{k = 1}^{\infty}  &=\sum_{k = 1}^{\infty} \pi_k \text{poisson}(\lambda_k), \text{ for } i = 1, 2, \dots , n \\
+\end{aligned}
+$$
+
+Finite Approximation for $K$ Iterations (implemented model)
+$$
+\begin{aligned} 
+\alpha &\sim \text{gamma}(1, 1) \\
+\mathbb{G}_0 &\sim \text{gamma}(1, 2) \\
+\{\pi_k\}_{k = 1}^{K}&\sim \text{GEM}(\alpha)\\
+\{\lambda_k\}_{k = 1}^{K} &\sim \mathbb{G}_0 \\
+z_i &\sim \text{categorical}(\{1, 2, \dots , K \}, \{\pi_k\}_{k = 1}^{K}) \\
+y_i  \mid z_i, \{\lambda_k\}_{k = 1}^{K} &\sim \text{poisson}(\lambda_{k =z_i})
+\end{aligned}
+$$
 ....
 
 
@@ -238,7 +269,8 @@ Below, we plot the estimated posterior distribution on a sample frame of size $1
 # Appendix 
 
 
-*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametric statistics!
+*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametrics and to my friends and family who put up with me talking about statistics constantly.
+
 
 ## Section 1: Proofs and Examples
 
