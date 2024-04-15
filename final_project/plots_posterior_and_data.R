@@ -34,6 +34,28 @@ p0 = ggplot(data.frame(ind, y), aes(x = ind, y = y)) +
   )
 print(p0)
 
+##########################
+#### Posterior Rates #####
+##########################
+
+library(knitr)
+library(kableExtra)
+# read in results from other file
+dirichlet_results = readRDS("final_project/posterior_results.RDS")
+# format nicely
+results_DF = data.frame(
+  lambdas = unlist(dirichlet_results$clusterParameters),
+  weights = dirichlet_results$weights )
+# make a table - columns are clusters
+results = kable(t(round(results_DF, 3)),
+                format = "latex",
+                booktabs = TRUE,
+                caption = "DPMM Posterior Parameters and Weights") %>%
+  kable_styling(latex_options = "striped", position = "center") %>%
+  column_spec(1, bold = TRUE, border_left = TRUE) 
+# write to latex to render 
+# this gives the initial design, which I edited later
+writeLines(results,  "final_project/results.tex")
 
 ##########################
 ### Poisson Regression ###
@@ -66,7 +88,7 @@ upper = ifelse(mleL >= mleU, mleL, mleU)
 
 
 ##########################
-###### Poisson DPMM ######
+##### Posterior Plot #####
 ##########################
 
 pf = readRDS("final_project/posterior_sampleframe.RDS")
@@ -113,8 +135,13 @@ p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
 
 print(p1)
 
+
+
+
 ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
+
+
 # What we effectively have is discrete weekly counts (in 100s), with 
 # latent categorization (severity) that is masked
 # however, with a DP Infinite Mixture Model we 

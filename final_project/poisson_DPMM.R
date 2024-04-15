@@ -1,22 +1,21 @@
 library(dirichletprocess)
-
 # set seed for reproducibility
 set.seed(447)
 # start the clock
 start_time = proc.time()
 M = 10000
-RUN = T # TRUE if running sampler
+RUN = TRUE # TRUE if running sampler
 
 ###########################
 ### Mixing Distribution ###
 ###########################
+
 # define the framework conjugate mixture model
 poisMd = MixingDistribution(
   distribution = "poisson",
   priorParameters = c(1, 2),
   conjugate = "conjugate"
 )
-
 # Part 1: Poisson Likelihood
 Likelihood.poisson = function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
@@ -49,7 +48,6 @@ Predictive.poisson = function(mdobj, x){
   return(pred)
 }
 
-
 ###########################
 ### D.P. Gibbs Sampling ###
 ###########################
@@ -66,7 +64,7 @@ if(RUN){
   # initialize and fit DPMM via Gibbs 
   dirp = Initialise(dirp)
   dirp = Fit(dirp, M) 
-  
+  dirp = Burn(dirp, 100)
   # compute, posterior frame: sampling from the posterior
   cat("Generating Posterior Frame...")
   # include 95% and 99% Credible Intervals
