@@ -218,10 +218,10 @@ The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $B =100$ h
 \end{table}
 
 
-From the results above, we see that high posterior weight was associate with three distinct rate parameters, indicating that the DPMM correctly identified the different clusters of data, with the majority of the weight mass being placed on the first three rate parameters. The fourth rate parameter with $w_4 \approx 0.718$ had a cluster size of only $8$ out of $1,076$ data points indicating that it is likely not significant to the overall mixture model. 
+From the results above, we see that high posterior weight was associate with three distinct rate parameters, indicating that the DPMM correctly identified the different clusters of data, with the majority of the weight mass being placed on the first three rate parameters. The fourth rate parameter with $\pi_4 \approx 0.718$ had a cluster size of only $8$ out of $1,076$ data points indicating that it is likely not significant to the overall mixture model. 
 
 
-Below, we plot the estimated posterior distribution on a sample frame of size $10,000$ alongside the $99\%$ credible interval. We compare these results with the frequentist maximum likelihood estimate of the rate parameter found via Poisson regression, which includes the corresponding $99\%$ confidence interval. 
+Below, we plot the estimated posterior mixture distribution on a sample frame of size $10,000$ alongside the $99\%$ credible interval. We compare these results with the frequentist maximum likelihood estimate of the rate parameter found via Poisson regression, which includes the corresponding $99\%$ confidence interval. 
 <!-- ```{r} -->
 <!-- # Total Runtime of Script:   691.36 seconds -->
 <!-- # TODO: generation from the Gibbs sampling procedure detailed in [@Neal2000] -->
@@ -451,20 +451,22 @@ PriorDraw.poisson = function(mdobj, n){
 PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
   theta = rgamma(n, priorParameters[1] + sum(x),
-                     priorParameters[2] + nrow(x))
+                    priorParameters[2] + nrow(x))
   return(list(array(theta, dim=c(1,1,n))))
 }
 
 # Part 4: Predictive Distribution by Marginalization
 Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
+  alpha = priorParameters[1]
+  beta = priorParameters[2]
   pred = numeric(length(x))
   for(i in seq_along(x)){
-    alphaPost = priorParameters[1] + x[i]
-    betaPost =  priorParameters[2] + 1
-    pred[i] = (priorParameters[2] ^ priorParameters[1]) / gamma(priorParameters[1])
-    pred[i] = pred[i] * gamma(alphaPost) / (betaPost^alphaPost)
-    pred[i] = pred[i] * (1 / prod(factorial(x[i])))
+    alphaP = alpha + x[i]
+    betaP =  beta  + 1
+    pred[i] = (beta ^ alpha) * gamma(alphaP) 
+    pred[i] = pred[i] / ( (betaP^alphaP) * gamma(alpha) )
+    pred[i] = pred[i] / prod(factorial(x[i]))
   }
   return(pred)
 }

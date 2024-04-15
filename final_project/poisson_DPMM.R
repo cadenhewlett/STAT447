@@ -37,13 +37,15 @@ PosteriorDraw.poisson = function(mdobj, x, n=1){
 # Part 4: Predictive Distribution by Marginalization
 Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
+  alpha = priorParameters[1]
+  beta = priorParameters[2]
   pred = numeric(length(x))
   for(i in seq_along(x)){
-    alphaPost = priorParameters[1] + x[i]
-    betaPost =  priorParameters[2] + 1
-    pred[i] = (priorParameters[2] ^ priorParameters[1]) / gamma(priorParameters[1])
-    pred[i] = pred[i] * gamma(alphaPost) / (betaPost^alphaPost)
-    pred[i] = pred[i] * (1 / prod(factorial(x[i])))
+    alphaP = alpha + x[i]
+    betaP =  beta  + 1
+    pred[i] = (beta ^ alpha) * gamma(alphaP) 
+    pred[i] = pred[i] / ( (betaP^alphaP) * gamma(alpha) )
+    pred[i] = pred[i] / prod(factorial(x[i]))
   }
   return(pred)
 }
