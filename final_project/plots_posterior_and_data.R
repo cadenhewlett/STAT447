@@ -2,6 +2,8 @@ library(ggplot2)
 library(latex2exp)
 library(hexbin)
 library(scales)
+library(knitr)
+library(kableExtra)
 
 ##########################
 ##### Raw Data Plot ######
@@ -38,8 +40,6 @@ print(p0)
 #### Posterior Rates #####
 ##########################
 
-library(knitr)
-library(kableExtra)
 # read in results from other file
 dirichlet_results = readRDS("final_project/posterior_results.RDS")
 # format nicely
@@ -134,8 +134,6 @@ p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
   )
 
 print(p1)
-
-
 
 
 ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
