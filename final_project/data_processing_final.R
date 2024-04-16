@@ -2,7 +2,7 @@ library(dplyr)
 library(lubridate)
 library(readxl)
 library(tidyr)
-
+library(pbapply)
 #######################
 ### Data Processing ###
 #######################
@@ -11,7 +11,19 @@ library(tidyr)
 
 cat("Reading Data... \n")
 # read Chicago Crash data from excel using `readxl`
+#df <- read_excel("final_project/crash_dates_and_damages.xlsx")
+start_time = proc.time()
+repeat {
+  if (exists("df")) {
+    break
+  }
+  Sys.sleep(1)  
+  elapsed_time <- proc.time() - start_time
+  cat("\rTime elapsed: ", round(elapsed_time["elapsed"]), " seconds")
+  flush.console()
+}
 df <- read_excel("final_project/crash_dates_and_damages.xlsx")
+
 
 cat("Processing Dates...\n")
 df <- df %>%

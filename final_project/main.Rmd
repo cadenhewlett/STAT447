@@ -22,19 +22,24 @@ knitr::opts_chunk$set(echo = TRUE)
 # https://stats.stackexchange.com/questions/95120/simulate-dirichlet-process-in-r
 ```
 
-## Introduction
+## \underline{Introduction}
 
-```{r}
-# TODO
-# a real-world inference task/problem
-# Provide references for the closest analyses of the same data and explain how they differ from yours.
-# https://www.kaggle.com/code/anoopjohny/chicago-traffic-crashes-chicago-police-dept
-# We couldn't find any individuals on Kaggle or elsewhere using this data for any purpose other than
-# preliminary summary statistics. This work will not only present an novel integration 
-# of a Poisson DPMM with existing R Packages, but apply more nuanced analytics of the source data.
-```
+<!-- ```{r} -->
+<!-- # TODO -->
+<!-- # a real-world inference task/problem -->
+<!-- # Provide references for the closest analyses of the same data and explain how they differ from yours. -->
+<!-- # https://www.kaggle.com/code/anoopjohny/chicago-traffic-crashes-chicago-police-dept -->
+<!-- # We couldn't find any individuals on Kaggle or elsewhere using this data for any purpose other than -->
+<!-- # preliminary summary statistics. This work will not only present an novel integration  -->
+<!-- # of a Poisson DPMM with existing R Packages, but apply more nuanced analytics of the source data. -->
+<!-- ``` -->
 
-We will begin with a brief literature review, discussing probability measures and Dirichlet Processes from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot, and provide some summary statistics. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, including the table of weighted posterior rates and the posterior distribution plot. We then briefly interpret these results in the context of the problem domain and discuss shortcomings and future work.
+\vspace{-4.5mm}
+
+In this work, we present a non-parametric approach to the Gamma-Poisson (GP) model framework using crash count data from the Chicago Police Department [@chicago_police_department__cpd__2024]. As of writing, there is no out-of-the-box approach for the GP setup in the widely-used `dirichletprocess` package for Dirichlet Process Mixture Models (DPMMs.) So, in addition to presenting a nuanced analysis of the CPD data set, this work develops a bespoke integration of the GP Bayesian Model with the aforementioned `R` package. It should be noted that the closest investigation of the CPD data publicly available were summary statistics by [@Johny2018ChicagoTraffic]. 
+
+
+We will begin with a brief literature review, discussing probability measures and Dirichlet Processes (DPs) from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot of the count data and provide some observational analysis. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, which include the table of weighted posterior rates and the corresponding estimated posterior density plot. We then briefly interpret these results and discuss shortcomings and future work.
 
 
 \vspace{-5mm}
@@ -44,7 +49,7 @@ We will begin with a brief literature review, discussing probability measures an
 
 \vspace{-4mm}
 
-Before we discuss Dirichlet Processes, it is crucial to establish a groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. In the following, we present generalized definitions which are discussed rigorously in works such as [@billingsley2012probability] and [@rudin1986real].
+Before we discuss Dirichlet Processes, we establish  groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. In the following, we present generalized definitions which are discussed rigorously in works such as [@billingsley2012probability] and [@rudin1986real].
 
 \vspace{-5mm}
 
@@ -59,6 +64,8 @@ Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F}
   1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. This is referred to in the literature as "non-emptiness and universality." 
   2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
   3. For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable index set, if $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
+
+<!-- **Sigma-Algebra**: Let $\mathbb{X}$ be a well-defined sample space. A $\mathbf\sigma$**-algebra** $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying three key properties. *Non-emptiness and universality*: The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. *Closure under complementation*: For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. *Closure under countable unions*: For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable set of indices, $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ -->
 
 
 \vspace{-1mm}
@@ -668,8 +675,9 @@ outDF = data.frame(
 cat("Writing to File... \n")
 write.csv(outDF, "final_project/cleaned_crash_data.csv", row.names = FALSE)
 ```
-### Plotting Code
+### Raw Data Plotting Code
 
+Includes LaTeX generating function for posterior results table. 
 ```{r, eval = FALSE}
 library(ggplot2)
 library(latex2exp)
@@ -730,88 +738,120 @@ results = kable(t(round(results_DF, 3)),
 # this gives the initial design, which I edited later
 writeLines(results,  "final_project/results.tex")
 
-##########################
-### Poisson Regression ###
-##########################
+ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
+```
 
-# fit poisson regression
-freq_model = glm(y~seq_along(y),  family = poisson(link = "log"))
-coefs = data.frame(summary(freq_model)$coefficients)
-# extract coefficients
-b0 = coefs$Estimate[1] ; b1 = coefs$Estimate[2]
-# we use Z quantiles due to asymptotic normality (n = 1076, very large)
-b0U = b0 +  qnorm(0.995)*coefs$Std..Error[1]
-b1U = b1 +  qnorm(0.995)*coefs$Std..Error[2]
-# lower estimates
-b0L = b0 -  qnorm(0.995)*coefs$Std..Error[1]
-b1L = b1 -  qnorm(0.995)*coefs$Std..Error[2]
-# compute lambda
-lambda = exp(b0 + b1*ind)
-# and confidence interval
-lambdaL = exp(b0L + b1L*ind)
-lambdaU = exp(b0U + b1U*ind)
-# figure out rate plot from model
-mle  = sapply(0:22, function(x) {mean(dpois(x, lambda) )})
-mleL = sapply(0:22, function(x) {mean(dpois(x, lambdaL) )})
-mleU = sapply(0:22, function(x) {mean(dpois(x, lambdaU) )})
+### Posterior Simulations and Plotting
 
-# 99% confidence interval by MLE
-lower = ifelse(mleL < mleU, mleL, mleU)
-upper = ifelse(mleL >= mleU, mleL, mleU)
-
+```{r, eval = FALSE}
+library(dirichletprocess)
+library(latex2exp)
+library(logspline)
+library(ggplot2)
+library(scales)
+library(pbapply)
 
 ##########################
 ##### Posterior Plot #####
 ##########################
 
-pf = readRDS("final_project/posterior_sampleframe.RDS")
-
-colnames(pf) = c("Mean", "Q5", "Q05", "Q95", "Q995", "xVal")
-
-p1 = ggplot(pf, aes(x = xVal, y = Mean)) +
-  geom_ribbon(
-    data = pf,
-    aes(x = xVal, ymin = Q05, ymax = Q995),
-    fill = "#10a19d",
-    alpha = 0.15
+set.seed(447)
+# true if running simulations
+RUN = FALSE
+# read in DP Fit and Data
+df = read.csv("final_project/cleaned_crash_data.csv")
+dp = readRDS(file =  "final_project/posterior_results.RDS")
+# get the rates in the clusters
+rates = unlist(dp$clusterParameters)
+# get the weights and cluster sizes
+sizes = unlist(dp$pointsPerCluster)
+weights = unlist (dp$weights)
+# declare number of simulations
+M = 10000
+N = nrow(df)
+# run M simulations of size N from the posterior mixture distribution
+if (RUN) {
+  cat("Generating posterior draws... \n")
+  # then, simulate M draws from the posterior DPMM
+  simulated_datasets =
+    pbsapply(1:M,
+             function(m) {
+               # where each draw is of size n = 1076
+               # mixed by rates and cluster sizes
+               unlist(sapply(1:length(sizes), function(i) {
+                 # generate z_i draws at rate r_i
+                 rpois(sizes[i], rates[i])
+               }))
+             })
+  cat("Done! \n")
+  cat("Generating posterior densities... \n")
+  # then compute the densities to be compared against the data histogram
+  simulations = matrix(0, nrow = 24, ncol = M)
+  # here, we get the proportion counts
+  simulations = (pbsapply(1:M,
+                          function(m) {
+                            as.numeric(table(factor(simulated_datasets[, m], levels = 0:23)))
+                          }))
+  # save locally (reduces re-run time)
+  saveRDS(simulations, file = "final_project/posterior_sims.RDS")
+  cat("Done! \n")
+} else {
+  cat("Using saved simulations... \n")
+  simulations = readRDS(file = "final_project/posterior_sims.RDS")
+}
+# density profile comparison
+posterior_data <- data.frame(
+  x = 0:23,
+  avg_post = apply(simulations, MARGIN = 1, mean),
+  low_post = apply(simulations, MARGIN = 1, quantile, probs = 0.025),
+  hi_post  = apply(simulations, MARGIN = 1, quantile, probs = 0.975)
+)
+p1 <- ggplot() +
+  geom_bar(
+    data = df,
+    aes(x = round(crash_count / 100),
+        y = after_stat(prop)),
+    stat = "count",
+    fill = "gray",
+    color = "white",
+    alpha = 0.5
   ) +
-  geom_line(aes(colour = "DPMM Posterior")) + theme_bw() +
-  geom_line(aes(x = 0:22, y = mle, colour = "Regression MLE")) +
-  geom_ribbon(aes(x = xVal, ymin = lower, ymax = upper),
-              fill = "#765b82",
-              alpha = 0.1) +
   labs(
     title = TeX(
-      "Posterior Distribution for Rate Parameter $\\lambda$ Using Mean of 10,000 Draws"
+      "Estimated Posterior PDF for Rate Parameter $\\lambda$"
     ),
     subtitle = TeX(
-      "Comparison with Estimated $\\lambda_i$ from Frequentist Poisson Regression (MLE)"
+      "Posterior Mean and 95% Credible Interval with Histogram of Observed Data"
     ),
-    y = TeX("Posterior Value of   $\\lambda$"),
-    x = TeX("Value of $x \\in [0, 22]$")
-  ) + scale_color_manual(values = c(
-    "DPMM Posterior" = "#10a19d",
-    "Regression MLE" = "#765b82"
-  )) +
-  guides(color = guide_legend(override.aes = list(linewidth = 1))) +
+    y = "Probability Density",
+    x = TeX("Count Values")
+  ) +
+  theme_bw() +
+  geom_line(
+    data = posterior_data,
+    aes(x = x, y = avg_post/N),
+    color = "#10a19d",
+    size = 0.8
+  ) +
+  geom_ribbon(
+    data = posterior_data,
+    aes(x = x, ymin = low_post/N, ymax = hi_post/N),
+    fill = "#10a19d",
+    alpha = 0.2
+  ) +
+  scale_y_continuous(n.breaks = 10) +
   theme(
     panel.grid.minor = element_line(
       color = "grey90",
       linetype = "dashed",
       linewidth = 0.5
-    ),
-    legend.title = element_blank(),
-    legend.position = "top",
-    legend.justification = "left",
-    legend.margin = margin(-3, 0, -3, 0)
+    )
   )
 
 print(p1)
-
-
-ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 ```
+
 <!-- $$ -->
 <!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->
 <!-- $$ -->
