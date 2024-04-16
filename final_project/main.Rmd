@@ -26,6 +26,12 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 # TODO
+# a real-world inference task/problem
+# Provide references for the closest analyses of the same data and explain how they differ from yours.
+# https://www.kaggle.com/code/anoopjohny/chicago-traffic-crashes-chicago-police-dept
+# We couldn't find any individuals on Kaggle or elsewhere using this data for any purpose other than
+# preliminary summary statistics. This work will not only present an novel integration 
+# of a Poisson DPMM with existing R Packages, but apply more nuanced analytics of the source data.
 ```
 
 We will begin with a brief literature review, discussing probability measures and Dirichlet Processes from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot, and provide some summary statistics. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, including the table of weighted posterior rates and the posterior distribution plot. We then briefly interpret these results in the context of the problem domain and discuss shortcomings and future work.
@@ -119,7 +125,7 @@ The finite approximation used in this work is known as a "stick-breaking" or Gri
 The idea behind GEM weighing is to take a "stick" with unit length and break it at a location decided by a $\upbeta_1 \sim \text{beta}(1, \alpha)$ random pull, which we denote $\pi_1$. Then, we break the remaining stick length in two by a second $\upbeta_2 \sim \text{beta}(1, \alpha)$ sample. Hence, $\pi_2 = (1 - \upbeta_1)\upbeta_2$, which can be understood as "the remaining stick length after the first break, broken at the second random break location." Then, we generalize this concept for discrete $k = \{1, 2, \dots, K\} \subseteq \mathbb{Z}$ as follows: 
 \vspace{-4mm}
 $$
-\uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i) \tag{1}
+\uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i) \tag{1}
 $$
 \vspace{-4mm}
 
@@ -133,46 +139,61 @@ $$
 \vspace{-10mm}
 \end{wrapfigure}
 Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$ as noted in [@Xing2014]. 
-As mentioned in the literature review, $\alpha$ is the concentration of the finite-approximated Dirichlet Process. With the additional context of the GEM distribution this property becomes more evident. For an arbitrary \newline $\upbeta_k \sim \text{beta}(1, \alpha)$, a larger $\alpha$ assigns more probability density to lower values in $\text{supp}(\upbeta_k) = (0,1)$. This means that the breaks are more likely to happen "earlier on" along each stick, yielding smaller initial clusters and hence more dispersion in the density of pulls from $\mathbb{G}_0$. To contrast, a very low $\alpha$ may result in a $\upbeta_1$ break near $1$, implying very low weights for the remaining $\{\upbeta_k\}_{k = 1}^{K-1}$. For the model we apply in this work, we let $\alpha \sim \text{gamma}(1, 1)$ and $\mathbb{G}_0 \sim \text{gamma}(1, 2)$ define $\text{DP}(\alpha \mathbb{G}_0)$. In the figure above, we demonstrate the finite approximation at $K = 20$, where the horizontal axis corresponds to the logarithm of stick-breaking weights $\{\pi_k\}_{k = 1}^N$ and the vertical axis are the sampled values $\{\lambda_k\}_{k = 1}^N$ from $\mathbb{G}_0$. The kernel density bin width for contour separation is $0.02$, starting from $(0, 0.02]$ and ending at $(0.22, 0.24]$. The full code for the approximation and density plot is included in the appendix. For the full implementation of the DPMM we selected $K = 150$, a choice justified in detail in [@IshwaranJames2001]. 
-
-<!-- This would result in a high concentration of density around the sampled $\mathbb{G}_0$ value corresponding to $\upbeta_1$. -->
-<!-- the residual distance of the sum from one quickly converges to zero as $K$ increases: explicitly, -->
+As mentioned in the literature review, $\alpha$ is the concentration of the finite-approximated Dirichlet Process. With the additional context of the GEM distribution this property becomes more evident. For an arbitrary \newline $\upbeta_k \sim \text{beta}(1, \alpha)$, a larger $\alpha$ assigns more probability density to lower values in $\text{supp}(\upbeta_k) = (0,1)$. This means that the breaks are more likely to happen "earlier on" along each stick, yielding smaller initial clusters and hence more dispersion in the density of pulls from $\mathbb{G}_0$. To contrast, a very low $\alpha$ may result in a $\upbeta_1$ break near $1$, implying very low weights for the remaining $\{\upbeta_k\}_{k = 1}^{K-1}$. For the model we apply in this work, we let $\alpha \sim \text{gamma}(1, 1)$ and $\mathbb{G}_0 \sim \text{gamma}(1, 2)$ define $\text{DP}(\alpha \mathbb{G}_0)$. In the figure above, we demonstrate the finite approximation at $K = 20$, where the horizontal axis corresponds to the logarithm of stick-breaking weights $\{\pi_k\}_{k = 1}^K$ and the vertical axis are the sampled values $\{\lambda_k\}_{k = 1}^K$ from $\mathbb{G}_0$. The kernel density bin width for contour separation is $0.02$, starting from $(0, 0.02]$ and ending at $(0.22, 0.24]$. The full code for the approximation and density plot is included in the appendix. For the full implementation of the DPMM we selected $K = 150$, a choice justified in detail in [@IshwaranJames2001]. 
 
 ### Model Implementation
 
-Gamma-Poisson: 
 
-Posterior by conjugacy
+To implement the Dirichlet Process Mixture Model we derived an explicit expression for the mixing distribution, as the standard Poisson-Gamma conjugate pair is not supported by default in the Gibbs sampling algorithm. The adaptation was accomplished through a set of four functions, which customize the sampling procedure. The first function, denoted $\text{F}1$, specifies the likelihood as Poisson. The second function, $\text{F}2$, generates $n$ random draws from the Gamma base distribution $\mathbb{G}_0$ which are vital for the stick-breaking definition of the Dirichlet Process discussed in the previous section. 
+
+In addition, we define a function $\text{F}3$ which enables posterior updates for the Poisson rate parameter $\lambda$. This function simulates $n$ random draws from the Gamma posterior distribution using the observations $\{y_i\}_{i = 1}^n$, where $N$ is the sample size. Letting $\alpha$ and $\beta$ be the parameters of $\mathbb{G}_0$, the posterior distribution of $\lambda$ is given by:
 $$
-\lambda \mid \{y_i\}_{i = 1}^n \sim \text{gam}(\alpha + \sum_{i = 1}^n y_i, \beta + n) \tag{F3}
+\lambda \mid \{y_i\}_{i = 1}^N \sim \text{Gamma}(\alpha + \sum_{i = 1}^N y_i, \beta + N) \tag{F3}
 $$
-Posterior Predictive
+The complete derivation of the distribution above is in the Appendix. Finally, we derived an explicit expression for the Posterior Predictive distribution given observation $y_n$. Letting $y_{n+1}$ be the new observation, the predictive distribution is given as:
 $$
 p(y_{n+1} \mid y_n ) =   \frac{(\beta+1)^{\alpha +y_n} \Gamma( \alpha +y_n + y_{n+1} )}{ \Gamma(\alpha + y_n) y_{n+1}!(\beta + 2)^{\alpha +y_n + y_{n+1}} } \tag{F4}
 $$
+Here, $\Gamma$ indicates the gamma function. In the DPMM, the predictive is crucial for calculating the probability of the data being from the prior, as noted in [@dirichletprocess2023]. The complete mathematical derivation of this expression is included in the Appendix.
 
 
-Theoretical infinite model:
+
+With this framework in place, we can define the theoretical infinite Poisson mixture model. Let $\pi_k$ be the GEM weights, $\lambda_k$ be the $k$-th mixture rate and $\{y_i\}_{i=1}^N$ be the observations. 
 $$
 \begin{aligned}
 \{\pi_k\}_{k = 1}^{\infty} &\sim \text{GEM}(\alpha_0)\\
 \{\lambda_k\}_{k = 1}^{\infty} &\sim \mathbb{G}_0 \\
-y_i \mid \{\pi_k\}_{k = 1}^{\infty} , \{\lambda_k\}_{k = 1}^{\infty}  &=\sum_{k = 1}^{\infty} \pi_k \text{poisson}(\lambda_k), \text{ for } i = 1, 2, \dots , n \\
+y_i \mid \{\pi_k\}_{k = 1}^{\infty} , \{\lambda_k\}_{k = 1}^{\infty}  &=\sum_{k = 1}^{\infty} \pi_k \, \text{Poisson}(\lambda_k), \text{ for } i = 1, 2, \dots , N \\
 \end{aligned}
 $$
-
-Finite Approximation for $K$ Iterations (implemented model)
+However, the model description provided above is purely theoretical; in practice, it is impossible to construct a mixture model with infinite components. Thus, we implement a finite approximation of the model. We let $\pi_k$, $\lambda_k$ and $K$ be defined as earlier. In addition, we explicitly define the distributions of $\alpha$ and $\mathbb{G}_0$ describing the underlying Dirichlet Process $\text{DP}(\alpha \mathbb{G}_0)$. The full Bayesian model is as follows:
 $$
 \begin{aligned} 
-\alpha &\sim \text{gamma}(1, 1) \\
-\mathbb{G}_0 &\sim \text{gamma}(1, 2) \\
-\{\pi_k\}_{k = 1}^{K}&\sim \text{GEM}(\alpha)\\
+\alpha &\sim \text{Gamma}(1, 1) \\
 \{\lambda_k\}_{k = 1}^{K} &\sim \mathbb{G}_0 \\
-z_i &\sim \text{categorical}(\{1, 2, \dots , K \}, \{\pi_k\}_{k = 1}^{K}) \\
-y_i  \mid z_i, \{\lambda_k\}_{k = 1}^{K} &\sim \text{poisson}(\lambda_{k =z_i})
+\{\pi_k\}_{k = 1}^{K} \mid \alpha&\sim \text{GEM}(\alpha)\\
+z_i \mid \{\pi_k\}_{k = 1}^{K} &\sim \text{Categorical}(\{1, 2, \dots , K \}, \{\pi_k\}_{k = 1}^{K}) \\
+y_i  \mid z_i, \{\lambda_k\}_{k = 1}^{K} &\sim \text{Poisson}(\lambda_{z_i})
 \end{aligned}
 $$
-....
+\begin{wrapfigure}{r}{0.25\textwidth} 
+\vspace{-12mm}
+\begin{center}
+\includegraphics[width=0.32\textwidth]{diagram.PNG}  
+\vspace{-8mm}
+\hspace{15mm}
+\caption{Graphical Model}
+\end{center}
+\vspace{-10mm}
+\end{wrapfigure}
+
+In the model described in the equations above and in Figure 1, the base measure $\mathbb{G}_0$ is Gamma-distributed with shape $1$ and rate $2$. With this DPMM structure, $z_i$ denotes the $i$-th cluster where the probability of selecting cluster $k \in [1, K]$ is determined by the stick-breaking weights $\{\pi_k\}_{k=1}^K$. As a consequence, the Poisson Likelihood is determined by the rate parameter corresponding to the $k$-th randomly sampled weight index. This indexing procedure is facilitated by the use of a categorical distribution to select clusters.  
+
+
+While the categorical distribution could select directly from $\lambda_k$, the cluster-based approach allows the algorithm to utilize information on the assignments $z_i$, which can be applied in nonparametric clustering methods such as those discussed in [@Zhang2019DPMM].
+
+
+
 
 
 <!-- which will be utilized be used as the `MixingDistribution` object in the DP sampler  package [@dirichletprocess2023] to produce a posterior distribution. In  -->
@@ -202,7 +223,7 @@ $$
 
 
 
-The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $B =100$ had a total run time of $703.87$ seconds, and converged to the posterior rates and distribution consistently across multiple runs and randomization seeds. In the table below, we report the posterior rate estimates and the associated mixing weights.
+The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $B =100$ had a total run time of $703.87$ seconds, and converged to the posterior rates and distribution consistently across multiple runs and randomization seeds. In addition, we ran the Poisson DPMM on synthetic data, and observed consistent recovery of source weights in the mean results and posterior weights. Furthermore, the synthetic data of equivalent size to the experiment data had a similar run time of $732.53$ seconds, implying that the chain is mixing well.  In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set.
 
 \begin{table}[h]
 \centering
@@ -222,40 +243,25 @@ From the results above, we see that high posterior weight was associate with thr
 
 
 Below, we plot the estimated posterior mixture distribution on a sample frame of size $10,000$ alongside the $99\%$ credible interval. We compare these results with the frequentist maximum likelihood estimate of the rate parameter found via Poisson regression, which includes the corresponding $99\%$ confidence interval. 
-<!-- ```{r} -->
-<!-- # Total Runtime of Script:   691.36 seconds -->
-<!-- # TODO: generation from the Gibbs sampling procedure detailed in [@Neal2000] -->
-<!-- # TODO: report posterior distrubtion (of mean of lambda with CrI error bars) from posterior frame -->
-<!-- # TODO: report posterior weights and lambda values (much more useful, actually shows high -->
-<!-- # weight on three separate lambdas ) -->
-<!-- # the original source data has three distinct clusters which is why the non-paramteric mixture model  -->
-<!-- # worked better, and the varying rates between those clusters is well captured by  -->
-<!-- # the plot of the posterior which is encouraging ability to adapt to the structure of the data -->
-<!-- ``` -->
 
-<!-- What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
-
-
-<!-- ```{r} -->
-<!-- # TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve. -->
-
-<!-- # we've actually ended up creating latent categorization by  -->
-<!-- # crash severity, which is exactly what we are looking for  -->
-<!-- # we can think of this as "evaluated weekly crash reports" -->
-<!-- # assuming that more severe crashes will be processed later -->
-<!-- # or, more likely, the number of evaluated crash reports  -->
-<!-- # declines in groups over time as severity increases -->
-<!-- # since more severe reports take longer to evaluate -->
-<!-- ``` -->
-
-
-
-
-## Conclusion and Further Work
 
 ```{r}
-# TODO: Discuss other unsupported conjugates (such as categorical) as well as the potential to explore 
+# An appropriate combination of diagnostics, synthetic datasets and other validation strategies.
+# synthetic: report rate recovery of synthetic data and runtime
+# MLEs under the false assumption of homogeneous rates 
+```
+
+
+## Discussion and Further Work
+
+```{r}
+# TODO: Discuss other unsupported conjugates (such as categorical) 
+# as well as the potential to explore 
 #       non-conjugate mixtures. 
+#  key limitations: difficult to identify data requiring a non-parametric implementation
+#  for example, a Hierarchical Model would likely return similar results to the DPMM
+#  further, count data with distinct clustering is difficult to locate, so the application 
+#  of these sorts of models may be limited
 ```
 
 <!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
@@ -275,6 +281,76 @@ Below, we plot the estimated posterior mixture distribution on a sample frame of
 ## Section 1: Proofs and Examples
 
 Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
+
+
+### Proof of Gamma-Poisson Conjugacy : Posterior
+
+
+We noted the posterior conjugate in the methods section, and left the full derivation of the conjugate pair for the appendix here. As mentioned in the methods section, the conjugate pair is helpful for Gibbs samplers where the nonparametric Dirichlet Process is centered about a gamma base measure.
+
+Let $\lambda \sim \text{gamma}(\alpha, \beta)$ be the prior on the Poisson rate parameter $\lambda$. Let $x_i \mid \lambda \sim \text{pois}(\lambda)$ for $i = 1, 2, \dots, n$.
+<!-- -->
+We derive the expression for the conjugate prior, begging with the proportionality: 
+$$
+\begin{aligned}
+\text{Posterior} &\propto \text{Prior } \times \text{ Likelihood} \\
+\text{Posterior} &\propto p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, p_{\text{pois}}(x_i\, ; \lambda) \\
+\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, \Big( \dfrac{e^{-\lambda} \lambda^{x_i}}{x_i!} \Big) \\
+\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta)\times \prod_{i = 1}^n (e^{-\lambda})\cdot  \prod_{i = 1}^n (\lambda^{x_i}) \cdot  \prod ({x_i!})^{-1} \\
+\text{Posterior} &\propto  \Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha)} \lambda^{\alpha - 1}e^{-\beta \lambda} \Big) \times (e^{-n\lambda})\cdot  (\lambda^{\sum x_i}) \cdot  \prod_{i=1}^n ({x_i!})^{-1} \\
+\text{Posterior} &\propto  \underbrace{\Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha) \prod_{i=1}^nx_i!} \Big)}_{\text{constant wrt } \lambda}   \cdot (e^{-n\lambda}e^{-\beta \lambda})\cdot  (\lambda^{\sum x_i}\lambda^{\alpha - 1})   \\
+\text{Posterior} &\propto  (e^{-n\lambda -\beta \lambda}) \cdot  (\lambda^{\sum x_i +\alpha - 1})  \\
+\text{Posterior} &\propto  (e^{-\lambda (n+\beta)}) \cdot  (\lambda^{ \sum x_i +\alpha - 1})   \\
+\text{Posterior} &\propto   \text{gam}(\alpha + \sum_{i = 1}^n x_i, \beta + n) \\
+\end{aligned}
+$$
+The above gives the Posterior Distribution used in Part 3 of the DPMM Mixing Distribution definition, as required. 
+
+
+
+### Proof of Gamma-Poisson Conjugacy : Posterior Predictive
+
+
+As was discussed in the main work, the posterior predictive is also needed to use the sampler. Since we need the full expression (not a proportionality), we utilize line 5 from the previous proof for a single observation.
+
+For a single observation, we have the following from the gamma distribution using $x_n$ and $1$ rather than $n$ and the observation sum. 
+$$
+\begin{aligned}
+p(\lambda \mid x_n) &=  \Big( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) 
+\end{aligned}
+$$
+Then, we compute $P(x_{n+1})$ by marginalization to arrive at the predictive distribution.
+$$
+\begin{aligned}
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)p(\lambda \mid x_n) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)\bigg( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} \Big( \dfrac{e^{-\lambda} \lambda^{x_{n+1}}}{x_{n+1}!} \Big) \bigg(  \dfrac{(\beta +1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   e^{-\lambda} \lambda^{x_{n+1}}  \Big( \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) \text{d}\lambda \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \Big( \lambda^{\alpha + x_n + x_{n+1}- 1}e^{-(\beta + 2) \lambda} \Big) \text{d}\lambda
+\end{aligned}
+$$
+At this point, we recall the definition of the complete gamma function.
+$$
+\Gamma(z) = \int_0^{\infty}t^{z-1}e^{-t}\text{d}t, \text{ where } \; \mathfrak{R}(z) > 0
+$$
+Note by the strictly real-valued supports and parameters of both the Gamma and Poisson distributions that the $\mathfrak{R}(z) > 0$ clause holds trivially in this case. 
+
+For our expression, we will proceed with substitution to get it into this form.
+
+First, we let $t = (\beta + 2)\lambda$. To solve via substitution, we note that:
+$$
+\text{d}t = (\beta + 2)\text{d}\lambda, \;\text{ hence } \; \text{d}\lambda = \dfrac{\text{d}t}{(\beta + 2)}
+$$
+Let us substitute this value into our expression and simplify.
+$$
+\begin{aligned}
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \bigg( \dfrac{t}{(\beta + 2)}\bigg)^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \dfrac{\text{d}t}{(\beta + 2)} \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{x_n + x_{n+1}-1}(\beta + 2) } \int_{0}^{\infty}   t^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \text{d}t \\
+p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha + x_n + x_{n+1}-1}(\beta + 2)^1 } \Gamma( \alpha +x_n + x_{n+1} )\\
+p(x_{n+1} \mid x_n ) &=   \frac{(\beta+1)^{\alpha +x_n} \Gamma( \alpha +x_n + x_{n+1} )}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha +x_n + x_{n+1}} }  \;\;\; \square
+\end{aligned}
+$$
+The above gives the Posterior Predictive used in Part 4 of the DPMM Mixing Distribution definition, as required. 
 
 
 ### Example of a $\sigma$-Algebra 
@@ -345,75 +421,6 @@ Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma
 
 From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
-### Proof of Gamma-Poisson Conjugacy : Posterior
-
-
-We noted the posterior conjugate in the methods section, and left the full derivation of the conjugate pair for the appendix here. As mentioned in the methods section, the conjugate pair is helpful for Gibbs samplers where the nonparametric Dirichlet Process is centered about a gamma base measure.
-
-Let $\lambda \sim \text{gamma}(\alpha, \beta)$ be the prior on the Poisson rate parameter $\lambda$. Let $x_i \mid \lambda \sim \text{pois}(\lambda)$ for $i = 1, 2, \dots, n$.
-<!-- -->
-We derive the expression for the conjugate prior, beginning from the well-known expression for the posterior. 
-$$
-\begin{aligned}
-\text{Posterior} &\propto \text{Prior } \times \text{ Likelihood} \\
-\text{Posterior} &\propto p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, p_{\text{pois}}(x_i\, ; \lambda) \\
-\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta) \times \prod_{i = 1}^n \, \Big( \dfrac{e^{-\lambda} \lambda^{x_i}}{x_i!} \Big) \\
-\text{Posterior} &\propto  p_{\text{gam}}(\lambda ; \alpha, \beta)\times \prod_{i = 1}^n (e^{-\lambda})\cdot  \prod_{i = 1}^n (\lambda^{x_i}) \cdot  \prod ({x_i!})^{-1} \\
-\text{Posterior} &\propto  \Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha)} \lambda^{\alpha - 1}e^{-\beta \lambda} \Big) \times (e^{-n\lambda})\cdot  (\lambda^{\sum x_i}) \cdot  \prod_{i=1}^n ({x_i!})^{-1} \\
-\text{Posterior} &\propto  \underbrace{\Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha) \prod_{i=1}^nx_i!} \Big)}_{\text{constant wrt } \lambda}   \cdot (e^{-n\lambda}e^{-\beta \lambda})\cdot  (\lambda^{\sum x_i}\lambda^{\alpha - 1})   \\
-\text{Posterior} &\propto  (e^{-n\lambda -\beta \lambda}) \cdot  (\lambda^{\sum x_i +\alpha - 1})  \\
-\text{Posterior} &\propto  (e^{-\lambda (n+\beta)}) \cdot  (\lambda^{ \sum x_i +\alpha - 1})   \\
-\text{Posterior} &\propto   \text{gam}(\alpha + \sum_{i = 1}^n x_i, \beta + n) \\
-\end{aligned}
-$$
-The above gives the Posterior Distribution used in Part 3 of the DPMM Mixing Distribution definition, as required. 
-
-
-
-### Proof of Gamma-Poisson Conjugacy : Posterior Predictive
-
-
-As was discussed in the main work, the posterior predictive is also needed to use the sampler. Since we need the full expression (not a proportionality), we utilize line 5 from the previous proof for a single observation.
-
-For a single observation, we have the following from the gamma distribution using $x_n$ and $1$ rather than $n$ and the observation sum. 
-$$
-\begin{aligned}
-p(\lambda \mid x_n) &=  \Big( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) 
-\end{aligned}
-$$
-Then, we compute $P(x_{n+1})$ by marginalization to arrive at the predictive distribution.
-$$
-\begin{aligned}
-p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)p(\lambda \mid x_n) \text{d}\lambda \\
-p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} p(x_{n + 1} \mid \lambda)\bigg( \dfrac{(\beta + 1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
-p(x_{n+1} \mid x_n ) &=  \int_{0}^{\infty} \Big( \dfrac{e^{-\lambda} \lambda^{x_{n+1}}}{x_{n+1}!} \Big) \bigg(  \dfrac{(\beta +1)^{\alpha +x_n}}{\Gamma(\alpha + x_n)} \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \bigg) \text{d}\lambda \\
-p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   e^{-\lambda} \lambda^{x_{n+1}}  \Big( \lambda^{\alpha + x_n - 1}e^{-(\beta + 1) \lambda} \Big) \text{d}\lambda \\
-p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \Big( \lambda^{\alpha + x_n + x_{n+1}- 1}e^{-(\beta + 2) \lambda} \Big) \text{d}\lambda
-\end{aligned}
-$$
-At this point, we recall the definition of the complete gamma function.
-$$
-\Gamma(z) = \int_0^{\infty}t^{z-1}e^{-t}\text{d}t, \text{ where } \; \mathfrak{R}(z) > 0
-$$
-Note by the strictly real-valued supports and parameters of both the Gamma and Poisson distributions that the $\mathfrak{R}(z) > 0$ clause holds trivially in this case. 
-
-For our expression, we will proceed with substitution to get it into this form.
-
-First, we let $t = (\beta + 2)\lambda$. To solve via substitution, we note that:
-$$
-\text{d}t = (\beta + 2)\text{d}\lambda, \;\text{ hence } \; \text{d}\lambda = \dfrac{\text{d}t}{(\beta + 2)}
-$$
-Let us substitute this value into our expression and simplify.
-$$
-\begin{aligned}
-p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{{\Gamma(\alpha + x_n)x_{n+1}!}}\int_{0}^{\infty}   \bigg( \dfrac{t}{(\beta + 2)}\bigg)^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \dfrac{\text{d}t}{(\beta + 2)} \\
-p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{x_n + x_{n+1}-1}(\beta + 2) } \int_{0}^{\infty}   t^{\alpha + x_n + x_{n+1}- 1}(e^{-t}) \text{d}t \\
-p(x_{n+1} \mid x_n ) &=  \frac{(\beta+1)^{\alpha +x_n}}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha + x_n + x_{n+1}-1}(\beta + 2)^1 } \Gamma( \alpha +x_n + x_{n+1} )\\
-p(x_{n+1} \mid x_n ) &=   \frac{(\beta+1)^{\alpha +x_n} \Gamma( \alpha +x_n + x_{n+1} )}{ \Gamma(\alpha + x_n) x_{n+1}!(\beta + 2)^{\alpha +x_n + x_{n+1}} }  \;\;\; \square
-\end{aligned}
-$$
-The above gives the Posterior Predictive used in Part 4 of the DPMM Mixing Distribution definition, as required. 
-
 
 ## Section 2: R Code
 
@@ -437,17 +444,17 @@ poisMd = MixingDistribution(
   priorParameters = c(1, 2),
   conjugate = "conjugate"
 )
-# Part 1: Poisson Likelihood
+# F 1: Poisson Likelihood
 Likelihood.poisson = function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
 }
-# Part 2: Gamma Prior : Base Measure
+# F 2: Gamma Prior : Base Measure
 PriorDraw.poisson = function(mdobj, n){
   draws = rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
   theta = list(array(draws, dim=c(1,1,n)))
   return(theta)
 }
-# Part 3: Posterior Draw (defined by conjugacy)
+# F 3: Posterior Draw (defined by conjugacy)
 PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
   theta = rgamma(n, priorParameters[1] + sum(x),
@@ -455,7 +462,7 @@ PosteriorDraw.poisson = function(mdobj, x, n=1){
   return(list(array(theta, dim=c(1,1,n))))
 }
 
-# Part 4: Predictive Distribution by Marginalization
+# F 4: Predictive Distribution by Marginalization
 Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
   alpha = priorParameters[1]
@@ -853,6 +860,34 @@ ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 <!-- F &= \prod_{i=1}^N\bigg(\sum_{k =1}^{\infty} \pi_k N(x_i \mid \uptheta_k) \bigg), \text{ likelihood from normal kernel} -->
 <!-- \end{aligned} -->
 <!-- $$ -->
+<!-- This would result in a high concentration of density around the sampled $\mathbb{G}_0$ value corresponding to $\upbeta_1$. -->
+<!-- the residual distance of the sum from one quickly converges to zero as $K$ increases: explicitly, -->
+<!-- ```{r} -->
+<!-- # Total Runtime of Script:   691.36 seconds -->
+<!-- # TODO: generation from the Gibbs sampling procedure detailed in [@Neal2000] -->
+<!-- # TODO: report posterior distrubtion (of mean of lambda with CrI error bars) from posterior frame -->
+<!-- # TODO: report posterior weights and lambda values (much more useful, actually shows high -->
+<!-- # weight on three separate lambdas ) -->
+<!-- # the original source data has three distinct clusters which is why the non-paramteric mixture model  -->
+<!-- # worked better, and the varying rates between those clusters is well captured by  -->
+<!-- # the plot of the posterior which is encouraging ability to adapt to the structure of the data -->
+<!-- ``` -->
+
+<!-- What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
+
+
+<!-- ```{r} -->
+<!-- # TODO: Fit to Chicago Traffic model. Discuss posterior distribution curve. -->
+
+<!-- # we've actually ended up creating latent categorization by  -->
+<!-- # crash severity, which is exactly what we are looking for  -->
+<!-- # we can think of this as "evaluated weekly crash reports" -->
+<!-- # assuming that more severe crashes will be processed later -->
+<!-- # or, more likely, the number of evaluated crash reports  -->
+<!-- # declines in groups over time as severity increases -->
+<!-- # since more severe reports take longer to evaluate -->
+<!-- ``` -->
+
 
 
 

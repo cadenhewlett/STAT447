@@ -4,7 +4,8 @@ set.seed(447)
 # start the clock
 start_time = proc.time()
 M = 10000
-RUN = TRUE # TRUE if running sampler
+RUN = FALSE # TRUE if running sampler
+TESTING = TRUE # TRUE if running synthetic validation
 
 ###########################
 ### Mixing Distribution ###
@@ -29,7 +30,7 @@ PriorDraw.poisson = function(mdobj, n){
 # Part 3: Posterior Draw (defined by conjugacy)
 PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
-  theta = rgamma(n, priorParameters[1] + sum(x),
+  theta = rgamma(n,  priorParameters[1] + sum(x),
                      priorParameters[2] + nrow(x))
   return(list(array(theta, dim=c(1,1,n))))
 }
@@ -53,7 +54,7 @@ Predictive.poisson = function(mdobj, x){
 ###########################
 ### D.P. Gibbs Sampling ###
 ###########################
-
+?Predictive.normal
 # read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
 # monthly crash count, in 100s of crashes 
@@ -75,6 +76,31 @@ if(RUN){
   saveRDS(postf, file = "final_project/posterior_sampleframe.RDS")
   saveRDS(dirp, file =  "final_project/posterior_results.RDS")
 }
+
+###########################
+## Synthetic Validation ###
+###########################
+
+if(TESTING){
+  # generate three synthetic rates
+  synth_data = c(rpois(269, lambda = 3),
+                 rpois(538, lambda = 12),
+                 rpois(269, lambda = 0.8))
+  # initiate the dirichlett process poisson
+  synth = DirichletProcessCreate(synth_data, poisMd)
+  # initialize and fit DPMM via Gibbs 
+  synth = Initialise(synth)
+  synth = Fit(synth, M) 
+  synth = Burn(synth, 100)
+  # compute, posterior frame: sampling from the posterior
+  cat("Generating Posterior Frame for Synthetic Data...")
+  # include 95% and 99% Credible Intervals
+  post_synth = PosteriorFrame(synth, 0:22, 10000, ci_size = c(0.1, 0.01))
+  # save locally
+  saveRDS(postf, file = "final_project/synthetic_sampleframe.RDS")
+  saveRDS(dirp, file =  "final_project/synthetic_results.RDS")
+}
+
 # report runtime 
 total_time = proc.time() - start_time
 cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")
