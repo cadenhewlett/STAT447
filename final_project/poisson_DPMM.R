@@ -54,7 +54,7 @@ Predictive.poisson = function(mdobj, x){
 ###########################
 ### D.P. Gibbs Sampling ###
 ###########################
-?Predictive.normal
+
 # read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
 # monthly crash count, in 100s of crashes 

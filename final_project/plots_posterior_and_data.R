@@ -58,12 +58,3 @@ results = kable(t(round(results_DF, 3)),
 writeLines(results,  "final_project/results.tex")
 
 ggsave("final_project/data_raw.PNG", plot = p0, width = 6.5, height = 5)
-
-
-
-# What we effectively have is discrete weekly counts (in 100s), with 
-# latent categorization (severity) that is masked
-# however, with a DP Infinite Mixture Model we 
-# can still compute a posteriori estimates of the rate parameter 
-# (despite the fact that the count distribution is multimodal)
-## How to plot : runtime  694.59 s

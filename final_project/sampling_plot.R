@@ -80,7 +80,7 @@ p1 <- ggplot() +
   ) +
   labs(
     title = TeX(
-      "Mean Estimated Posterior Predictive for DPMM"
+      "Estimated Posterior Predictive for DPMM"
     ),
     subtitle = TeX(
       "95% and 99% Credible Interval with Histogram of Observed Data"

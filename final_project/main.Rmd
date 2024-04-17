@@ -46,7 +46,7 @@ knitr::opts_chunk$set(echo = TRUE)
 In this work, we present a non-parametric approach to the Gamma-Poisson (GP) model framework using weekly aggregation of daily crash count data from the Chicago Police Department [@chicago_police_department__cpd__2024]. As of writing, there is no out-of-the-box approach for the GP setup in the widely-used `dirichletprocess` package for Dirichlet Process Mixture Models (DPMMs). So, in addition to presenting a formalized Bayesian analysis of the CPD data set, this work develops a bespoke integration of the GP Bayesian Model with the aforementioned `R` package. In addition we provide a more formal analysis of these data considering that the closest investigation of the CPD data publicly available were summary statistics by [@Johny2018ChicagoTraffic]. 
 
 
-We will begin with a brief literature review, discussing probability measures and Dirichlet Processes (DPs) from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot of the count data and provide some observational analysis. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results which include the table of weighted posterior rates and the corresponding posterior plots. We then briefly interpret these results, discuss shortcomings, and establish ideas for future work.
+We will begin with a brief literature review, discussing probability measures and Dirichlet Processes (DPs) from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot of the count data and provide some observational analysis. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results which include the table of weighted posterior rates and the corresponding posterior plots. We then briefly interpret these results, discuss shortcomings, and establish ideas for future work. 
 
 \vspace{-5mm}
 
@@ -147,11 +147,11 @@ The finite approximation used in this work is known as a "stick-breaking" or Gri
 The idea behind GEM weighing is to take a "stick" with unit length and break it at a location decided by a $\upbeta_1 \sim \text{beta}(1, \alpha)$ random pull, which we denote $\pi_1$. Then, we break the remaining stick length in two by a second $\upbeta_2 \sim \text{beta}(1, \alpha)$ sample. Hence, $\pi_2 = (1 - \upbeta_1)\upbeta_2$, which can be understood as "the remaining stick length after the first break, broken at the second random break location." Then, we generalize this concept for discrete $k = \{1, 2, \dots, K\} \subseteq \mathbb{Z}$ as follows: 
 \vspace{-4mm}
 $$
-\uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i) \tag{1}
+\uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i)
 $$
 \vspace{-4mm}
 
-Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$ with the residual distance of the sum from $1$ decreasing exponentially by properties of beta-distributed random variables, as noted in [@Xing2014] and other works. 
+Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$, which we prove in the Appendix. Further, the residual distance of the sum from $1$ decreases exponentially, as noted in [@Xing2014] and other works. 
 
 \begin{wrapfigure}{l}{0.60\textwidth}
 \vspace{-5mm}
@@ -265,33 +265,46 @@ We tested the model on varying sets of synthetic data of size $n$, and observed 
 From the table above, we see that the majority of the weight is assigned to three distinct rate parameters. The estimates for these parameters are notably different from another, as shown in the boxplots to the left. This implies that the DPMM is correctly identifying the varying rates in the source data; specifically, it is locating the three groupings of the crash counts we discussed in the Data Analysis section. It should be noted that the fourth rate parameter with $\lambda_4 \approx 0.718$ has a very small cluster size, which indicates minimal contribution to the overall mixture model. In addition, we found the average cluster size to be approximately $4.6$ and the proportion of clusters of size $3$ improved to around $35\%$ by the final $500$ iterations from $21\%$ in the first $500$ post burn-in. In all, the DPMM seems to performing well with respect to rate identification of the intrinsically clustered count data.
 
 \vspace{-1mm}
-\begin{wrapfigure}{r}{0.62\textwidth}
+\begin{wrapfigure}{r}{0.65\textwidth}
 \vspace{-6mm}
 \begin{center}
-\includegraphics[width=0.65\textwidth]{post_comp.PNG}
+\includegraphics[width=0.67\textwidth]{post_comp.PNG}
 \end{center}
 \vspace{-1cm}
 \end{wrapfigure}
 
 To further assess the model's ability to capture the pattern and variability of the true data, we simulated $10,000$ draws of size $n$ from the posterior predictive distribution. These samples used the posterior rates $\{\lambda_i\}_{i = 1}^4$ and corresponding weights $\{\pi_i\}_{i = 1}^4$, as reported in Table 1. We compared these simulations to the original data by tabulating the frequencies of simulated counts and plotting them alongside a histogram of the original data. The resulting plot, shown to the right, suggest that the model captures the general shape of the data well. It is correctly identifying the changing density and heavier tails of the histogram. While the true values seem to occasionally fall beyond the 95% Credible Interval for the posterior predictive they remain within the 99% Interval, save for one observed bin. In addition, the interval width seems to grow considerably near areas where the densities shift in the source data; this makes sense, as we would expect higher variability along the boundaries of clusters.  Bearing all of this in mind, there still doesn't seem to be significant evidence to suggest that the model is mis-specified; the similar shape of the posterior predictive to the true data and the consistent identification of distinct rates suggest that our implementation of the Gamma-Poisson DPMM is robust.
 
-## Discussion and Further Work
 
-```{r}
-# TODO: Discuss other unsupported conjugates (such as categorical) 
-# as well as the potential to explore 
-#       non-conjugate mixtures. 
-#  key limitations: difficult to identify data requiring a non-parametric implementation
-#  for example, a Hierarchical Model would likely return similar results to the DPMM
-#  further, count data with distinct clustering is difficult to locate, so the application 
-#  of these sorts of models may be limited
-#  showed that the Gibbs sampling algrotihm in the `dirichletprocess` package can be a powerful tool for
-# generation of posterior estimates of non-parametric mixture models of conjugate data
-# we can potentiall extend to other conjugate pairs not currently supported, such as the dirichlet distribution 
-# as a conjugate prior to the multinomial distribution.
-# the high proportion of clusters of size 4 is likely due to how close groups 2 and 3 are to one another,
-# bringing into question whether the model could have performed better on a different set of data
-```
+## \underline{Discussion and Further Work}
+
+\vspace{-3mm}
+
+While the posterior results seemed generally favourable, the methodology applied here is not without its shortcomings. Despite the fact that the proportion of clusters of size $3$ increased as we ran the chain, the relatively high overall mean cluster size of $4.6$ - different from the expecting clustering - suggests the potential of confounding among cluster assignments. The boxplot in the results section revealed that the rates of the second and third clusters are relatively close, a claim that is supported by the overlap seen in the hexplot reported in the Data Analysis section. The closeness of these groups is a potential culprit for the larger than expected number of clusters, as the algorithm may favour group assignments which overfit the rates. This could theoretically incentivize more lightly-weighted clusters with slightly different rates rather than a small number of heavily weighted assignments. This raises the question of whether or not the model would have performed better on a different set of data. To that end, it is tough to say whether a purely non-parametric approach is necessary in this setting; in situations where assumptions on the prior are rather lax, a more simple hierarchical Bayesian model can often suffice instead of a rigorous non-parametric fit. 
+
+With all of this in mind, the implementation of the Dirichlet Process Poisson Mixture Model using a customized `R` function with existing package framework was still an overall success. The ability to add customized models to the `dirichletprocess` package opens the door for novel `R`-based software for more complex Bayesian non-parametrics such as DP-GLMs. In addition, the process used here could be expanded to facilitate a potential CRAN-based extension to the existing package by developing more out-of-the-box options for DPMMs. A direct extension to this work would be to implement another conjugate pair such as a Dirichlet distributed base measure with a Categorical likelihood. Such a model would have interesting applications in classification problems, as the non-parametric framework allows for an arbitrary number of categories. 
+
+
+<!-- ```{r} -->
+<!-- # TODO: Discuss other unsupported conjugates (such as categorical)  -->
+<!-- # all in all the implementation went well. exploration on further data and more -->
+<!-- # complex models such as DP-GLMs is a possibility. in addition, the ability to -->
+<!-- # add custom integration with this package opens the door for novel R-based software -->
+<!-- # to implement more complicated models such as DP-GLMs on a large CRAN package-based scale.  -->
+<!-- # as well as the potential to explore  -->
+<!-- #       non-conjugate mixtures.  -->
+<!-- #  key limitations: difficult to identify data requiring a non-parametric implementation -->
+<!-- #  for example, a Hierarchical Model would likely return similar results to the DPMM -->
+<!-- #  further, count data with distinct clustering is difficult to locate, so the application  -->
+<!-- #  of these sorts of models may be limited -->
+<!-- #  showed that the Gibbs sampling algrotihm in the `dirichletprocess` package can be a powerful tool for -->
+<!-- # generation of posterior estimates of non-parametric mixture models of conjugate data -->
+<!-- # we can potentiall extend to other conjugate pairs not currently supported,  -->
+<!-- # such as the dirichlet distribution  -->
+<!-- # as a conjugate prior to the multinomial distribution. -->
+<!-- # the high proportion of clusters of size 4 is likely due to how close groups 2 and 3 are to one another, -->
+<!-- # bringing into question whether the model could have performed better on a different set of data -->
+<!-- ``` -->
 
 <!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
 <!-- https://projecteuclid.org/journals/annals-of-statistics/volume-1/issue-2/A-Bayesian-Analysis-of-Some-Nonparametric-Problems/10.1214/aos/1176342360.full -->
@@ -306,14 +319,43 @@ To further assess the model's ability to capture the pattern and variability of 
 # Appendices
 
 
-The appendices are divided into three sections: Proofs and Examples, `R` Code, and Large Images of Figures.
+The appendices are divided into three sections: Proofs and Examples, `R` Code, and Large Images of Figures. These groupings are by importance. While the entire appendix is not strictly necessary, the proofs in Appendix 1 and first code cell in Appendix 2 are recommended to read. 
 
 
 *Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametrics and to my friends and family who put up with me talking about statistics constantly.
 
 ## Appendix 1: Proofs and Examples
 
-Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
+Proofs are in order of reference, with examples being included afterwards. Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
+
+### Proof of Convergence of Summation of GEM Process to 1
+
+
+We recall the definition of the GEM process, as discussed in the Methods section.
+$$
+\uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i)
+$$
+
+We wish to show the following:
+$$
+\underset{K \rightarrow \infty}{\lim} \bigg( \sum_{k=1}^K \pi_k\bigg) =  \sum_{k=1}^{\infty} \pi_k = 1
+$$
+We will achieve this by showing that the expected value of the sum converges to $1$. We will evaluate the expectation of the sum directly, using properties of expectation, independence, the beta distribution and geometric series.
+$$
+\begin{aligned}
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \mathbb{E}\Bigg(\sum_{k=1}^{\infty} \bigg(\upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i)  \bigg)\Bigg) \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \sum_{k=1}^{\infty} \bigg(\mathbb{E}(\upbeta_k) \prod_{i=1}^{k-1}\big(1 - \mathbb{E}(\upbeta_i)\big) \bigg), \text{ by independence and linearity} \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \sum_{k=1}^{\infty} \bigg(\Big(\dfrac{1}{1+\alpha}\Big) \prod_{i=1}^{k-1}\Big(1 - \dfrac{1}{1+\alpha}\Big) \bigg), \text{ since } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha) \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \sum_{k=1}^{\infty} \bigg( \prod_{i=1}^{k-1}\Big( \dfrac{\alpha}{1+\alpha}\Big) \bigg)  \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \sum_{k=1}^{\infty}  \Big( \dfrac{\alpha}{1+\alpha}\Big)^{k-1}, \text{ by independence wrt }i  \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \sum_{k=0}^{\infty}  \Big( \dfrac{\alpha}{1+\alpha}\Big)^{k}, \text{ by index shifting}  \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \bigg(\dfrac{1} { 1 - \frac{\alpha}{1+\alpha} }\bigg), \text{ since }  \Big|\dfrac{\alpha}{1+\alpha}\Big| < 1\\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \bigg(\dfrac{1} { \frac{1}{1+\alpha} }\bigg) \\
+\mathbb{E}\bigg(\sum_{k=1}^{\infty} \pi_k\bigg) &= \Big(\dfrac{1}{1+\alpha}\Big) \bigg(\dfrac{{1+\alpha}} {1 }\bigg) = {1}, \text{ as required. } \; \; \square
+\end{aligned}
+$$
+
+Using the process outlined above, it is direct to show that $\mathbb{E}(\pi_k^2) \rightarrow 1$, implying the asymptotic consistency $\text{var}(\pi_k) \overset{n \rightarrow \infty}{\longrightarrow} 0$ and thus the absolute convergence to $1$.
 
 
 ### Proof of Gamma-Poisson Conjugacy : Posterior
@@ -472,7 +514,7 @@ TESTING = FALSE # TRUE if running synthetic validation
 ### Mixing Distribution ###
 ###########################
 
-# define the framework conjugate mixture model
+# custom implementation using conjugate mixing dist.
 poisMd = MixingDistribution(
   distribution = "poisson",
   priorParameters = c(1, 2),
