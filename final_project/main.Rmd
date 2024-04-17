@@ -31,15 +31,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## \underline{Introduction}
 
-<!-- ```{r} -->
-<!-- # TODO -->
-<!-- # a real-world inference task/problem -->
-<!-- # Provide references for the closest analyses of the same data and explain how they differ from yours. -->
-<!-- # https://www.kaggle.com/code/anoopjohny/chicago-traffic-crashes-chicago-police-dept -->
-<!-- # We couldn't find any individuals on Kaggle or elsewhere using this data for any purpose other than -->
-<!-- # preliminary summary statistics. This work will not only present an novel integration  -->
-<!-- # of a Poisson DPMM with existing R Packages, but apply more nuanced analytics of the source data. -->
-<!-- ``` -->
 
 \vspace{-3mm}
 
@@ -55,7 +46,7 @@ We will begin with a brief literature review, discussing probability measures an
 
 \vspace{-3mm}
 
-Before we discuss Dirichlet Processes, we establish  groundwork in probability measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. In the following, we present generalized definitions which are discussed rigorously in works such as [@billingsley2012probability] and [@rudin1986real].
+Before we discuss Dirichlet Processes, we establish some groundwork in measure theory. We will briefly revisit the concepts of $\sigma$-algebra and probability measures. In the following, we present generalized definitions which are discussed rigorously in works such as [@billingsley2012probability] and [@rudin1986real].
 
 \vspace{-5mm}
 
@@ -65,15 +56,18 @@ Before we discuss Dirichlet Processes, we establish  groundwork in probability m
 
 Let $\mathbb{X}$ be a well-defined sample space. A $\sigma$-algebra $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying the following:
 
+
 \vspace{-3mm}
 
-  1. The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. This is referred to in the literature as "non-emptiness and universality." 
-  2. For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. This property is referred to as "closure under complementation."
-  3. For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable index set, if $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ This is referred to as "closure under countable unions."
-
-
-<!-- **Sigma-Algebra**: Let $\mathbb{X}$ be a well-defined sample space. A $\mathbf\sigma$**-algebra** $\mathcal{F} \subseteq P(\mathbb{X})$ is a set satisfying three key properties. *Non-emptiness and universality*: The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$. *Closure under complementation*: For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$. *Closure under countable unions*: For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable set of indices, $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$ -->
-
+\begin{itemize}
+  
+  \item[1.]{\textit{Non-emptiness and universality}: The entire sample space $\mathbb{X}$ is in $\mathcal{F}$ and $\emptyset$ is in $\mathcal{F}$.}
+  
+   \item[2.]{\textit{Closure under complementation}: For all sets $A \in \mathcal{F}$, the complement $A^c \in \mathcal{F}$.}
+  
+   \item[3.]{\textit{Closure under countable unions}: For any countable collection of sets $\{A_i\}_{i \in I}$, where $I$ is a countable index set, if $\forall i \in I, A_i \in \mathcal{F}$ then $\bigcup_{i \in I}A_i \in \mathcal{F}.$}
+  
+\end{itemize}
 
 \vspace{-2mm}
 
@@ -83,13 +77,19 @@ For the sake of this work, we are more interested in *probability measures*, whi
 
 \vspace{-3mm}
 
-  1. $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. This is referred to as "non-negativity."
-  2. $\upmu(\mathbb{X}) = 1$, and $\upmu(\emptyset) = 0$. 
-  3. For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, we have that $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$, this is referred to as "countable additivity."
+\begin{itemize}
+  
+  \item[1.]{\textit{Non-negativity}: $\forall A \in \mathcal{F}, \;  \upmu(A) \geq 0$. This is often extended to include the fact that $0 \leq \upmu(A) \leq 1$.}
+  
+   \item[2.]{\textit{Unit measure}: For the sample space $\mathbb{X}$, $\upmu(\mathbb{X}) = 1$, and $\upmu(\emptyset) = 0$.}
+  
+   \item[3.]{\textit{Countable additivity}: For any countable set $\{A_i\} \subseteq \mathcal{F}$ where $\forall i \neq j, A_i \cap A_j = \emptyset$, $\upmu\Big(\bigcup_{i=1}^{\infty} A_i \Big)  = \sum_{i =1}^{\infty} \upmu(A_i)$.}
+  
+\end{itemize}
 
 \vspace{-2mm}
 
-Before we move on to Dirichlet Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes examples to illustrate $\sigma$-algebra properties and verify a probability measure $\upmu$ on a simple finite set.
+Before we move on to Dirichlet Processes, we acknowledge that the above definitions might be abstract for those new to measure theory. For clarity, the Appendix includes a finite example to illustrate $\sigma$-algebra properties and verify a simple probability measure $\upmu$.
 
 \vspace{-5mm}
 
@@ -97,10 +97,10 @@ Before we move on to Dirichlet Processes, we acknowledge that the above definiti
 
 \vspace{-3mm}
 
-Now, we introduce the concept of the Dirichlet Process (DP), a distribution across probability measures. We adopt the description used in [@hannah2011dirichlet], where the DP is specified by its base measure $\mathbb{G}_0$ (commonly a distribution) and the concentration parameter, $\alpha$. A random sample from a Dirichlet Process is a probability measure over a $\sigma$-algebra from sample space $\mathbb{X}$, which is often assumed to be countable. The resulting probability measure follows the structure of the base measure $\mathbb{G}_0$ with a degree of deviation controlled by $\alpha$. A Dirichlet Process can also be thought of conceptually of as a Dirichlet Distribution whose support is an infinite-simplex, rather than a discretely-defined $k$-simplex [@Ferguson1973].
+Now, we introduce the concept of the Dirichlet Process (DP), a distribution over probability measures. We adopt the nomenclature used in [@hannah2011dirichlet], where the DP is specified by its base measure $\mathbb{G}_0$ (commonly a distribution) and the concentration parameter, $\alpha$. A random sample from a Dirichlet Process is a probability measure over a $\sigma$-algebra from sample space $\mathbb{X}$, which is often assumed to be countable. The resulting probability measure follows the structure of the base measure $\mathbb{G}_0$ with a degree of deviation controlled by $\alpha$. A Dirichlet Process can also be considered conceptually as a Dirichlet Distribution whose support is an infinite-simplex, rather than a discretely-defined $k$-simplex [@Ferguson1973].
 
 
-The $\alpha$ parameter can be thought of as the confidence in the base measure, where a higher $\alpha$ yields greater dispersion and a higher number of clusters of measures about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more confidence in $\mathbb{G}_0$ resulting in fewer, larger clusters [@Sethuraman1994]. This property is explored in more detail in the discussion of finite approximation in the Methods section.  
+The $\alpha$ parameter can be thought of as the confidence in the base measure, where a higher $\alpha$ is indicative of less confidence and a greater dispersion about $\mathbb{G}_0$. Conversely, a lower $\alpha$ indicates more certainty in $\mathbb{G}_0$ resulting in fewer, larger clusters about the base measure [@Sethuraman1994]. This property is explored in more detail in the discussion of finite approximation in the Methods section.  
 
 
 
@@ -116,16 +116,8 @@ Now, we will perform some exploratory data analysis and explain the data set use
 \end{center}
 \vspace{-6mm}
 \end{wrapfigure}
-We applied an aggregation code framework modified from [@stackoverflow2023customfunc] in order to coerce the data into weekly crash counts over the time frame. Certain weeks in both $2014$ and $2015$ had missing counts. In these cases, we performed nearest-neighbours imputation for the missing values. In addition, we grouped the counts by severity to craft an environment in which reports were logged by monetary crash damage, with low-severity accidents ordered first. Furthermore, in an attempt to avoid overflow in training loops we measured crashes in hundreds. As the hexplot shows, there are three distinct categorizations of crash counts, with the count dispersion decreasing across the groups. In addition, as the plot shows, the point density varies across these clusters. These characteristics of the aggregated data create a distinct multimodal plot, which makes these data a good candidate for Bayesian non-parametrics. The code for data processing and plotting are included in the appendix. 
+We applied an aggregation code framework modified from [@stackoverflow2023customfunc] in order to coerce the data into weekly crash counts over the time frame. Certain weeks in both $2014$ and $2015$ had missing counts. In these cases, we performed nearest-neighbours imputation for the missing values. In addition, we grouped the counts by severity to craft an environment in which reports were logged by monetary crash damage, with low-severity accidents ordered first. Furthermore, in an attempt to avoid overflow in training loops we measured crashes in hundreds. As the hexplot shows, there are three distinct categorizations of crash counts, with the count dispersion decreasing across the groups. In addition, as the plot shows, the point densities vary across these clusters. These characteristics of the aggregated data create a distinct multimodal plot, which makes these data a good candidate for Bayesian non-parametrics. The code for data processing, imputation and plotting are included in the appendix. 
 
-
-<!-- Using  -->
-<!-- ```{r} -->
-<!-- # TODO: discuss data itself -->
-<!-- #       discuss aggregation and latent categorization (and events where this could take place irl) -->
-<!-- #       discuss 2014 imputation process (by nearest neighbours) -->
-<!-- # What we effectively have is discrete weekly counts, with latent categorization (damage severity) that is masked to the reporter. however, with a DP Infinite Mixture Model we can still recover a posteriori estimates of the Poisson rate parameters of each of the latent categories (despite the fact that the count distribution is multimodal) and present a unified posterior model -->
-<!-- ``` -->
 
 \vspace{-5mm}
 
@@ -133,7 +125,7 @@ We applied an aggregation code framework modified from [@stackoverflow2023custom
 
 \vspace{-3mm}
 
-In this section, we define the stick-breaking discrete approximation of the Dirichlet Process implemented in this work and in the Gibbs sampler of the `dirichletprocess` package [@dirichletprocess2023]. This library implements the algorithm discussed in-depth in [@Neal2000]. As Markwick notes in his work, using a conjugate base prior allows the algorithm to use an optimized method presented by Neal, and hence is generally preferable if fast mixing is desired. However, as of writing, the Gamma-Poisson conjugate pair is not implemented as a default model in the package. Hence, in addition to the Dirichlet Process finite approximation, we explicitly define the likelihood, conjugate posterior and posterior predictive for the Gamma-Poisson to be implemented as a mixing distribution object in the DPMM Gibbs sampler. Further, we explicitly state the Bayesian model applied to the data from the previous section. 
+In this section, we define the stick-breaking discrete approximation of the Dirichlet Process implemented in this work and in the Gibbs sampler of the `dirichletprocess` package [@dirichletprocess2023]. This library implements the algorithm discussed in-depth in [@Neal2000]. As Markwick notes in his work, using a conjugate base prior allows the algorithm to use an optimized method presented by Neal, and hence is generally preferable if fast mixing is desired. However, as of writing, the Gamma-Poisson conjugate pair is not implemented as a default model in the package. Hence, in addition to the Dirichlet Process finite approximation, we explicitly define the likelihood, conjugate posterior and posterior predictive for the Gamma-Poisson to be implemented as a mixing distribution in the DPMM Gibbs sampler. Further, we explicitly state the Bayesian model applied to the data from the previous section. 
 
 \vspace{-3mm}
 
@@ -144,14 +136,14 @@ In this section, we define the stick-breaking discrete approximation of the Diri
 The finite approximation used in this work is known as a "stick-breaking" or Griffiths, Engen, and McCloskey (GEM) process. The purpose of the GEM process in terms of a Dirichlet Process is to generate weights $\{\pi_k\}$, which will be assigned to pulls from $\mathbb{G}_0$ to approximate a sampled measure from $\text{DP}(\alpha \mathbb{G}_0)$.
 
 
-The idea behind GEM weighing is to take a "stick" with unit length and break it at a location decided by a $\upbeta_1 \sim \text{beta}(1, \alpha)$ random pull, which we denote $\pi_1$. Then, we break the remaining stick length in two by a second $\upbeta_2 \sim \text{beta}(1, \alpha)$ sample. Hence, $\pi_2 = (1 - \upbeta_1)\upbeta_2$, which can be understood as "the remaining stick length after the first break, broken at the second random break location." Then, we generalize this concept for discrete $k = \{1, 2, \dots, K\} \subseteq \mathbb{Z}$ as follows: 
+The idea behind GEM weighing is to take a "stick" with unit length and break it at a location determined by the realization of a $\upbeta_1 \sim \text{Beta}(1, \alpha)$ random variable, which we denote $\pi_1$. Then, we break the remaining stick length in two by a second $\upbeta_2 \sim \text{Beta}(1, \alpha)$ sample. Hence, $\pi_2 = (1 - \upbeta_1)\upbeta_2$, which can be understood as "the remaining stick length after the first break, broken at the second random break location." Then, we generalize this concept for discrete $k = \{1, 2, \dots, K\} \subseteq \mathbb{Z}$ as follows: 
 \vspace{-4mm}
 $$
 \uppi \sim \text{GEM}(\alpha): \text{Let } \upbeta_k \overset{\text{iid}}\sim \text{Beta}(1, \alpha), \text{ then } \pi_k = \upbeta_k \prod_{i=1}^{k-1}(1 - \upbeta_i)
 $$
 \vspace{-4mm}
 
-Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$, which we prove in the Appendix. Further, the residual distance of the sum from $1$ decreases exponentially, as noted in [@Xing2014] and other works. 
+Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$ which we prove in the Appendix. Further, the residual distance of the sum from $1$ decreases exponentially, as noted in [@Xing2014] and other works. 
 
 \begin{wrapfigure}{l}{0.60\textwidth}
 \vspace{-5mm}
@@ -161,18 +153,18 @@ Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. 
 \vspace{-10mm}
 \end{wrapfigure}
 
-As mentioned in the literature review, $\alpha$ is the concentration of the finite-approximated Dirichlet Process. With the additional context of the GEM distribution this property becomes more evident. For an arbitrary $\upbeta_k \sim \text{beta}(1, \alpha)$, a larger $\alpha$ assigns more probability density to lower values in $\text{supp}(\upbeta_k) = (0,1)$. This means that the breaks are more likely to happen "earlier on" along each stick, yielding smaller initial clusters and hence more dispersion in the density of pulls from $\mathbb{G}_0$. To contrast, a very low $\alpha$ may result in a $\upbeta_1$ break near $1$, implying very low weights for the remaining $\{\upbeta_k\}_{k = 1}^{K-1}$. For the model we apply in this work, we let $\alpha \sim \text{gamma}(1, 1)$ and $\mathbb{G}_0 \sim \text{gamma}(1, 2)$ define $\text{DP}(\alpha \mathbb{G}_0)$. In the figure above, we demonstrate the finite approximation at $K = 20$, where the horizontal axis corresponds to the logarithm of stick-breaking weights $\{\pi_k\}_{k = 1}^K$ and the vertical axis are the sampled values $\{\lambda_k\}_{k = 1}^K$ from $\mathbb{G}_0$. The kernel density bin width for contour separation is $0.02$, starting from $(0, 0.02]$ and ending at $(0.22, 0.24]$. The full code for the approximation and density plot is included in the appendix. For the full implementation of the DPMM we selected $K = 150$, a choice justified in detail in [@IshwaranJames2001]. 
+As mentioned in the literature review, $\alpha$ is the concentration of the finite-approximated Dirichlet Process. With the additional context of the GEM distribution this property becomes more evident. For an arbitrary $\upbeta_k \sim \text{Beta}(1, \alpha)$, a larger $\alpha$ assigns more probability density to lower values in $\text{supp}(\upbeta_k) = (0,1)$. This means that the breaks are more likely to happen "earlier on" along each stick, yielding smaller initial clusters and hence more dispersion in the density of pulls from $\mathbb{G}_0$. To contrast, a very low $\alpha$ may result in a $\upbeta_1$ break near $1$, implying very low weights for the remaining $\{\upbeta_k\}_{k = 1}^{K-1}$. For the model we apply in this work, we let $\alpha \sim \text{Gamma}(1, 1)$ and $\mathbb{G}_0 \sim \text{Gamma}(1, 2)$ define $\text{DP}(\alpha \mathbb{G}_0)$. In the figure above, we demonstrate a finite approximation of $\text{DP}(\alpha \mathbb{G}_0)$ at $K = 20$, where the vertical axis corresponds to the logarithm of stick-breaking weights $\{\pi_k\}_{k = 1}^K$ and the horizontal axis denote the sampled values $\{\lambda_k\}_{k = 1}^K$ from $\mathbb{G}_0$. The kernel density bin width for contour separation is $0.02$, starting from $(0, 0.02]$ and ending at $(0.22, 0.24]$. The full code for the approximation and density plot is included in the appendix. For the full implementation of the DPMM we selected $K = 150$, a choice justified in [@IshwaranJames2001]. 
 
 ### Model Implementation
 
 \vspace{-3mm}
-To implement the Dirichlet Process Mixture Model we derived an explicit expression for the mixing distribution, as the standard Poisson-Gamma conjugate pair is not supported by default in the package for the Gibbs sampling algorithm we employed. The adaptation was accomplished through a set of four functions, which customize the sampling procedure. The first function, denoted $\text{F}1$, specifies the likelihood as Poisson. The second function, $\text{F}2$, generates $n$ random draws from the Gamma base distribution $\mathbb{G}_0$ which are vital for the stick-breaking definition of the Dirichlet Process discussed in the previous section. 
+We implemented the Dirichlet Process Mixture Model by deriving an explicit expression for the mixing distribution. This custom implementation was necessary, since the standard Poisson-Gamma conjugate pair is not supported by default in the package for Gibbs sampling we utilized. This adaptation was accomplished through a set of four functions, which customize the sampling procedure. The first function, denoted $\text{F}1$, specifies the likelihood as Poisson. The second function, $\text{F}2$, generates $n$ random draws from the Gamma base distribution $\mathbb{G}_0$ which are mandatory for the stick-breaking definition of the Dirichlet Process discussed in the previous section. 
 
 In addition, we define a function $\text{F}3$ which enables posterior updates for the Poisson rate parameter $\lambda$. This function simulates $n$ random draws from the Gamma posterior distribution using the observations $\{y_i\}_{i = 1}^n$, where $N$ is the sample size. Letting $\alpha$ and $\beta$ be the parameters of $\mathbb{G}_0$, the posterior distribution of $\lambda$ is given by:
 $$
 \lambda \mid \{y_i\}_{i = 1}^N \sim \text{Gamma}(\alpha + \sum_{i = 1}^N y_i, \beta + N) \tag{F3}
 $$
-The complete derivation of the distribution above is in the Appendix. Finally, we derived an explicit expression for the Posterior Predictive distribution given observation $y_n$. Letting $y_{n+1}$ be the new observation, the predictive distribution is given as:
+The complete derivation of the distribution above is in the Appendix. Finally, we derived a function $\text{F}4$ for the Posterior Predictive distribution given observation $y_n$. Letting $y_{n+1}$ be the new observation, the predictive distribution is given as:
 $$
 p(y_{n+1} \mid y_n ) =   \frac{(\beta+1)^{\alpha +y_n} \Gamma( \alpha +y_n + y_{n+1} )}{ \Gamma(\alpha + y_n) y_{n+1}!(\beta + 2)^{\alpha +y_n + y_{n+1}} } \tag{F4}
 $$
@@ -180,26 +172,16 @@ Here, $\Gamma$ indicates the gamma function. In the DPMM, the predictive is cruc
 
 
 
-With this framework in place, we can define the theoretical infinite Poisson mixture model. Let $\pi_k$ be the GEM weights, $\lambda_k$ be the $k$-th mixture rate and $\{y_i\}_{i=1}^N$ be the observations. 
+With this framework in place, we can define the theoretical infinite Poisson mixture model. Let $\pi_k$ be the GEM weights, $\lambda_k$ be the $k$-th mixture rate and $\{y_i\}_{i=1}^N$ be observed crash counts, in hundreds.
 
 $$
 \begin{aligned}
-\{\pi_k\}_{k = 1}^{\infty} &\sim \text{GEM}(\alpha_0)\\
+\{\pi_k\}_{k = 1}^{\infty} &\sim \text{GEM}(\alpha)\\
 \{\lambda_k\}_{k = 1}^{\infty} &\sim \mathbb{G}_0 \\
-y_i \mid \{\pi_k\}_{k = 1}^{\infty} , \{\lambda_k\}_{k = 1}^{\infty}  &=\sum_{k = 1}^{\infty} \pi_k \, \text{Poisson}(\lambda_k), \text{ for } i = 1, 2, \dots , N \\
+y_i \mid \{\pi_k\}_{k = 1}^{\infty} , \{\lambda_k\}_{k = 1}^{\infty}  &=\sum_{k = 1}^{\infty} \pi_k \, \text{Poisson}(\lambda_k), \text{ for } i = 1, 2, \dots , N 
 \end{aligned}
 $$
-However, the model description provided above is purely theoretical; in practice, it is impossible to construct a mixture model with infinite components. Thus, we implement a finite approximation of the model. We let $\pi_k$, $\lambda_k$ and $K$ be defined as earlier. In addition, we explicitly define the distributions of $\alpha$ and $\mathbb{G}_0$ describing the underlying Dirichlet Process $\text{DP}(\alpha \mathbb{G}_0)$. The full Bayesian model and graphical representation are below:
-
-
-<!-- \begin{figure}[ht] -->
-<!-- \hfill -->
-<!-- \begin{minipage}{0.32\textwidth}  -->
-<!--   \centering -->
-<!--   \includegraphics[width=\textwidth]{diagram.PNG} -->
-<!--   \caption{Graphical Model} -->
-<!-- \end{minipage} -->
-<!-- \end{figure} -->
+However, the model description provided above is purely theoretical; in practice, it is impossible to construct a mixture model with infinite components. Thus, we implement a finite approximation of the model. We let $\pi_k$, $\lambda_k$ and $K$ be defined as earlier and $y_i$ be the observed crash counts up to $N = 1,076$. We explicitly define the distributions of $\alpha$ and $\mathbb{G}_0$ describing $\text{DP}(\alpha \mathbb{G}_0)$. The Bayesian model and graphical representation are below:
 
 
 \begin{figure}[h]
@@ -212,7 +194,7 @@ $$
 \{\lambda_k\}_{k = 1}^{K} &\sim \mathbb{G}_0 \\
 \{\pi_k\}_{k = 1}^{K} \mid \alpha&\sim \text{GEM}(\alpha)\\
 z_i \mid \{\pi_k\}_{k = 1}^{K} &\sim \text{Categorical}(\{1, 2, \dots , K \}, \{\pi_k\}_{k = 1}^{K}) \\
-y_i  \mid z_i, \{\lambda_k\}_{k = 1}^{K} &\sim \text{Poisson}(\lambda_{z_i})
+y_i  \mid z_i, \{\lambda_k\}_{k = 1}^{K} &\sim \text{Poisson}(\lambda_{z_i}), \text{ for } i = 1, 2, \dots , N 
 \end{aligned}
 $$
 
@@ -242,7 +224,7 @@ The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $100$ comp
 \end{center}
 \vspace{-3.5cm}
 \end{wrapfigure}
-We tested the model on varying sets of synthetic data of size $n$, and observed consistent recovery of the true clustering and approximate rates of the data. In addition, we observed similarity in convergence times between the synthetic and actual data, suggesting the chain is mixing well on the real-world dataset. In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set, where columns $k \in\{1,2,3,4\}$ indicate the cluster.
+We tested the model on varying sets of synthetic data of size $N$, and observed consistent recovery of the true clustering and approximate rates of the data. In addition, we observed similarity in convergence times between the synthetic and actual data, suggesting the chain is mixing well on the real-world dataset. In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set, where columns $k \in\{1,2,3,4\}$ indicate the cluster.
 
 \begin{table}[h]
 \begin{adjustwidth}{8.75cm}{}
@@ -273,56 +255,24 @@ From the table above, we see that the majority of the weight is assigned to thre
 \vspace{-1cm}
 \end{wrapfigure}
 
-To further assess the model's ability to capture the pattern and variability of the true data, we simulated $10,000$ draws of size $n$ from the posterior predictive distribution. These samples used the posterior rates $\{\lambda_i\}_{i = 1}^4$ and corresponding weights $\{\pi_i\}_{i = 1}^4$, as reported in Table 1. We compared these simulations to the original data by tabulating the frequencies of simulated counts and plotting them alongside a histogram of the original data. The resulting plot, shown to the right, suggest that the model captures the general shape of the data well. It is correctly identifying the changing density and heavier tails of the histogram. While the true values seem to occasionally fall beyond the 95% Credible Interval for the posterior predictive they remain within the 99% Interval, save for one observed bin. In addition, the interval width seems to grow considerably near areas where the densities shift in the source data; this makes sense, as we would expect higher variability along the boundaries of clusters.  Bearing all of this in mind, there still doesn't seem to be significant evidence to suggest that the model is mis-specified; the similar shape of the posterior predictive to the true data and the consistent identification of distinct rates suggest that our implementation of the Gamma-Poisson DPMM is robust.
+To further assess the model's ability to capture the characteristics of the true data, we simulated $10,000$ draws of size $N$ from the posterior predictive distribution. These samples used the posterior rates $\{\lambda_i\}_{i = 1}^4$ and corresponding weights $\{\pi_i\}_{i = 1}^4$, as reported in Table 1. We compared these simulations to the original data by tabulating the frequencies of simulated counts and plotting them alongside a histogram of the observed crash counts. The resulting plot, shown to the right, suggests that the model captures the general shape of the true data well. It correctly identifies the varying density and heavier tails seen in the histogram. While the true values seem to occasionally fall beyond the 95% Credible Interval for the posterior predictive, they consistently remain within the 99% Interval save for one observed bin. In addition, the interval width seems to grow near areas where the densities shift in the source data; this makes sense, as we would expect higher variability along the boundaries of clusters.  From this visual evaluation of the posterior, it seems unlikely that DPMM is mis-specified; the similar shape of the posterior predictive to the true observed counts and the consistent identification of distinct rates suggest that our implementation of the non-parametric Poisson mixture is sound.
 
 
 ## \underline{Discussion and Further Work}
 
 \vspace{-3mm}
 
-While the posterior results seemed generally favourable, the methodology applied here is not without its shortcomings. Despite the fact that the proportion of clusters of size $3$ increased as we ran the chain, the relatively high overall mean cluster size of $4.6$ - different from the expecting clustering - suggests the potential of confounding among cluster assignments. The boxplot in the results section revealed that the rates of the second and third clusters are relatively close, a claim that is supported by the overlap seen in the hexplot reported in the Data Analysis section. The closeness of these groups is a potential culprit for the larger than expected number of clusters, as the algorithm may favour group assignments which overfit the rates. This could theoretically incentivize more lightly-weighted clusters with slightly different rates rather than a small number of heavily weighted assignments. This raises the question of whether or not the model would have performed better on a different set of data. To that end, it is tough to say whether a purely non-parametric approach is necessary in this setting; in situations where assumptions on the prior are rather lax, a more simple hierarchical Bayesian model can often suffice instead of a rigorous non-parametric fit. 
+While the posterior results seemed generally favourable, the methodology applied here is not without its shortcomings. Despite the fact that the proportion of clusters of size $3$ increased as we ran the chain, the relatively high overall mean cluster size of $4.6$, notably different from the clustering seen in the source data, suggests potential problems in cluster assignments. The boxplot in the results section revealed that the rates of the second and third clusters are relatively close, a claim that is supported by the overlap seen in the hexplot reported in the Data Analysis section. The closeness of these groups is a potential culprit for the larger than expected number of clusters, as the algorithm may favour group assignments which overfit the number of distinct rates. This could theoretically incentivize more lightly-weighted clusters with slightly different rates rather than a small number of heavily weighted assignments. However, such a hypothesis would need to be formally tested. Regardless, these findings bring into question whether or not the model would have performed better on a different set of data. To that end, it is tough to say whether a purely non-parametric approach is necessary in this setting; in situations where assumptions on the prior are rather lax, a more simple hierarchical Bayesian model can often suffice instead of a rigorous non-parametric fit. 
 
-With all of this in mind, the implementation of the Dirichlet Process Poisson Mixture Model using a customized `R` function with existing package framework was still an overall success. The ability to add customized models to the `dirichletprocess` package opens the door for novel `R`-based software for more complex Bayesian non-parametrics such as DP-GLMs. In addition, the process used here could be expanded to facilitate a potential CRAN-based extension to the existing package by developing more out-of-the-box options for DPMMs. A direct extension to this work would be to implement another conjugate pair such as a Dirichlet distributed base measure with a Categorical likelihood. Such a model would have interesting applications in classification problems, as the non-parametric framework allows for an arbitrary number of categories. 
-
-
-<!-- ```{r} -->
-<!-- # TODO: Discuss other unsupported conjugates (such as categorical)  -->
-<!-- # all in all the implementation went well. exploration on further data and more -->
-<!-- # complex models such as DP-GLMs is a possibility. in addition, the ability to -->
-<!-- # add custom integration with this package opens the door for novel R-based software -->
-<!-- # to implement more complicated models such as DP-GLMs on a large CRAN package-based scale.  -->
-<!-- # as well as the potential to explore  -->
-<!-- #       non-conjugate mixtures.  -->
-<!-- #  key limitations: difficult to identify data requiring a non-parametric implementation -->
-<!-- #  for example, a Hierarchical Model would likely return similar results to the DPMM -->
-<!-- #  further, count data with distinct clustering is difficult to locate, so the application  -->
-<!-- #  of these sorts of models may be limited -->
-<!-- #  showed that the Gibbs sampling algrotihm in the `dirichletprocess` package can be a powerful tool for -->
-<!-- # generation of posterior estimates of non-parametric mixture models of conjugate data -->
-<!-- # we can potentiall extend to other conjugate pairs not currently supported,  -->
-<!-- # such as the dirichlet distribution  -->
-<!-- # as a conjugate prior to the multinomial distribution. -->
-<!-- # the high proportion of clusters of size 4 is likely due to how close groups 2 and 3 are to one another, -->
-<!-- # bringing into question whether the model could have performed better on a different set of data -->
-<!-- ``` -->
-
-<!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
-<!-- https://projecteuclid.org/journals/annals-of-statistics/volume-1/issue-2/A-Bayesian-Analysis-of-Some-Nonparametric-Problems/10.1214/aos/1176342360.full -->
-<!-- https://en.wikipedia.org/wiki/Dirichlet_process -->
-<!-- https://en.wikipedia.org/wiki/Dirichlet_process#cite_note-2 -->
-<!-- https://en.wikipedia.org/wiki/Probability_measure -->
-<!-- https://en.wikipedia.org/wiki/Sigma-additive_set_function -->
-
+With all of this in mind, the implementation of the Dirichlet Process Poisson Mixture Model using a customized `R` function with existing package framework was still an overall success. The ability to add customized models to the `dirichletprocess` package opens the door for novel `R`-based software for more complex Bayesian non-parametrics such as DP-GLMs. In addition, the process used here could be expanded to facilitate a potential CRAN-based extension to the existing package by developing more out-of-the-box options for DPMMs. A direct extension to this work would be to implement another conjugate pair such as a Dirichlet-distributed base measure with a Categorical likelihood. Such a model would have interesting applications in classification problems, as the non-parametric framework allows for an arbitrary number of categories. 
 
 \newpage
 
 # Appendices
 
 
-The appendices are divided into three sections: Proofs and Examples, `R` Code, and Large Images of Figures. These groupings are by importance. While the entire appendix is not strictly necessary, the proofs in Appendix 1 and first code cell in Appendix 2 are recommended to read. 
+The appendices are divided into three sections: Proofs and Examples, `R` Code, and Large Images of Figures. These groupings are by importance. While the entire appendix is not strictly necessary, the proofs in Appendix 1 and the first code cell in Appendix 2 showing the custom mixing distribution are recommended to read. 
 
-
-*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametrics and to my friends and family who put up with me talking about statistics constantly.
 
 ## Appendix 1: Proofs and Examples
 
@@ -361,11 +311,11 @@ Using the process outlined above, it is direct to show that $\mathbb{E}(\pi_k^2)
 ### Proof of Gamma-Poisson Conjugacy : Posterior
 
 
-We noted the posterior conjugate in the methods section, and left the full derivation of the conjugate pair for the appendix here. As mentioned in the methods section, the conjugate pair is helpful for Gibbs samplers where the nonparametric Dirichlet Process is centered about a gamma base measure.
+We noted the posterior in the Methods section, and left the full derivation of the conjugate pair for the Appendix here. As mentioned in the Methods section, the conjugate pair is helpful for Gibbs samplers where the nonparametric Dirichlet Process is centered about a Gamma base measure.
 
-Let $\lambda \sim \text{gamma}(\alpha, \beta)$ be the prior on the Poisson rate parameter $\lambda$. Let $x_i \mid \lambda \sim \text{pois}(\lambda)$ for $i = 1, 2, \dots, n$.
+Let $\lambda \sim \text{Gamma}(\alpha, \beta)$ be the prior on the Poisson rate parameter $\lambda$. Let $x_i \mid \lambda \sim \text{Poisson}(\lambda)$ for $i = 1, 2, \dots, n$.
 <!-- -->
-We derive the expression for the conjugate prior, begging with the proportionality: 
+We derive the expression for the conjugate prior, beginning with the proportionality: 
 $$
 \begin{aligned}
 \text{Posterior} &\propto \text{Prior } \times \text{ Likelihood} \\
@@ -376,7 +326,7 @@ $$
 \text{Posterior} &\propto  \underbrace{\Big( \dfrac{\beta^{\alpha}}{\Gamma(\alpha) \prod_{i=1}^nx_i!} \Big)}_{\text{constant wrt } \lambda}   \cdot (e^{-n\lambda}e^{-\beta \lambda})\cdot  (\lambda^{\sum x_i}\lambda^{\alpha - 1})   \\
 \text{Posterior} &\propto  (e^{-n\lambda -\beta \lambda}) \cdot  (\lambda^{\sum x_i +\alpha - 1})  \\
 \text{Posterior} &\propto  (e^{-\lambda (n+\beta)}) \cdot  (\lambda^{ \sum x_i +\alpha - 1})   \\
-\text{Posterior} &\propto   \text{gam}(\alpha + \sum_{i = 1}^n x_i, \beta + n) \\
+\text{Posterior} &\propto   \text{Gamma}(\alpha + \sum_{i = 1}^n x_i, \beta + n) \\
 \end{aligned}
 $$
 The above gives the Posterior Distribution used in Part 3 of the DPMM Mixing Distribution definition, as required. 
@@ -430,7 +380,7 @@ The above gives the Posterior Predictive used in Part 4 of the DPMM Mixing Distr
 
 ### Example of a $\sigma$-Algebra 
 
-For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the literature review.
+For additional clarity, we provide an example of a $\sigma$-algebra $\mathcal{F}$ to demonstrate the properties mentioned in the Literature Review.
 
 
 Let's consider the finitely countable and simple set $\mathbb{X} = \{a, b, c\}$. 
@@ -439,7 +389,7 @@ Let's consider the finitely countable and simple set $\mathbb{X} = \{a, b, c\}$.
 Directly, $P(\mathbb{X}) = \big\{ \emptyset, \{a\}, \{b\}, \{c\}, \{a, b\}, \{a, c\}, \{b,c\}, \{a, b, c\} \big\}$ is the power set of $\mathbb{X}$, where we note $\{a, b, c\} = \mathbb{X}$. Consider $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\} \subseteq P(\mathbb{X})$. 
 
 
-We will apply the properties discussed in the literature review section to prove that $\mathcal{F}$ is a $\sigma$-algebra.
+We will apply the properties discussed in the Literature Review section to prove that $\mathcal{F}$ is a $\sigma$-algebra.
 
 
 To verify Property 1 (universality and non-emptiness), we note that we can also write $\mathcal{F}$ as $\big\{\emptyset, \{a\}, \{b,c\}, \mathbb{X} \big\}$. From this definition, it is direct to see that $\mathbb{X} \in \mathcal{F}$ and $\emptyset \in \mathcal{F}$, verifying universality and non-emptiness.
@@ -456,7 +406,7 @@ From all of these properties, we can conclude that $\mathcal{F}$ is a $\sigma$-a
 
 ### Example of a Probability Measure
 
-Using the $\sigma$-algebra $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\}$ we will define $\upmu: \mathcal{F} \mapsto [0, 1]$ and prove that $\upmu$ is a probability measure using the properties discussed in the literature review. 
+Using the $\sigma$-algebra $\mathcal{F} = \big\{ \emptyset, \{a\}, \{b,c\}, \{a, b, c\} \big\}$ we will define $\upmu: \mathcal{F} \mapsto [0, 1]$ and prove that $\upmu$ is a probability measure using the properties discussed in the Literature Review. 
 
 We will define a concrete example as follows, and show it is a probability measure on $\mathcal{F}$.
 $$
@@ -467,7 +417,7 @@ $$
 0, & \text{otherwise} \end{cases}
 $$
 
- Let's evaluate the properties discussed in the literature review to verify that $\upmu$ is in fact a probability measure.
+Let's evaluate the properties discussed in the literature review to verify that $\upmu$ is in fact a probability measure.
 
 First, we evaluate Property 1 (non-negativity.)  In effect, we wish to verify that $\forall A \in \mathcal{F}, \upmu(A) \geq 0$. We can easily evaluate the universal in a case-wise basis. 
 
@@ -499,7 +449,11 @@ From all of these properties, we can conclude that $\upmu$ is a probability meas
 
 ## Appendix 2: R Code
 
+[Click to Access GitHub Repository](https://github.com/cadenhewlett/STAT447/tree/final-project/final_project). The code to follow is separated across multiple different files. The Results Code is named `poisson_DPMM.R`, the DP Finite Approximation is named `finite_appx.R`, the plotting files are `plots_posterior_and_data.R` and `sampling_plot.R`. Finally, the data cleaning is from `data_processing_final.R`. The original Excel spreadsheet was too large to upload remotely. It can be accessed from Kaggle link in the Sources, and works directly with the data processing code. 
+
 ### Results Code
+
+This code features $\text{F}1$ through $\text{F}4$ as discussed in the Methods section, and an implementation of the custom mixing distribution using the source data. 
 ```{r, eval = FALSE}
 library(dirichletprocess)
 # set seed for reproducibility
@@ -514,23 +468,23 @@ TESTING = FALSE # TRUE if running synthetic validation
 ### Mixing Distribution ###
 ###########################
 
-# custom implementation using conjugate mixing dist.
+# define the framework conjugate mixture model
 poisMd = MixingDistribution(
   distribution = "poisson",
-  priorParameters = c(1, 2),
+  priorParameters = c(1, 2), # G_0 params
   conjugate = "conjugate"
 )
-# Part 1: Poisson Likelihood
+# F 1: Poisson Likelihood
 Likelihood.poisson = function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
 }
-# Part 2: Gamma Prior : Base Measure
+# F 2: Gamma Prior : Base Measure
 PriorDraw.poisson = function(mdobj, n){
   draws = rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
   theta = list(array(draws, dim=c(1,1,n)))
   return(theta)
 }
-# Part 3: Posterior Draw (defined by conjugacy)
+# F 3: Posterior Draw (defined by conjugacy)
 PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
   theta = rgamma(n,  priorParameters[1] + sum(x),
@@ -538,7 +492,7 @@ PosteriorDraw.poisson = function(mdobj, x, n=1){
   return(list(array(theta, dim=c(1,1,n))))
 }
 
-# Part 4: Predictive Distribution by Marginalization
+# F 4: Predictive Distribution by Marginalization
 Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
   alpha = priorParameters[1]
@@ -557,6 +511,7 @@ Predictive.poisson = function(mdobj, x){
 ###########################
 ### D.P. Gibbs Sampling ###
 ###########################
+
 # read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
 # monthly crash count, in 100s of crashes 
@@ -564,7 +519,7 @@ y = ( round((df$crash_count)/100) )
 
 # create DP Poisson Mixture Model from mix dist. defined earlier
 dirp = DirichletProcessCreate(y, poisMd)
-
+# if running main code
 if(RUN){
   # initialize and fit DPMM via Gibbs 
   dirp = Initialise(dirp)
@@ -584,7 +539,7 @@ if(RUN){
 ###########################
 
 if(TESTING){
-  # generate three synthetic rates
+  # generate three synthetic rates (total size N = 1,076)
   synth_data = c(rpois(269, lambda = 3),
                  rpois(538, lambda = 12),
                  rpois(269, lambda = 0.8))
@@ -609,6 +564,7 @@ cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")
 ```
 ### Dirichlet Process Finite Approximation
 
+Here, we provde an implementation of the GEM process, used in the Methods section. 
 ```{r, eval = FALSE}
 library(ggplot2)
 library(latex2exp)
@@ -628,14 +584,13 @@ alpha = rgamma(1, 1, 1)
 ##### Finite D.P. Appx. #####
 #############################
 
-
-# generate stick breaking finite approximation
+# compute beta pulls
 b <- rbeta(K, 1, alpha)
-# empty vector for pulls
+# empty vector for population
 p <- numeric(length = K)
 # initial stick break
 p[1] <- b[1]
-# further breaks following GEM(a) definition from methods
+# further breaks following GEM(a) definition
 p[2:K] <- sapply(2:K, function(i)
   b[i] * prod(1 - b[1:(i - 1)]))
 # then, sample from base distribution by weight probabilities
@@ -690,7 +645,7 @@ library(dplyr)
 library(lubridate)
 library(readxl)
 library(tidyr)
-
+library(pbapply)
 #######################
 ### Data Processing ###
 #######################
@@ -700,7 +655,6 @@ library(tidyr)
 cat("Reading Data... \n")
 # read Chicago Crash data from excel using `readxl`
 df <- read_excel("final_project/crash_dates_and_damages.xlsx")
-
 cat("Processing Dates...\n")
 df <- df %>%
   # drop weirdly formatted excel dates
@@ -742,7 +696,7 @@ aggregated_data <- lapply(damage_levels, function(damage_level) {
     left_join(weekly_aggregation %>% filter(year(Week) == 2016) %>%
                 select(Week, Crash_Count), by = c("Nearest_2016_Week" = "Week")) %>%
     mutate(
-      # Use 2016's Crash_Count for nearest week and add to scaled 2014 count if present
+      # use 2016's Crash_Count for nearest week and add to scaled 2014 count if present
       Crash_Count_Adjusted = if_else(year(Week) == 2014, Crash_Count.y + Crash_Count.x / max(Crash_Count.x) * 2, Crash_Count.x)
     ) %>%
     select(Week, Crash_Count_Adjusted)
@@ -811,7 +765,7 @@ p0 = ggplot(data.frame(ind, y), aes(x = ind, y = y)) +
 print(p0)
 
 ##########################
-#### Posterior Rates #####
+###### Latex Table  ######
 ##########################
 
 # read in results from other file
@@ -893,9 +847,8 @@ if (RUN) {
   cat("Using saved simulations... \n")
   simulations = readRDS(file = "final_project/posterior_sims.RDS")
 }
-
 ##########################
-## Pedictive vs. Actual ##
+# Predictive vs. Actual ##
 ##########################
 
 # density profile comparison
@@ -913,39 +866,46 @@ p1 <- ggplot() +
     aes(x = round(crash_count / 100),
         y = after_stat(prop)),
     stat = "count",
-    fill = "gray",
+    fill = "grey65",
     color = "white",
     alpha = 0.5
   ) +
   labs(
     title = TeX(
-      "Mean Estimated Posterior Predictive for DPMM"
+      "Poisson Predictive Densities from DPMM with Observed Data Histogram" 
     ),
     subtitle = TeX(
-      "95% and 99% Credible Interval with Histogram of Observed Data"
+      "Using Clusters $\\{z_i\\}_{i \\in [1,4]}$ and Rates $\\{\\lambda_i\\}_{i \\in [1,4]}$ including 95% and 99% Credible Intervals"
     ),
     y = "Probability Density",
     x = TeX("Count Values")
   ) +
   theme_bw() +
-  geom_line(
-    data = posterior_data,
-    aes(x = x, y = avg_post/N),
-    color = "#075957",
-    size = 0.8
-  ) +
   xlim(-1, 20) +
   geom_ribbon(
     data = posterior_data,
     aes(x = x, ymin = low_post/N, ymax = hi_post/N),
-    fill = "#075957",
-    alpha = 0.2
+    fill = "#5a189a", ##075957",
+    alpha = 0.35
+  ) +
+  geom_line(
+    data = posterior_data,
+    aes(x = x, y = avg_post/N),
+    color = "#240046",#"#075957",
+    size = 0.8,
+    alpha = 0.8
   ) +
   geom_ribbon(
     data = posterior_data,
-    aes(x = x, ymin = vlow_post/N, ymax = vhi_post/N),
-    fill = "#10a19d",
-    alpha = 0.20
+    aes(x = x, ymin = hi_post/N, ymax = vhi_post/N),
+    fill = "#c77dff",#"#10a19d",
+    alpha = 0.5
+  ) +
+  geom_ribbon(
+    data = posterior_data,
+    aes(x = x, ymin = vlow_post/N, ymax = low_post/N),
+    fill = "#c77dff",#"#10a19d",
+    alpha = 0.5
   ) +
   scale_y_continuous(n.breaks = 10) +
   theme(
@@ -953,17 +913,18 @@ p1 <- ggplot() +
       color = "grey90",
       linetype = "dashed",
       linewidth = 0.5
-    )
+    ), 
+    plot.title = element_text(size = 11.75, vjust = -0.1),
+    plot.subtitle = element_text(size = 10)
   )
-
 print(p1)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 
 ##########################
-#### Posterior Rates #####
+###### Rate Boxplots #####
 ##########################
 
-# Etract MCMC iterations post Burn-In for each rate param
+# get MCMC iterations post Burn-In for each rate param
 L_data = data.frame(sapply(1:3, function(L) {
   sapply(1:(M - B), function(m) {
     (dp$clusterParametersChain)[[m]][[1]][L]
@@ -1020,7 +981,6 @@ p2 = ggplot(L_data_long,
     legend.position = "none",
     axis.text.x = element_text(size = 12)
   )
-#print(p2)
 
 ggsave("final_project/post_box.png", plot = p2, width = 4, height = 6)
 
@@ -1042,8 +1002,6 @@ final_probs
 first_density = data.frame(table(sapply(dp$weightsChain[0:500], length)))
 first_probs = sapply(1:nrow(first_density),
                      function(c){first_density$Freq[c]/(sum(first_density$Freq))})
-first_probs
-
 ```
 
 ## Appendix 3: Large Images
@@ -1055,7 +1013,7 @@ Larger images of the figures shown in the main document are included below, in o
 ### Plot of CPD Data
 
 \begin{center}
-\includegraphics[width=1\textwidth]{data_raw.PNG}
+\includegraphics[width=0.8\textwidth]{data_raw.PNG}
 \end{center}
 
 
@@ -1063,7 +1021,7 @@ Larger images of the figures shown in the main document are included below, in o
 ### Plot of DP Finite Approximation
 
 \begin{center}
-\includegraphics[width=1\textwidth]{dirch_appx.PNG}
+\includegraphics[width=0.8\textwidth]{dirch_appx.PNG}
 \end{center}
 
 
@@ -1080,7 +1038,7 @@ Larger images of the figures shown in the main document are included below, in o
 ### Posterior Predictive vs. Source
 
 \begin{center}
-\includegraphics[width=1\textwidth]{post_comp.PNG}
+\includegraphics[width=0.8\textwidth]{post_comp.PNG}
 \end{center}
 <!-- $$ -->
 <!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->
@@ -1157,7 +1115,8 @@ Larger images of the figures shown in the main document are included below, in o
 <!-- # declines in groups over time as severity increases -->
 <!-- # since more severe reports take longer to evaluate -->
 <!-- ``` -->
-
+\vspace{-5mm}
+*Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametrics and to my friends and family who put up with me talking about statistics constantly.
 
 
 

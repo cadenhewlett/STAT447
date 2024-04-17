@@ -74,39 +74,46 @@ p1 <- ggplot() +
     aes(x = round(crash_count / 100),
         y = after_stat(prop)),
     stat = "count",
-    fill = "gray",
+    fill = "grey65",
     color = "white",
     alpha = 0.5
   ) +
   labs(
     title = TeX(
-      "Estimated Posterior Predictive for DPMM"
+      "Poisson Predictive Densities from DPMM with Observed Data Histogram" 
     ),
     subtitle = TeX(
-      "95% and 99% Credible Interval with Histogram of Observed Data"
+      "Using Clusters $\\{z_i\\}_{i \\in [1,4]}$ and Rates $\\{\\lambda_i\\}_{i \\in [1,4]}$ including 95% and 99% Credible Intervals"
     ),
     y = "Probability Density",
-    x = TeX("Count Values")
+    x = TeX("Weekly Crash Count Values, in Hundreds")
   ) +
   theme_bw() +
-  geom_line(
-    data = posterior_data,
-    aes(x = x, y = avg_post/N),
-    color = "#075957",
-    size = 0.8
-  ) +
   xlim(-1, 20) +
   geom_ribbon(
     data = posterior_data,
     aes(x = x, ymin = low_post/N, ymax = hi_post/N),
-    fill = "#075957",
-    alpha = 0.2
+    fill = "#5a189a", ##075957",
+    alpha = 0.35
+  ) +
+  geom_line(
+    data = posterior_data,
+    aes(x = x, y = avg_post/N),
+    color = "#240046",#"#075957",
+    size = 0.8,
+    alpha = 0.8
   ) +
   geom_ribbon(
     data = posterior_data,
-    aes(x = x, ymin = vlow_post/N, ymax = vhi_post/N),
-    fill = "#10a19d",
-    alpha = 0.20
+    aes(x = x, ymin = hi_post/N, ymax = vhi_post/N),
+    fill = "#c77dff",#"#10a19d",
+    alpha = 0.5
+  ) +
+  geom_ribbon(
+    data = posterior_data,
+    aes(x = x, ymin = vlow_post/N, ymax = low_post/N),
+    fill = "#c77dff",#"#10a19d",
+    alpha = 0.5
   ) +
   scale_y_continuous(n.breaks = 10) +
   theme(
@@ -114,9 +121,10 @@ p1 <- ggplot() +
       color = "grey90",
       linetype = "dashed",
       linewidth = 0.5
-    )
+    ), 
+    plot.title = element_text(size = 11.75, vjust = -0.1),
+    plot.subtitle = element_text(size = 10)
   )
-
 print(p1)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 
@@ -181,7 +189,6 @@ p2 = ggplot(L_data_long,
     legend.position = "none",
     axis.text.x = element_text(size = 12)
   )
-#print(p2)
 
 ggsave("final_project/post_box.png", plot = p2, width = 4, height = 6)
 
@@ -203,4 +210,3 @@ final_probs
 first_density = data.frame(table(sapply(dp$weightsChain[0:500], length)))
 first_probs = sapply(1:nrow(first_density),
                      function(c){first_density$Freq[c]/(sum(first_density$Freq))})
-first_probs

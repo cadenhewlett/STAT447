@@ -37,7 +37,7 @@ p0 = ggplot(data.frame(ind, y), aes(x = ind, y = y)) +
 print(p0)
 
 ##########################
-#### Posterior Rates #####
+###### Latex Table  ######
 ##########################
 
 # read in results from other file
