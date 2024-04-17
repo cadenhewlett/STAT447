@@ -6,7 +6,7 @@ library(scales)
 library(pbapply)
 
 ##########################
-##### Posterior Plot #####
+#### Posterior Plots #####
 ##########################
 
 set.seed(447)
@@ -22,6 +22,7 @@ sizes = unlist(dp$pointsPerCluster)
 weights = unlist (dp$weights)
 # declare number of simulations
 M = 10000
+B = 100 # burn in 
 N = nrow(df)
 # run M simulations of size N from the posterior mixture distribution
 if (RUN) {
@@ -32,7 +33,7 @@ if (RUN) {
              function(m) {
                # where each draw is of size n = 1076
                # mixed by rates and cluster sizes
-               unlist(sapply(1:length(sizes), function(i) {
+               unlist(pbsapply(1:length(sizes), function(i) {
                  # generate z_i draws at rate r_i
                  rpois(sizes[i], rates[i])
                }))
@@ -53,12 +54,19 @@ if (RUN) {
   cat("Using saved simulations... \n")
   simulations = readRDS(file = "final_project/posterior_sims.RDS")
 }
+
+##########################
+## Pedictive vs. Actual ##
+##########################
+
 # density profile comparison
 posterior_data <- data.frame(
   x = 0:23,
   avg_post = apply(simulations, MARGIN = 1, mean),
   low_post = apply(simulations, MARGIN = 1, quantile, probs = 0.025),
-  hi_post  = apply(simulations, MARGIN = 1, quantile, probs = 0.975)
+  hi_post  = apply(simulations, MARGIN = 1, quantile, probs = 0.975),
+  vlow_post = apply(simulations, MARGIN = 1, quantile, probs = 0.005),
+  vhi_post  = apply(simulations, MARGIN = 1, quantile, probs = 0.995)
 )
 p1 <- ggplot() +
   geom_bar(
@@ -72,10 +80,10 @@ p1 <- ggplot() +
   ) +
   labs(
     title = TeX(
-      "Estimated Posterior PDF for Rate Parameter $\\lambda$"
+      "Mean Estimated Posterior Predictive for DPMM"
     ),
     subtitle = TeX(
-      "Posterior Mean and 95% Credible Interval with Histogram of Observed Data"
+      "95% and 99% Credible Interval with Histogram of Observed Data"
     ),
     y = "Probability Density",
     x = TeX("Count Values")
@@ -84,14 +92,21 @@ p1 <- ggplot() +
   geom_line(
     data = posterior_data,
     aes(x = x, y = avg_post/N),
-    color = "#10a19d",
+    color = "#075957",
     size = 0.8
   ) +
+  xlim(-1, 20) +
   geom_ribbon(
     data = posterior_data,
     aes(x = x, ymin = low_post/N, ymax = hi_post/N),
-    fill = "#10a19d",
+    fill = "#075957",
     alpha = 0.2
+  ) +
+  geom_ribbon(
+    data = posterior_data,
+    aes(x = x, ymin = vlow_post/N, ymax = vhi_post/N),
+    fill = "#10a19d",
+    alpha = 0.20
   ) +
   scale_y_continuous(n.breaks = 10) +
   theme(
@@ -105,20 +120,86 @@ p1 <- ggplot() +
 print(p1)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 
+##########################
+#### Posterior Rates #####
+##########################
 
-# avg_post
-# # ECDF 
-# counts = as.numeric(table(round(df$crash_count/100)))
-# counts = c(counts, rep(0, 24-length(counts)))
-# 
-# # 
-# #    geom_step(aes(x = cumsum(counts)
-# # , cumsum(counts/N), color = "Observed"))
-# 
-# ggplot(data.frame(x = round(df$crash_count / 100)), aes(x = x)) +
-#   stat_ecdf(geom = "step") +
-#   ggtitle("ECDF of Observed Data") +
-#   xlab("Data values") +
-#   ylab("ECDF") +
-#   theme_bw() 
-# ecdf_data( ecdf(simulations[, 1]) )
+# Etract MCMC iterations post Burn-In for each rate param
+L_data = data.frame(sapply(1:3, function(L) {
+  sapply(1:(M - B), function(m) {
+    (dp$clusterParametersChain)[[m]][[1]][L]
+  })
+}))
+
+colnames(L_data) = c("Lambda 1", "Lambda 2", "Lambda 3")
+
+L_data_long = L_data %>%
+  mutate(id = row_number()) %>%
+  pivot_longer(
+    cols = -id,
+    names_to = "Parameter",
+    values_to = "Rate"
+  )
+p2 = ggplot(L_data_long,
+       aes(
+         x = Parameter,
+         y = Rate,
+         fill = Parameter,
+         colour = Parameter
+       )) +
+  geom_boxplot(width = 0.2, alpha = 0.5,
+               outlier.shape = 3, outlier.size = 0.5) +
+  geom_violin(trim = TRUE, alpha = 0.3) +
+  scale_fill_manual(values = c(
+    "Lambda 1" = "#414833",
+    "Lambda 2" = "#936639",
+    "Lambda 3" = "#c2c5aa"
+  )) +
+  scale_colour_manual(values = c(
+    "Lambda 1" = "#333d29",
+    "Lambda 2" = "#7f4f24",
+    "Lambda 3" = "#656d4a"
+  )) +
+  labs(
+    title = TeX("Boxplots of Posterior Rate Parameters"),
+    subtitle = TeX("For Dominant-Populated Clusters $i \\in \\{1, 2, 3\\}$"),
+    x = "Parameter",
+    y = "Posterior Rate"
+  ) +
+  scale_x_discrete(labels = c(
+    TeX("$\\lambda_1$"),
+    TeX("$\\lambda_2$"),
+    TeX("$\\lambda_3$")
+  )) +
+  scale_y_continuous(n.breaks = 10)+
+  theme_bw() +  theme(
+    panel.grid.minor = element_line(
+      color = "grey90",
+      linetype = "dashed",
+      linewidth = 0.5
+    ),
+    legend.position = "none",
+    axis.text.x = element_text(size = 12)
+  )
+#print(p2)
+
+ggsave("final_project/post_box.png", plot = p2, width = 4, height = 6)
+# ?geom_boxplot
+### CLUSTERING COUNTS ###
+cluster_density = data.frame( table(sapply(dp$weightsChain, length) ))
+
+probs = sapply(1:nrow(cluster_density),
+       function(c){cluster_density$Freq[c]/(sum(cluster_density$Freq))})
+# values used in paragraph
+cumsum(probs)
+sum( seq(from = 3, to = 13)*probs )
+
+#final 1,000 loops
+final_density = data.frame(table(sapply(dp$weightsChain[9400:9900], length)))
+final_probs = sapply(1:nrow(final_density),
+               function(c){final_density$Freq[c]/(sum(final_density$Freq))})
+final_probs[1]+final_probs[2]
+first_density = data.frame(table(sapply(dp$weightsChain[0:500], length)))
+cumsum(final_probs)
+# probs
+# final_probs

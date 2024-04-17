@@ -13,7 +13,9 @@ header-includes:
    - \usepackage{yfonts}
    - \usepackage{wrapfig}
    - \usepackage{array}
-   
+   - \usepackage{threeparttable}
+   - \usepackage{booktabs}
+   - \usepackage{changepage}
 bibliography: bibliography.bib
 ---
 
@@ -36,16 +38,15 @@ knitr::opts_chunk$set(echo = TRUE)
 
 \vspace{-4.5mm}
 
-In this work, we present a non-parametric approach to the Gamma-Poisson (GP) model framework using crash count data from the Chicago Police Department [@chicago_police_department__cpd__2024]. As of writing, there is no out-of-the-box approach for the GP setup in the widely-used `dirichletprocess` package for Dirichlet Process Mixture Models (DPMMs.) So, in addition to presenting a nuanced analysis of the CPD data set, this work develops a bespoke integration of the GP Bayesian Model with the aforementioned `R` package. It should be noted that the closest investigation of the CPD data publicly available were summary statistics by [@Johny2018ChicagoTraffic]. 
+In this work, we present a non-parametric approach to the Gamma-Poisson (GP) model framework using a weekly aggregation of daily crash count data from the Chicago Police Department [@chicago_police_department__cpd__2024]. As of writing, there is no out-of-the-box approach for the GP setup in the widely-used `dirichletprocess` package for Dirichlet Process Mixture Models (DPMMs). So, in addition to presenting a formalized Bayesian analysis of the CPD data set, this work develops a bespoke integration of the GP Bayesian Model with the aforementioned `R` package. In addition we provide a more formal analysis of these data considering that the closest investigation of the CPD data publicly available were summary statistics by [@Johny2018ChicagoTraffic]. 
 
 
-We will begin with a brief literature review, discussing probability measures and Dirichlet Processes (DPs) from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot of the count data and provide some observational analysis. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results, which include the table of weighted posterior rates and the corresponding estimated posterior density plot. We then briefly interpret these results and discuss shortcomings and future work.
-
+We will begin with a brief literature review, discussing probability measures and Dirichlet Processes (DPs) from a theoretical standpoint. In the Data Analysis section, we briefly recap the source data aggregation and imputation, inspect the plot of the count data and provide some observational analysis. We will proceed to detail the stick-breaking process used by the algorithm and formally define both the Bayesian model and hyper-parameter choices for the DPMM. In the Results section, we produce the *a posteriori* results which include the table of weighted posterior rates and the corresponding posterior plots. We then briefly interpret these results, discuss shortcomings, and establish ideas for future work.
 
 \vspace{-5mm}
 
 
-## Literature Review 
+## \underline{Literature Review}
 
 \vspace{-4mm}
 
@@ -191,10 +192,10 @@ $$
 \hspace{15mm}
 \caption{Graphical Model}
 \end{center}
-\vspace{-10mm}
+\vspace{-18mm}
 \end{wrapfigure}
 
-In the model described in the equations above and in Figure 1, the base measure $\mathbb{G}_0$ is Gamma-distributed with shape $1$ and rate $2$. With this DPMM structure, $z_i$ denotes the $i$-th cluster where the probability of selecting cluster $k \in [1, K]$ is determined by the stick-breaking weights $\{\pi_k\}_{k=1}^K$. As a consequence, the Poisson Likelihood is determined by the rate parameter corresponding to the $k$-th randomly sampled weight index. This indexing procedure is facilitated by the use of a categorical distribution to select clusters.  
+In the model described in the equations above and in Figure 1, the base measure $\mathbb{G}_0$ is Gamma-distributed with shape $1$ and rate $2$. With this DPMM structure, $z_i$ denotes the $i$-th cluster where the probability of selecting cluster $k \in [1, K]$ is determined by the stick-breaking weights $\{\pi_k\}_{k=1}^K$. As a consequence, the Poisson Likelihood is determined by the rate parameter corresponding to the $k$-th randomly sampled weight index. This indexing procedure is enabled by the use of a categorical distribution to select clusters.  
 
 
 While the categorical distribution could select directly from $\lambda_k$, the cluster-based approach allows the algorithm to utilize information on the assignments $z_i$, which can be applied in nonparametric clustering methods such as those discussed in [@Zhang2019DPMM].
@@ -225,32 +226,58 @@ While the categorical distribution could select directly from $\lambda_k$, the c
 <!-- # TODO: when setup is done, declare model equations -->
 <!-- ``` -->
 
+\newpage
 
-## Results 
+## \underline{Results} 
 
 
+\vspace{-4mm}
+The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $100$ completed in $703.87$ seconds. Across multiple trials and randomization seeds, the procedure converged to similar clusters and posterior rates, supporting the consistency and stability of the chain.
 
-The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $B =100$ had a total run time of $703.87$ seconds, and converged to the posterior rates and distribution consistently across multiple runs and randomization seeds. In addition, we ran the Poisson DPMM on synthetic data, and observed consistent recovery of source weights in the mean results and posterior weights. Furthermore, the synthetic data of equivalent size to the experiment data had a similar run time of $732.53$ seconds, implying that the chain is mixing well.  In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set.
+
+\vspace{-1mm}
+\begin{wrapfigure}{l}{0.36\textwidth}
+\vspace{-9mm}
+\begin{center}
+\includegraphics[width=0.37\textwidth]{post_box.PNG}
+\end{center}
+\vspace{-3.8cm}
+\end{wrapfigure}
+We tested the model on varying sets of synthetic data of size $n$, and observed consistent recovery of the true clustering and approximate rates of the data. In addition, we observed similarity in convergence times between the synthetic and actual data, suggesting the chain is mixing well on the real-world dataset. In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set.
 
 \begin{table}[h]
-\centering
-\vspace{-4mm}
+\begin{adjustwidth}{7.5cm}{}
+\begin{threeparttable}
 \caption{DPMM Posterior Parameters and Weights}
 \begin{tabular}{r|cccc}
 \toprule
-{\textbf{Rate} $\lambda_k$ } & 11.964 & 3.880 & 2.034 & 0.718\\
+\textbf{Rate} $\lambda_k$ & 11.964 & 3.880 & 2.034 & 0.718\\
 \midrule
-{\textbf{Weight} $\pi_k$ } & 0.198 & 0.329 & 0.466 & 0.007\\
+\textbf{Weight} $\pi_k$ & 0.198 & 0.329 & 0.466 & 0.007\\
+\midrule
+\textbf{Cluster Size} $z_k$ & 213 & 354 & 501 & 8\\
 \bottomrule
 \end{tabular}
+\end{threeparttable}
+\end{adjustwidth}
 \end{table}
 
 
-From the results above, we see that high posterior weight was associate with three distinct rate parameters, indicating that the DPMM correctly identified the different clusters of data, with the majority of the weight mass being placed on the first three rate parameters. The fourth rate parameter with $\pi_4 \approx 0.718$ had a cluster size of only $8$ out of $1,076$ data points indicating that it is likely not significant to the overall mixture model. 
+From the table above, we see that high weight is assigned to three distinct rate parameters. The estimates for these parameters are notably different from another, as shown in the boxplots to the left. This implies that the DPMM is correctly identifying the varying rates in the source data; specifically, it is locating the three groupings of the crash counts we discussed in the Data Analysis section. It should be noted that the fourth rate parameter with $\lambda_4 \approx 0.718$ has a very small cluster size, which indicates minimal contribution to the overall mixture model. In addition, we found the average cluster size to be approximately $4.6$ and the proportion of clusters of size $3$ improved to around $35\%$ by the final $500$ iterations from $21\%$ in the first $500$ post burn-in. In all, the DPMM seems to performing well with respect to rate identification of the intrinsically clustered count data.
+
+\vspace{-1mm}
+\begin{wrapfigure}{r}{0.62\textwidth}
+\vspace{-10mm}
+\begin{center}
+\includegraphics[width=0.65\textwidth]{post_comp.PNG}
+\end{center}
+\vspace{-1cm}
+\end{wrapfigure}
+
+To further assess the model's ability to capture the pattern and variability of the true data, we simulated $10,000$ draws of size $n$ from the posterior predictive distribution. These samples used the posterior rates $\{\lambda_i\}_{i = 1}^4$ and corresponding weights $\{\pi_i\}_{i = 1}^4$, as reported in Table 1. We compared these simulations to the original data by tabulating the frequencies of simulated counts and plotting them alongside a histogram of the original data. The resulting plot, shown to the right, suggest that the model captures the general shape of the data well. It is correctly identifying the changing density and heavier tails of the histogram. While the true values seem to occasionally fall beyond the 95% Credible Interval for the posterior predictive they remain within the 99% Interval, save for one observed bin. In addition, the interval width seems to grow considerably near areas where the densities shift in the source data; this makes sense, as we would expect higher variability along the boundaries of clusters.  Bearing all of this in mind, there still doesn't seem to be significant evidence to suggest that the model is mis-specified; the similar shape of the posterior predictive to the true data and the consistent identification of distinct rates suggest that our implementation of the Gamma-Poisson DPMM is robust.
 
 
-Below, we plot the estimated posterior mixture distribution on a sample frame of size $10,000$ alongside the $99\%$ credible interval. We compare these results with the frequentist maximum likelihood estimate of the rate parameter found via Poisson regression, which includes the corresponding $99\%$ confidence interval. 
-
+\newpage
 
 ```{r}
 # An appropriate combination of diagnostics, synthetic datasets and other validation strategies.
@@ -269,6 +296,12 @@ Below, we plot the estimated posterior mixture distribution on a sample frame of
 #  for example, a Hierarchical Model would likely return similar results to the DPMM
 #  further, count data with distinct clustering is difficult to locate, so the application 
 #  of these sorts of models may be limited
+#  showed that the Gibbs sampling algrotihm in the `dirichletprocess` package can be a powerful tool for
+# generation of posterior estimates of non-parametric mixture models of conjugate data
+# we can potentiall extend to other conjugate pairs not currently supported, such as the dirichlet distribution 
+# as a conjugate prior to the multinomial distribution.
+# the high proportion of clusters of size 4 is likely due to how close groups 2 and 3 are to one another,
+# bringing into question whether the model could have performed better on a different set of data
 ```
 
 <!--  https://mlg.eng.cam.ac.uk/zoubin/tut06/ywt.pdf -->
@@ -279,13 +312,15 @@ Below, we plot the estimated posterior mixture distribution on a sample frame of
 <!-- https://en.wikipedia.org/wiki/Sigma-additive_set_function -->
 
 
-# Appendix 
+# Appendices
+
+
+The appendices are divided into three sections: Proofs and Examples, `R` Code, and Large Images of Figures.
 
 
 *Acknowledgements*: Special thanks to Prof. Lasantha Premarathna for sparking my interest in non-parametrics and to my friends and family who put up with me talking about statistics constantly.
 
-
-## Section 1: Proofs and Examples
+## Appendix 1: Proofs and Examples
 
 Miscellaneous information such as knowledge on sets, power sets, subsets and countability from [@demirbas2023introduction].
 
@@ -429,7 +464,7 @@ Finally, we verify Property 3 (countable additivity.) Again, because the $\sigma
 From all of these properties, we can conclude that $\upmu$ is a probability measure on $\sigma$-algebra $\mathcal{F}$, as required $\square$.
 
 
-## Section 2: R Code
+## Appendix 2: R Code
 
 ### Results Code
 ```{r, eval = FALSE}
@@ -852,6 +887,42 @@ print(p1)
 ggsave("final_project/post_comp.png", plot = p1, width = 7, height = 5)
 ```
 
+## Appendix 3: Large Images
+
+Larger images of the figures shown in the main document are included below, in order of appearance.
+
+
+
+### Plot of CPD Data
+
+\begin{center}
+\includegraphics[width=1\textwidth]{data_raw.PNG}
+\end{center}
+
+
+
+### Plot of DP Finite Approximation
+
+\begin{center}
+\includegraphics[width=1\textwidth]{dirch_appx.PNG}
+\end{center}
+
+
+
+### Boxplots of Posterior Rates 
+
+
+\begin{center}
+\includegraphics[width=0.6\textwidth]{post_box.PNG}
+\end{center}
+
+
+
+### Posterior Predictive vs. Source
+
+\begin{center}
+\includegraphics[width=1\textwidth]{post_comp.PNG}
+\end{center}
 <!-- $$ -->
 <!-- \mathbb{G}_0 : \big\langle \text{dir}({\alpha_{j,1:K(j)}}), N(m_{j,k}, s^2_{j,k}) \big\rangle =  \big\langle \text{dir}({1_{1:4}}), N(0, 10) \big\rangle -->
 <!-- $$ -->
