@@ -41,7 +41,7 @@ knitr::opts_chunk$set(echo = TRUE)
 <!-- # of a Poisson DPMM with existing R Packages, but apply more nuanced analytics of the source data. -->
 <!-- ``` -->
 
-\vspace{-4mm}
+\vspace{-3mm}
 
 In this work, we present a non-parametric approach to the Gamma-Poisson (GP) model framework using weekly aggregation of daily crash count data from the Chicago Police Department [@chicago_police_department__cpd__2024]. As of writing, there is no out-of-the-box approach for the GP setup in the widely-used `dirichletprocess` package for Dirichlet Process Mixture Models (DPMMs). So, in addition to presenting a formalized Bayesian analysis of the CPD data set, this work develops a bespoke integration of the GP Bayesian Model with the aforementioned `R` package. In addition we provide a more formal analysis of these data considering that the closest investigation of the CPD data publicly available were summary statistics by [@Johny2018ChicagoTraffic]. 
 
@@ -131,8 +131,9 @@ We applied an aggregation code framework modified from [@stackoverflow2023custom
 
 ## \underline{Methods}
 
+\vspace{-3mm}
 
-In this section, we define the stick-breaking discrete approximation of the Dirichlet Process implemented in this work and in the Gibbs sampler of the `dirichletprocess` package [@dirichletprocess2023]. This library implements the algorithm discussed in-depth in [@Neal2000]. As Markwick notes in his work, using a conjugate base prior allows the algorithm to use an optimized method presented by Neal, and hence is generally preferable if fast mixing is desired. However, as of writing, the Gamma-Poisson conjugate pair is not implemented as a default model in the package. Hence, in addition to the prior base measure finite approximation we explicitly define the likelihood, conjugate posterior and posterior predictive for the Gamma-Poisson to be implemented as a mixing distribution object in the DPMM Gibbs sampler. Then, we explicitly state the Bayesian model applied to the data from the previous section. 
+In this section, we define the stick-breaking discrete approximation of the Dirichlet Process implemented in this work and in the Gibbs sampler of the `dirichletprocess` package [@dirichletprocess2023]. This library implements the algorithm discussed in-depth in [@Neal2000]. As Markwick notes in his work, using a conjugate base prior allows the algorithm to use an optimized method presented by Neal, and hence is generally preferable if fast mixing is desired. However, as of writing, the Gamma-Poisson conjugate pair is not implemented as a default model in the package. Hence, in addition to the Dirichlet Process finite approximation, we explicitly define the likelihood, conjugate posterior and posterior predictive for the Gamma-Poisson to be implemented as a mixing distribution object in the DPMM Gibbs sampler. Further, we explicitly state the Bayesian model applied to the data from the previous section. 
 
 \vspace{-3mm}
 
@@ -150,7 +151,7 @@ $$
 $$
 \vspace{-4mm}
 
-Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$ as noted in [@Xing2014]. 
+Where $\pi_k$ can be considered the $k$-th value returned from the GEM process. The realization is then an estimation of a $K$-dimensional probability measure. For computational purposes, we treat $\text{GEM}(\alpha)$ as a discrete probability distribution for a reasonably large choice of $K$, since $\underset{K \rightarrow \infty}{\lim}\big(\sum_{k = 1}^K \pi_k \big) = 1$ with the residual distance of the sum from $1$ decreasing exponentially by properties of beta-distributed random variables, as noted in [@Xing2014] and other works. 
 
 \begin{wrapfigure}{l}{0.60\textwidth}
 \vspace{-5mm}
@@ -234,19 +235,19 @@ The Gibbs sampling procedure on $10,000$ iterations with a burn-in of $100$ comp
 
 
 \vspace{-1mm}
-\begin{wrapfigure}{l}{0.36\textwidth}
+\begin{wrapfigure}{l}{0.425\textwidth}
 \vspace{-9mm}
 \begin{center}
-\includegraphics[width=0.37\textwidth]{post_box.PNG}
+\includegraphics[width=0.42\textwidth]{post_box.PNG}
 \end{center}
-\vspace{-3.8cm}
+\vspace{-3.5cm}
 \end{wrapfigure}
-We tested the model on varying sets of synthetic data of size $n$, and observed consistent recovery of the true clustering and approximate rates of the data. In addition, we observed similarity in convergence times between the synthetic and actual data, suggesting the chain is mixing well on the real-world dataset. In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set.
+We tested the model on varying sets of synthetic data of size $n$, and observed consistent recovery of the true clustering and approximate rates of the data. In addition, we observed similarity in convergence times between the synthetic and actual data, suggesting the chain is mixing well on the real-world dataset. In the table below, we report the posterior rate estimates and the associated mixing weights for the Chicago Police data set, where columns $k \in\{1,2,3,4\}$ indicate the cluster.
 
 \begin{table}[h]
-\begin{adjustwidth}{7.5cm}{}
+\begin{adjustwidth}{8.75cm}{}
 \begin{threeparttable}
-\caption{DPMM Posterior Parameters and Weights}
+\caption{Posterior Parameters and Weights}
 \begin{tabular}{r|cccc}
 \toprule
 \textbf{Rate} $\lambda_k$ & 11.964 & 3.880 & 2.034 & 0.718\\
@@ -261,11 +262,11 @@ We tested the model on varying sets of synthetic data of size $n$, and observed 
 \end{table}
 
 
-From the table above, we see that high weight is assigned to three distinct rate parameters. The estimates for these parameters are notably different from another, as shown in the boxplots to the left. This implies that the DPMM is correctly identifying the varying rates in the source data; specifically, it is locating the three groupings of the crash counts we discussed in the Data Analysis section. It should be noted that the fourth rate parameter with $\lambda_4 \approx 0.718$ has a very small cluster size, which indicates minimal contribution to the overall mixture model. In addition, we found the average cluster size to be approximately $4.6$ and the proportion of clusters of size $3$ improved to around $35\%$ by the final $500$ iterations from $21\%$ in the first $500$ post burn-in. In all, the DPMM seems to performing well with respect to rate identification of the intrinsically clustered count data.
+From the table above, we see that the majority of the weight is assigned to three distinct rate parameters. The estimates for these parameters are notably different from another, as shown in the boxplots to the left. This implies that the DPMM is correctly identifying the varying rates in the source data; specifically, it is locating the three groupings of the crash counts we discussed in the Data Analysis section. It should be noted that the fourth rate parameter with $\lambda_4 \approx 0.718$ has a very small cluster size, which indicates minimal contribution to the overall mixture model. In addition, we found the average cluster size to be approximately $4.6$ and the proportion of clusters of size $3$ improved to around $35\%$ by the final $500$ iterations from $21\%$ in the first $500$ post burn-in. In all, the DPMM seems to performing well with respect to rate identification of the intrinsically clustered count data.
 
 \vspace{-1mm}
 \begin{wrapfigure}{r}{0.62\textwidth}
-\vspace{-10mm}
+\vspace{-6mm}
 \begin{center}
 \includegraphics[width=0.65\textwidth]{post_comp.PNG}
 \end{center}
@@ -465,6 +466,7 @@ set.seed(447)
 start_time = proc.time()
 M = 10000
 RUN = FALSE # TRUE if running sampler
+TESTING = FALSE # TRUE if running synthetic validation
 
 ###########################
 ### Mixing Distribution ###
@@ -476,25 +478,25 @@ poisMd = MixingDistribution(
   priorParameters = c(1, 2),
   conjugate = "conjugate"
 )
-# F 1: Poisson Likelihood
+# Part 1: Poisson Likelihood
 Likelihood.poisson = function(mdobj, x, theta){
   return(as.numeric(dpois(x, theta[[1]])))
 }
-# F 2: Gamma Prior : Base Measure
+# Part 2: Gamma Prior : Base Measure
 PriorDraw.poisson = function(mdobj, n){
   draws = rgamma(n, mdobj$priorParameters[1], mdobj$priorParameters[2])
   theta = list(array(draws, dim=c(1,1,n)))
   return(theta)
 }
-# F 3: Posterior Draw (defined by conjugacy)
+# Part 3: Posterior Draw (defined by conjugacy)
 PosteriorDraw.poisson = function(mdobj, x, n=1){
   priorParameters = mdobj$priorParameters
-  theta = rgamma(n, priorParameters[1] + sum(x),
-                    priorParameters[2] + nrow(x))
+  theta = rgamma(n,  priorParameters[1] + sum(x),
+                     priorParameters[2] + nrow(x))
   return(list(array(theta, dim=c(1,1,n))))
 }
 
-# F 4: Predictive Distribution by Marginalization
+# Part 4: Predictive Distribution by Marginalization
 Predictive.poisson = function(mdobj, x){
   priorParameters = mdobj$priorParameters
   alpha = priorParameters[1]
@@ -513,7 +515,6 @@ Predictive.poisson = function(mdobj, x){
 ###########################
 ### D.P. Gibbs Sampling ###
 ###########################
-
 # read in cleaned data frame
 df = read.csv("final_project/cleaned_crash_data.csv")
 # monthly crash count, in 100s of crashes 
@@ -535,6 +536,31 @@ if(RUN){
   saveRDS(postf, file = "final_project/posterior_sampleframe.RDS")
   saveRDS(dirp, file =  "final_project/posterior_results.RDS")
 }
+
+###########################
+## Synthetic Validation ###
+###########################
+
+if(TESTING){
+  # generate three synthetic rates
+  synth_data = c(rpois(269, lambda = 3),
+                 rpois(538, lambda = 12),
+                 rpois(269, lambda = 0.8))
+  # initiate the dirichlett process poisson
+  synth = DirichletProcessCreate(synth_data, poisMd)
+  # initialize and fit DPMM via Gibbs 
+  synth = Initialise(synth)
+  synth = Fit(synth, M) 
+  synth = Burn(synth, 100)
+  # compute, posterior frame: sampling from the posterior
+  cat("Generating Posterior Frame for Synthetic Data...")
+  # include 95% and 99% Credible Intervals
+  post_synth = PosteriorFrame(synth, 0:22, 10000, ci_size = c(0.1, 0.01))
+  # save locally
+  saveRDS(postf, file = "final_project/synthetic_sampleframe.RDS")
+  saveRDS(dirp, file =  "final_project/synthetic_results.RDS")
+}
+
 # report runtime 
 total_time = proc.time() - start_time
 cat("Total Runtime of Script: ", total_time['elapsed'], "seconds\n")

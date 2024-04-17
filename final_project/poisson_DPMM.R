@@ -5,7 +5,7 @@ set.seed(447)
 start_time = proc.time()
 M = 10000
 RUN = FALSE # TRUE if running sampler
-TESTING = TRUE # TRUE if running synthetic validation
+TESTING = FALSE # TRUE if running synthetic validation
 
 ###########################
 ### Mixing Distribution ###
