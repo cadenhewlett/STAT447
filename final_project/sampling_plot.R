@@ -184,22 +184,23 @@ p2 = ggplot(L_data_long,
 #print(p2)
 
 ggsave("final_project/post_box.png", plot = p2, width = 4, height = 6)
-# ?geom_boxplot
-### CLUSTERING COUNTS ###
+
+
+##########################
+#### Cluster Reports #####
+##########################
+
 cluster_density = data.frame( table(sapply(dp$weightsChain, length) ))
 
 probs = sapply(1:nrow(cluster_density),
        function(c){cluster_density$Freq[c]/(sum(cluster_density$Freq))})
 # values used in paragraph
-cumsum(probs)
 sum( seq(from = 3, to = 13)*probs )
-
-#final 1,000 loops
 final_density = data.frame(table(sapply(dp$weightsChain[9400:9900], length)))
 final_probs = sapply(1:nrow(final_density),
                function(c){final_density$Freq[c]/(sum(final_density$Freq))})
-final_probs[1]+final_probs[2]
+final_probs
 first_density = data.frame(table(sapply(dp$weightsChain[0:500], length)))
-cumsum(final_probs)
-# probs
-# final_probs
+first_probs = sapply(1:nrow(first_density),
+                     function(c){first_density$Freq[c]/(sum(first_density$Freq))})
+first_probs
