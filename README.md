@@ -27,6 +27,8 @@ R Markdown files for the homework assignments.
 ### [images](https://github.com/cadenhewlett/STAT447/tree/main/images)
 Images used in the reports and visualizations.
 
+![posterior in final project](https://github.com/cadenhewlett/STAT447/blob/main/final_project/post_comp.png)
+
 ### [notes_and_utils](https://github.com/cadenhewlett/STAT447/tree/main/notes_and_utils)
 Notes and utility scripts used throughout the coursework.
 
@@ -61,6 +63,7 @@ If you wish to cite this work for any purpose, please use the following `bibtex`
 ```
 ## Project Description
 
+This is an overview of the project. Full details are in `main.pdf`.
 ### Introduction
 
 This project presents a non-parametric approach to the Gamma-Poisson (GP) model framework using weekly aggregation of daily crash count data from the Chicago Police Department. The main goal is to integrate the GP Bayesian Model with the `dirichletprocess` R package, which does not have an out-of-the-box solution for this setup.
@@ -73,16 +76,3 @@ The project utilizes the stick-breaking process to define the Dirichlet Process 
 
 The results include posterior parameter estimates, cluster assignments, and predictive densities. The analysis demonstrates the effectiveness of the DPMM in identifying varying rates of crash counts.
 
-### Discussion
-
-The findings highlight the potential and limitations of non-parametric Bayesian approaches in modeling crash data. Suggestions for future work include extending the model to other conjugate pairs and improving cluster assignment methods.
-
-## Sources
-
-- [Chicago Traffic Crashes - Chicago Police Dept.](https://doi.org/10.34740/KAGGLE/DSV/7339559)
-- [An Introduction to Mathematical Proof: MATH 220](https://personal.math.ubc.ca/~PLP/)
-- [Bayesian Analysis of Some Nonparametric Problems](https://doi.org/10.1214/aos/1176342360)
-- [Dirichlet Process Mixtures of Generalized Linear Models](https://www.jmlr.org/papers/volume12/hannah11a/hannah11a.pdf)
-- [Markov Chain Sampling Methods for Dirichlet Process Mixture Models](https://doi.org/10.1080/10618600.2000.10474879)
-- [Hierarchical Dirichlet Processes](https://www.cs.cmu.edu/~epxing/Class/10708-14/scribe_notes/scribe_note_lecture20.pdf)
-- [Research on Dirichlet Process Mixture Model for Clustering](https://doi.org/10.18280/isi.240209)
